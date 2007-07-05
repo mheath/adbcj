@@ -11,8 +11,6 @@ import java.util.concurrent.Future;
  */
 public interface DbFuture<T> extends Future<T> {
 
-	Connection getConnection();
-	
 	void addListener(DbListener<T> listener);
 	
 	void removeListener(DbListener<T> listener);

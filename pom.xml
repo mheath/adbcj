@@ -10,7 +10,7 @@
 	<version>0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Asynchronous Database Connectiviy in Java</name>
+	<name>Asynchronous Database Connectivity in Java</name>
 
 	<modules>
 		<module>api</module>
@@ -27,4 +27,23 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<artifactId>adbcj-api</artifactId>
+				<groupId>${project.groupId}</groupId>
+				<version>${project.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.3.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 </project>

@@ -1,3 +1,7 @@
+Tasks
+---------------------
+Make ConnectionManager an interface and create a ConnectionManagerFactory that replaces ConnectionFactory.
+
 Requirements
 ---------------------
-Need to be able to pool connections
+

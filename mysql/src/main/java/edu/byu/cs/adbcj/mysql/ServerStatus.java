@@ -1,0 +1,14 @@
+package edu.byu.cs.adbcj.mysql;
+
+public enum ServerStatus {
+	IN_TRANSACTION,
+	AUTO_COMMIT,
+	MORE_RESULTS,
+	MULTI_QUERY,
+	BAD_INDEX,
+	NO_INDEX,
+	CURSOR_EXISTS,
+	LAST_ROW_SEBD,
+	DATABASE_DROPPED,
+	NO_BACKSLASH_ESCAPES
+}

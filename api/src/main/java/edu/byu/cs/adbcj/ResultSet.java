@@ -1,5 +1,5 @@
 package edu.byu.cs.adbcj;
 
-public interface ResultSet {
+public interface ResultSet extends Iterable<Result> {
 
 }

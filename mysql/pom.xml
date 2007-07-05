@@ -13,5 +13,18 @@
 
 	<artifactId>adbcj-mysql</artifactId>
 	<packaging>jar</packaging>
-	<name>Asynchronous Java Database Connectivity - MySQL Driver</name>
+	<name>Asynchronous Database Connectivity in Java - MySQL Driver</name>
+	
+	<dependencies>
+		<dependency>
+			<artifactId>adbcj-api</artifactId>
+			<groupId>edu.byu.cs.adbcj</groupId>
+		</dependency>
+		<dependency>
+			<artifactId>mina-core</artifactId>
+			<groupId>org.apache.mina</groupId>
+			<version>2.0.0-M1-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+	
 </project>
