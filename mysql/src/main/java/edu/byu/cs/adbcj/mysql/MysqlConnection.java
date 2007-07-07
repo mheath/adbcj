@@ -1,5 +1,8 @@
 package edu.byu.cs.adbcj.mysql;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import org.apache.mina.common.IoSession;
 
 import edu.byu.cs.adbcj.Connection;
@@ -169,6 +172,28 @@ public class MysqlConnection implements Connection {
 		if (closed) {
 			throw new DbException("This connection has been closed");
 		}
+	}
+
+	private static final Set<ClientCapabilities> CLIENT_CAPABILITIES = EnumSet.of(
+			ClientCapabilities.LONG_PASSWORD,
+			ClientCapabilities.FOUND_ROWS,
+			ClientCapabilities.LONG_COLUMN_FLAG,
+			ClientCapabilities.CONNECT_WITH_DB,
+			ClientCapabilities.LOCAL_FILES,
+			ClientCapabilities.PROTOCOL_4_1,
+			ClientCapabilities.TRANSACTIONS,
+			ClientCapabilities.SECURE_AUTHENTICATION);
+
+	public Set<ClientCapabilities> getClientCapabilities() {
+		return CLIENT_CAPABILITIES;
+	}
+
+	private static final Set<ExtendedClientCapabilities> EXTENDED_CLIENT_CAPABILITIES = EnumSet.of(
+			ExtendedClientCapabilities.MULTI_RESULTS
+			);
+
+	public Set<ExtendedClientCapabilities> getExtendedClientCapabilities() {
+		return EXTENDED_CLIENT_CAPABILITIES;
 	}
 
 }
