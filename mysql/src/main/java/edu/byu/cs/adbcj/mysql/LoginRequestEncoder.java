@@ -26,8 +26,8 @@ public class LoginRequestEncoder extends RequestEncoder<LoginRequest> {
 		// Encode password
 		final String password = request.getCredentials().getPassword();
 		if (password != null && password.length() > 0) {
-			ServerGreeting serverGreeting = (ServerGreeting)IoSessionUtil.getSessionAttribute(session, SessionId.SERVER_GREETING);
-			byte[] encryptedPassword = PasswordEncryption.encryptPassword(password, serverGreeting.getSalt());
+			byte[] salt = IoSessionUtil.getMysqlConnection(session).getServerGreeting().getSalt();
+			byte[] encryptedPassword = PasswordEncryption.encryptPassword(password, salt);
 			buffer.put((byte)encryptedPassword.length);
 			buffer.put(encryptedPassword);
 		} else {

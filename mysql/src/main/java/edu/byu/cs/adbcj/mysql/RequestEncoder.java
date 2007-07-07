@@ -12,10 +12,13 @@ public abstract class RequestEncoder<T extends Request> implements MessageEncode
 	protected static final int REQUEST_HEADER_SIZE = 4;
 
 	public final void encode(IoSession session, T request, ProtocolEncoderOutput out) throws Exception {
-		ByteBuffer buffer = ByteBuffer.allocate(request.getLength() + REQUEST_HEADER_SIZE);
+		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		
+		int length = request.getLength(connection.getServerGreeting().getCharacterSet());
+
+		ByteBuffer buffer = ByteBuffer.allocate(length + REQUEST_HEADER_SIZE);
 		buffer.order(ByteOrder.LITTLE_ENDIAN);
 		
-		int length = request.getLength();
 		buffer.put((byte)(length & 0xFF));
 		buffer.put((byte)(length >> 8 & 0xFF));
 		buffer.put((byte)(length >> 16 & 0xFF));

@@ -3,21 +3,14 @@ package edu.byu.cs.adbcj.mysql;
 import org.apache.mina.common.IoSession;
 
 public class IoSessionUtil {
+	
+	private static final String CONNECTION_KEY = MysqlConnection.class.getName();
 
-	public static Object getSessionAttribute(IoSession session, SessionId sessionId) {
-		return session.getAttribute(sessionId.toString());
+	public static MysqlConnection getMysqlConnection(IoSession session) {
+		return (MysqlConnection)session.getAttribute(CONNECTION_KEY);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public static <T> T getSessionAttribute(IoSession session, SessionId sessionId, T defaultValue) {
-		return (T)session.getAttribute(sessionId.toString(), defaultValue);
+	public static void setMysqlConnection(IoSession session, MysqlConnection connection) {
+		session.setAttribute(CONNECTION_KEY, connection);
 	}
-	
-	public static void setSessionAttribute(IoSession session, SessionId sessionId, Object value) {
-		if (session == null) {
-			throw new IllegalArgumentException("session cannot be null");
-		}
-		session.setAttribute(sessionId.toString(), value);
-	}
-	
 }

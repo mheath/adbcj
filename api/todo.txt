@@ -1,6 +1,6 @@
 Tasks
 ---------------------
-Make ConnectionManager an interface and create a ConnectionManagerFactory that replaces ConnectionFactory.
+ - Play with character encoding in MySQL
 
 Requirements
 ---------------------

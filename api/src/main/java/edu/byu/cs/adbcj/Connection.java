@@ -1,8 +1,7 @@
 package edu.byu.cs.adbcj;
 
-import java.io.Closeable;
 
-public interface Connection extends Closeable, Session {
+public interface Connection extends Session {
 
 	ConnectionManager getConnectionManager();
 	

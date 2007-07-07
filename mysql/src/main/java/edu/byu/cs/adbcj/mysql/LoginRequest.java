@@ -1,8 +1,7 @@
 package edu.byu.cs.adbcj.mysql;
 
+import java.nio.charset.CharacterCodingException;
 import java.util.Set;
-
-import org.apache.mina.common.ByteBuffer;
 
 public class LoginRequest extends Request {
 
@@ -14,24 +13,26 @@ public class LoginRequest extends Request {
 	private final LoginCredentials credentials;
 	private final Set<ClientCapabilities> capabilities;
 	private final Set<ExtendedClientCapabilities> extendedCapabilities;
+	private final MysqlCharacterSet charset;
 	
-	public LoginRequest(LoginCredentials credentials, Set<ClientCapabilities> capabilities, Set<ExtendedClientCapabilities> extendedCapabilities) {
+	public LoginRequest(LoginCredentials credentials, Set<ClientCapabilities> capabilities, Set<ExtendedClientCapabilities> extendedCapabilities, MysqlCharacterSet charset) {
 		this.credentials = credentials;
 		this.capabilities = capabilities;
 		this.extendedCapabilities = extendedCapabilities;
+		this.charset = charset;
 	}
 	
 	@Override
-	int getLength() {
+	int getLength(MysqlCharacterSet charset) throws CharacterCodingException {
 		return 2 // Client Capabilities field
 				+ 2 // Extended Client Capabilities field
 				+ 4 // Max packet size field
 				+ 1 // Char set
 				+ FILLER_LENGTH
-				+ credentials.getUserName().length() + 1
+				+ charset.encodedLength(credentials.getUserName()) + 1
 				+ PASSWORD_LENGTH
 				+ 1 // Filler after password
-				+ credentials.getDatabase().length() + 1;
+				+ charset.encodedLength(credentials.getDatabase()) + 1;
 	}
 	
 	@Override
@@ -56,7 +57,7 @@ public class LoginRequest extends Request {
 	}
 
 	public MysqlCharacterSet getCharSet() {
-		return MysqlCharacterSet.LATIN1_SWEDISH_CI; // TODO: Make this configurable
+		return charset;
 	}
 	
 }

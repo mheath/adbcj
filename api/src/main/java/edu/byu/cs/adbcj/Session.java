@@ -1,10 +1,8 @@
 package edu.byu.cs.adbcj;
 
-import java.io.Closeable;
+public interface Session {
 
-public interface Session extends Closeable {
-
-	DbSessionFuture<Void> beginTransaction();
+	void beginTransaction();
 	
 	DbSessionFuture<Void> commit();
 	
@@ -20,6 +18,8 @@ public interface Session extends Closeable {
 	
 	DbSessionFuture<PreparedStatement> prepareStatement(String sql);
 	
-	public void close() throws DbException;
+	DbSessionFuture<Void> close(boolean immediate) throws DbException;
+	
+	boolean isClosed();
 
 }

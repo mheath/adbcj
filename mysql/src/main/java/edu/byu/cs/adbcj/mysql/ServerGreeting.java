@@ -3,7 +3,7 @@ package edu.byu.cs.adbcj.mysql;
 import java.util.Collections;
 import java.util.Set;
 
-class ServerGreeting {
+class ServerGreeting extends Response {
 
 	private final byte protocol;
 	private final String version;
@@ -13,7 +13,8 @@ class ServerGreeting {
 	private final MysqlCharacterSet characterSet;
 	private final Set<ServerStatus> serverStatus;
 	
-	public ServerGreeting (byte protocol, String version, int threadId, byte[] salt, Set<ClientCapabilities> serverCapabilities, MysqlCharacterSet characterSet, Set<ServerStatus> serverStatus) {
+	public ServerGreeting (int length, byte packetNumber, byte protocol, String version, int threadId, byte[] salt, Set<ClientCapabilities> serverCapabilities, MysqlCharacterSet characterSet, Set<ServerStatus> serverStatus) {
+		super(length, packetNumber);
 		this.protocol = protocol;
 		this.version = version;
 		this.threadId = threadId;

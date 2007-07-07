@@ -1,5 +1,6 @@
 package edu.byu.cs.adbcj.mysql;
 
+import java.nio.charset.CharacterCodingException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,7 +22,7 @@ public class TestRequestEncoder {
 
 		final Request myRequest = new Request() {
 			@Override
-			int getLength() {
+			int getLength(MysqlCharacterSet charset) {
 				return length;
 			}
 			@Override
@@ -32,11 +33,11 @@ public class TestRequestEncoder {
 		
 		RequestEncoder<Request> encoder = new RequestEncoder<Request>() {
 			@Override
-			protected void encode(IoSession session, Request request, ByteBuffer buffer) {
+			protected void encode(IoSession session, Request request, ByteBuffer buffer) throws CharacterCodingException {
 				invokedEncode.set(true);
 
 				Assert.assertSame(myRequest, request);
-				Assert.assertEquals(length, request.getLength());
+				Assert.assertEquals(length, request.getLength(MysqlCharacterSet.LATIN1_SWEDISH_CI));
 				Assert.assertEquals(length + REQUEST_HEADER_SIZE, buffer.capacity());
 				
 				Assert.assertNotNull(buffer);
