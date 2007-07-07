@@ -57,6 +57,7 @@ public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> 
 		lock.lock();
 		try {
 			condition.signalAll();
+			// Invoke callbacks if future completed successfully
 			if (exception == null) {
 				for (DbListener<T> listener : getListeners()) {
 					try {
