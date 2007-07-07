@@ -16,6 +16,7 @@ public class ErrorResponseMessageHandler implements MessageHandler<ErrorResponse
 		if (currentFuture != null) {
 			currentFuture.setException(new DbException(message.getMessage()));
 			currentFuture.setDone();
+			connection.setCurrentFuture(null);
 		}
 	}
 

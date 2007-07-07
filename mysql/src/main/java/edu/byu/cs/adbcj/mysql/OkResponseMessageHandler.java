@@ -14,6 +14,7 @@ public class OkResponseMessageHandler implements MessageHandler<OkResponse> {
 		AbstractDbFutureListenerSupport currentFuture = connection.getCurrentFuture();
 		if (currentFuture != null) {
 			currentFuture.setDone();
+			connection.setCurrentFuture(null);
 		}
 	}
 
