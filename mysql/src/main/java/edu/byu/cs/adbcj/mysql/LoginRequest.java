@@ -30,7 +30,7 @@ public class LoginRequest extends Request {
 				+ 1 // Char set
 				+ FILLER_LENGTH
 				+ charset.encodedLength(credentials.getUserName()) + 1
-				+ PASSWORD_LENGTH
+				+ ((credentials.getPassword() == null || credentials.getPassword().length() == 0) ? 0 :PASSWORD_LENGTH)
 				+ 1 // Filler after password
 				+ charset.encodedLength(credentials.getDatabase()) + 1;
 	}

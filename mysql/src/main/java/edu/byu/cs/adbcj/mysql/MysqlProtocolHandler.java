@@ -7,10 +7,10 @@ import edu.byu.cs.adbcj.support.AbstractDbSessionFutureBase;
 
 public class MysqlProtocolHandler extends DemuxingIoHandler {
 	
-	
 	public MysqlProtocolHandler() {
 		addMessageHandler(ServerGreeting.class, new ServerGreetingMessageHandler());
 		addMessageHandler(OkResponse.class, new OkResponseMessageHandler());
+		addMessageHandler(ErrorResponse.class, new ErrorResponseMessageHandler());
 	}
 	
 	@Override

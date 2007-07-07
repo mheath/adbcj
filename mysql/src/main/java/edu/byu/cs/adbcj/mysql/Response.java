@@ -1,7 +1,5 @@
 package edu.byu.cs.adbcj.mysql;
 
-import java.util.Set;
-
 public abstract class Response {
 
 	private final int length;

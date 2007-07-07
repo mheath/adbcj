@@ -15,10 +15,16 @@ import edu.byu.cs.adbcj.DbException;
 
 public class MysqlMessageDecoder extends MessageDecoderAdapter {
 
+	private static final byte RESPONSE_OK = 0x00;
+	private static final byte RESPONSE_EOF = (byte)0xfe;
+	private static final byte RESPONSE_ERROR = (byte)0xff;
+
 	public static final Charset CHARSET = Charset.forName("US-ASCII");
-	private static final int SALT_SIZE = 8;
+
 	private static final int GREETING_UNUSED_SIZE = 13;
+	private static final int SALT_SIZE = 8;
 	private static final int SALT2_SIZE = 12;
+	private static final int SQL_STATE_LENGTH = 5;
 	
 	private static int getPacketLength(ByteBuffer buffer) {
 		int b1 = buffer.get();
@@ -79,7 +85,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		}
 		
 		byte fieldCount = in.get();
-		if (fieldCount == 0x00) {
+		if (fieldCount == RESPONSE_OK) {
 			// Create Ok response
 			long affectedRows = getBinaryLengthEncoding(in);
 			long insertId = 0;
@@ -92,18 +98,26 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			
 			OkResponse response = new OkResponse(length, packetNumber, affectedRows, insertId, serverStatus, warningCount, message);
 			out.write(response);
-		} else if (fieldCount == 0xff) {
+		} else if (fieldCount == RESPONSE_ERROR) {
 			// Create error response
-		} else if (fieldCount == 0xfe) {
+			int errorNumber = in.getUnsignedShort();
+			in.get(); // Throw away sqlstate marker
+			String sqlState = in.getString(SQL_STATE_LENGTH, MysqlCharacterSet.ASCII_BIN.getCharset().newDecoder());
+			String message = in.getString(length - (in.position() - startPosition), connection.getCharacterSet().getCharset().newDecoder());
+			ErrorResponse response = new ErrorResponse(length, packetNumber, errorNumber, sqlState, message);
+			out.write(response);
+		} else if (fieldCount == RESPONSE_EOF) {
 			// Create EOF response
+			throw new IllegalStateException("Implement EOF encoding");
 		} else {
 			// Create result set response
+			throw new IllegalStateException("Implement RS encoding");
 		}
 		
 		return OK;
 	}
 
-	private ServerGreeting decodeServerGreeting(int length, byte packetNumber, ByteBuffer buffer) throws CharacterCodingException {
+	protected ServerGreeting decodeServerGreeting(int length, byte packetNumber, ByteBuffer buffer) throws CharacterCodingException {
 		byte protocol = buffer.get();
 		String version = buffer.getString(CHARSET.newDecoder());
 		int threadId = buffer.getInt();
