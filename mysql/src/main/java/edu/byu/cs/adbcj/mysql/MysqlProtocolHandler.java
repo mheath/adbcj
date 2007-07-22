@@ -3,14 +3,25 @@ package edu.byu.cs.adbcj.mysql;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.handler.demux.DemuxingIoHandler;
 
-import edu.byu.cs.adbcj.support.AbstractDbSessionFutureBase;
+import edu.byu.cs.adbcj.DbException;
+import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
+import edu.byu.cs.adbcj.support.AbstractDbFutureListenerSupport;
+import edu.byu.cs.adbcj.support.BaseRequestQueue.Request;
 
 public class MysqlProtocolHandler extends DemuxingIoHandler {
 	
+	@SuppressWarnings("unchecked")
 	public MysqlProtocolHandler() {
 		addMessageHandler(ServerGreeting.class, new ServerGreetingMessageHandler());
 		addMessageHandler(OkResponse.class, new OkResponseMessageHandler());
 		addMessageHandler(ErrorResponse.class, new ErrorResponseMessageHandler());
+		
+		// Add handler for result set messages
+		ResultSetMessagesHandler resultSetMessagesHandler = new ResultSetMessagesHandler();
+		addMessageHandler(ResultSetResponse.class, resultSetMessagesHandler);
+		addMessageHandler(ResultSetFieldResponse.class, resultSetMessagesHandler);
+		addMessageHandler(ResultSetRowResponse.class, resultSetMessagesHandler);
+		addMessageHandler(EofResponse.class, resultSetMessagesHandler);
 	}
 	
 	@Override
@@ -21,7 +32,7 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		AbstractDbSessionFutureBase<Void> closeFuture = connection.getCloseFuture();
+		AbstractDbFutureBase<Void> closeFuture = connection.getCloseFuture();
 		if (closeFuture != null) {
 			closeFuture.setDone();
 		}
@@ -30,8 +41,23 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-		// TODO: Implement properly
-		cause.printStackTrace();
+		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		Request activeRequest = connection.getActiveRequest();
+		if (activeRequest == null) {
+			// TODO Figure out what to do with the exception
+			cause.printStackTrace();
+		} else {
+			AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
+			if (future != null) {
+				if (cause instanceof DbException) {
+					future.setException((DbException)cause);
+				} else {
+					future.setException(new DbException(cause));
+				}
+				future.setDone();
+				connection.makeNextRequestActive();
+			}
+		}
 	}
 	
 }

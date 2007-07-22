@@ -4,6 +4,7 @@ import edu.byu.cs.adbcj.ConnectionManagerFactory;
 import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbListener;
 import edu.byu.cs.adbcj.DbSessionFuture;
+import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.mysql.MysqlConnectionManagerProducer;
 
 
@@ -29,8 +30,15 @@ public class Test {
 				System.out.println("In connect callback 2.");
 			}
 		});
+		connection.executeQuery("SELECT * FROM test").addListener(new DbListener<ResultSet>() {
+			public void onCompletion(DbFuture<ResultSet> listener) throws Exception {
+				System.out.println("Result set count: " + listener.get().getFields().size());
+			}
+		}).get();
+		System.out.println("Got result set");
 		DbSessionFuture<Void> closeFuture = connection.close(true);
 		closeFuture.get();
+		
 		System.out.println("Closed");
 	}
 

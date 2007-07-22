@@ -14,7 +14,9 @@
 
 	<modules>
 		<module>api</module>
+		<module>jdbc</module>
 		<module>mysql</module>
+		<module>postgresql</module>
 	</modules>
 	<build>
 		<plugins>

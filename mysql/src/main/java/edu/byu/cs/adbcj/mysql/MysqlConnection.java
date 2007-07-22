@@ -8,14 +8,18 @@ import org.apache.mina.common.IoSession;
 import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.DbException;
+import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbSessionFuture;
 import edu.byu.cs.adbcj.PreparedStatement;
 import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.TransactionIsolationLevel;
+import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
 import edu.byu.cs.adbcj.support.AbstractDbSessionFutureBase;
-import edu.byu.cs.adbcj.support.AbstractDbFutureListenerSupport;
+import edu.byu.cs.adbcj.support.BaseRequestQueue;
+import edu.byu.cs.adbcj.support.DbSessionFutureProxy;
+import edu.byu.cs.adbcj.support.RequestAction;
 
-public class MysqlConnection implements Connection {
+public class MysqlConnection extends BaseRequestQueue implements Connection {
 
 	private final ConnectionManager connectionManager;
 	
@@ -23,13 +27,9 @@ public class MysqlConnection implements Connection {
 
 	private final LoginCredentials credentials;
 	private ServerGreeting serverGreeting;
-	private State state = State.CONNECTING;
 
-	private AbstractDbSessionFutureBase<Void> closeFuture;
+	private AbstractDbFutureBase<Void> closeFuture;
 	private volatile boolean closed = false;
-	
-	@SuppressWarnings("unchecked")
-	private AbstractDbFutureListenerSupport currentFuture;
 	
 	public MysqlConnection(ConnectionManager connectionManager, IoSession session, LoginCredentials credentials) {
 		this.connectionManager = connectionManager;
@@ -42,31 +42,47 @@ public class MysqlConnection implements Connection {
 	}
 
 	public synchronized DbSessionFuture<Void> close(final boolean immediate) throws DbException {
-		if (closed) {
-			return closeFuture;
-		}
-		if (closeFuture == null) {
-			closeFuture = new AbstractDbSessionFutureBase<Void>(this) {
-				@Override
-				protected boolean doCancel(boolean mayInterruptIfRunning) {
-					if (immediate) {
+		// If the connection is already closed, return existing close future
+		if (!closed) {
+			closed = true;
+	
+			if (immediate) {
+				// If the close is immediate, cancel pending requests and send request to server
+				cancelPendingRequests(true);
+				session.write(new CommandRequest(Command.QUIT));
+				closeFuture = new AbstractDbSessionFutureBase<Void>(this) {
+					@Override
+					protected boolean doCancel(boolean mayInterruptIfRunning) {
+						// Canceling is not possible when an immediate close
 						return false;
 					}
-					// TODO Implement cancel
-					// TODO If the cancel is successful, set the connection's closeFuture to null so that it can be recreated when close is called again
-					return false;
-				}
-			};
-			closed = true;
-			if (immediate) {
-				// TODO Cancel all pending futures
-				session.write(new CommandRequest(Command.QUIT));
+				};
 			} else {
-				// TODO Schedule close
+				// If the close is NOT immediate, schedule the close
+				closeFuture = enqueueRequest(new RequestAction() {
+					private boolean closed = false;
+					public synchronized boolean cancle(boolean mayInterruptIfRunning) {
+						if (!closed) {
+							unclose();
+							return true;
+						}
+						return false;
+					}
+					public synchronized void execute() {
+						closed = true;
+						// Do a close immediate to close the connection
+						close(true);
+					}
+				});
 			}
 		}
-		
-		return closeFuture;
+			
+		return newFutureProxy(closeFuture);
+	}
+	
+	private synchronized void unclose() {
+		this.closeFuture = null;
+		closed = false;
 	}
 	
 	public boolean isClosed() {
@@ -108,10 +124,18 @@ public class MysqlConnection implements Connection {
 		return null;
 	}
 
-	public DbSessionFuture<ResultSet> executeQuery(String sql) {
+	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
 		checkClosed();
-		// TODO Auto-generated method stub
-		return null;
+		DbFuture<?> future = enqueueRequest(new RequestAction() {
+			public boolean cancle(boolean mayInterruptIfRunning) {
+				return false;
+			}
+			public void execute() {
+				CommandRequest request = new CommandRequest(Command.QUERY, sql);
+				session.write(request);
+			}
+		});
+		return newFutureProxy(future);
 	}
 
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
@@ -130,7 +154,7 @@ public class MysqlConnection implements Connection {
 		this.serverGreeting = serverGreeting;
 	}
 
-	public synchronized AbstractDbSessionFutureBase<Void> getCloseFuture() {
+	public synchronized AbstractDbFutureBase<Void> getCloseFuture() {
 		return closeFuture;
 	}
 	
@@ -142,30 +166,12 @@ public class MysqlConnection implements Connection {
 		return session;
 	}
 
-	public State getState() {
-		return state;
-	}
-
-	public void setState(State state) {
-		this.state = state;
-	}
-	
 	public MysqlCharacterSet getCharacterSet() {
 		if (serverGreeting == null) {
 			return MysqlCharacterSet.LATIN1_SWEDISH_CI;
 		} else {
 			return serverGreeting.getCharacterSet();
 		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	public AbstractDbFutureListenerSupport getCurrentFuture() {
-		return currentFuture;
-	}
-
-	@SuppressWarnings("unchecked")
-	public void setCurrentFuture(AbstractDbFutureListenerSupport currentFuture) {
-		this.currentFuture = currentFuture;
 	}
 	
 	private void checkClosed() {
@@ -196,4 +202,29 @@ public class MysqlConnection implements Connection {
 		return EXTENDED_CLIENT_CAPABILITIES;
 	}
 
+	@SuppressWarnings("unchecked")
+	private <E> DbSessionFuture<E> newFutureProxy(DbFuture<?> future) {
+		return new DbSessionFutureProxy<E>((DbFuture<E>)future, this);
+	}
+
+	//
+	//
+	// Queuing methods
+	//
+	//
+	
+	@Override
+	public synchronized <E> AbstractDbFutureBase<E> enqueueRequest(RequestAction action) {
+		return super.enqueueRequest(action);
+	}
+	
+	@Override
+	public Request getActiveRequest() {
+		return super.getActiveRequest();
+	}
+	
+	@Override
+	public synchronized Request makeNextRequestActive() {
+		return super.makeNextRequestActive();
+	}
 }

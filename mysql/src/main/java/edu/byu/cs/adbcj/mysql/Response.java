@@ -2,16 +2,16 @@ package edu.byu.cs.adbcj.mysql;
 
 public abstract class Response {
 
-	private final int length;
+	private final int packetLength;
 	private final byte packetNumber;
 	
-	public Response(int length, byte packetNumber) {
-		this.length = length;
+	public Response(int packetLength, byte packetNumber) {
+		this.packetLength = packetLength;
 		this.packetNumber = packetNumber;
 	}
 	
-	public int getLength() {
-		return length;
+	public int getPacketLength() {
+		return packetLength;
 	}
 	
 	public byte getPacketNumber() {

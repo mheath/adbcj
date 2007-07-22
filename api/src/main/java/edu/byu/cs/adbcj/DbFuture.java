@@ -11,9 +11,9 @@ import java.util.concurrent.TimeoutException;
  */
 public interface DbFuture<T> extends Future<T> {
 
-	void addListener(DbListener<T> listener);
+	DbFuture<T> addListener(DbListener<T> listener);
 	
-	void removeListener(DbListener<T> listener);
+	boolean removeListener(DbListener<T> listener);
 	
 	public T get() throws DbException, InterruptedException;
 	

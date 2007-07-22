@@ -13,6 +13,8 @@ import org.apache.mina.common.IoFuture;
 import org.apache.mina.common.IoFutureListener;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.demux.DemuxingProtocolCodecFactory;
+import org.apache.mina.filter.codec.demux.MessageDecoder;
+import org.apache.mina.filter.codec.demux.MessageDecoderFactory;
 import org.apache.mina.transport.socket.nio.SocketConnector;
 
 import edu.byu.cs.adbcj.Connection;
@@ -20,6 +22,7 @@ import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
+import edu.byu.cs.adbcj.support.RequestAction;
 
 public class MysqlConnectionManager implements ConnectionManager {
 
@@ -40,7 +43,12 @@ public class MysqlConnectionManager implements ConnectionManager {
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
 		
 		DemuxingProtocolCodecFactory codecFactory = new DemuxingProtocolCodecFactory();
-		codecFactory.register(new MysqlMessageDecoder());
+		codecFactory.register(new MessageDecoderFactory() {
+			public MessageDecoder getDecoder() throws Exception {
+				System.out.println("Creating new decoder"); // TODO: Remove debug message
+				return new MysqlMessageDecoder();
+			}
+		});
 		codecFactory.register(new LoginRequestEncoder());
 		codecFactory.register(new CommandRequestEncoder());
 
@@ -71,11 +79,19 @@ public class MysqlConnectionManager implements ConnectionManager {
 		
 		connectFuture.addListener(new IoFutureListener() {
 			public void operationComplete(IoFuture future) {
-				MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials); 
-				dbConnectFuture.setValue(connection);
-				connection.setCurrentFuture(dbConnectFuture);
-				
+				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
 				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
+				
+				connection.enqueueRequest(new RequestAction() {
+					public boolean cancle(boolean mayInterruptIfRunning) {
+						return false;
+					}
+					public void execute() {
+						dbConnectFuture.setValue(connection);
+						dbConnectFuture.setDone();
+					}
+				});
+				
 			}
 		});
 		

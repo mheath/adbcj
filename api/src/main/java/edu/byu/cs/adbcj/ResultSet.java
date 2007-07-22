@@ -1,5 +1,9 @@
 package edu.byu.cs.adbcj;
 
-public interface ResultSet extends Iterable<Result> {
+import java.util.List;
 
+public interface ResultSet extends List<Row> {
+
+	List<? extends Field> getFields();
+	
 }

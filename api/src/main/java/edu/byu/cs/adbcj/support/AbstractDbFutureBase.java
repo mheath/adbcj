@@ -88,11 +88,11 @@ public abstract class AbstractDbFutureBase<T> extends AbstractDbFutureListenerSu
 		return cancelled;
 	}
 
-	public void setValue(T value) {
+	public void setValue(T value) throws IllegalStateException {
 		getLock().lock();
 		try {
 			if (isDone()) {
-				throw new IllegalStateException("Can not set value when future object is done");
+				throw new IllegalStateException("Cannot set value when future object is done");
 			}
 			this.value = value;
 		} finally {

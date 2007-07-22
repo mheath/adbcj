@@ -10,7 +10,12 @@ public class CommandRequestEncoder extends RequestEncoder<CommandRequest> {
 
 	@Override
 	protected void encode(IoSession session, CommandRequest request, ByteBuffer buffer)	throws Exception {
+		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		
 		buffer.put(request.getCommand().getCommandCode());
+		if (request.getPayload() != null && request.getPayload().length() > 0) {
+			buffer.putString(request.getPayload(), connection.getCharacterSet().getCharset().newEncoder());
+		}
 	}
 
 	public Set<Class<CommandRequest>> getMessageTypes() {

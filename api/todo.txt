@@ -1,6 +1,9 @@
 Tasks
 ---------------------
  - Play with character encoding in MySQL
+ - Add ExecutorService to ConnectionManager for executing callbacks
+ - Add option to throw error when insert/update does not return in transaction if a transaction is started
+ - Write article on what you would change in JDBC if you could and see if we can get it on TSS or JavaLobby or something
 
 Requirements
 ---------------------

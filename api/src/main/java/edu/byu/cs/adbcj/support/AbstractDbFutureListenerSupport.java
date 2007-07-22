@@ -20,7 +20,7 @@ public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> 
 	private volatile boolean done = false;
 	private volatile DbException exception;
 
-	public void addListener(DbListener<T> listener) {
+	public DbFuture<T> addListener(DbListener<T> listener) {
 		lock.lock();
 		try {
 			if (done) {
@@ -37,12 +37,13 @@ public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> 
 		} finally {
 			lock.unlock();
 		}
+		return this;
 	}
 
-	public void removeListener(DbListener<T> listener) {
+	public boolean removeListener(DbListener<T> listener) {
 		lock.lock();
 		try {
-			listeners.remove(listener);
+			return listeners.remove(listener);
 		} finally {
 			lock.unlock();
 		}

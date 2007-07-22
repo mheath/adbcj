@@ -9,10 +9,11 @@ public class ServerGreetingMessageHandler implements MessageHandler<ServerGreeti
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
 		System.out.println(serverGreeting.getVersion());
+
+		// Save server greeting
 		connection.setServerGreeting(serverGreeting);
 		
 		// Send Login request
-		connection.setState(State.AUTHENTICATING);
 		LoginRequest request = new LoginRequest(connection.getCredentials(), connection.getClientCapabilities(), connection.getExtendedClientCapabilities(), connection.getCharacterSet());
 		session.write(request);
 	}
