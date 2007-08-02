@@ -24,13 +24,11 @@ public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> 
 		lock.lock();
 		try {
 			if (done) {
-				if (exception == null) {
-					try {
-						listener.onCompletion(this);
-					} catch (Exception e) {
-						// TODO: Handle exception
-						e.printStackTrace();
-					}
+				try {
+					listener.onCompletion(this);
+				} catch (Exception e) {
+					// TODO: Handle exception
+					e.printStackTrace();
 				}
 			}
 			listeners.add(listener);
@@ -58,15 +56,13 @@ public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> 
 		lock.lock();
 		try {
 			condition.signalAll();
-			// Invoke callbacks if future completed successfully
-			if (exception == null) {
-				for (DbListener<T> listener : getListeners()) {
-					try {
-						listener.onCompletion(this);
-					} catch (Exception e) {
-						// TODO: Handle this exception in connection manager
-						e.printStackTrace();
-					}
+			// Invoke call-backs if future completed successfully
+			for (DbListener<T> listener : getListeners()) {
+				try {
+					listener.onCompletion(this);
+				} catch (Exception e) {
+					// TODO: Handle this exception in connection manager
+					e.printStackTrace();
 				}
 			}
 		} finally {
