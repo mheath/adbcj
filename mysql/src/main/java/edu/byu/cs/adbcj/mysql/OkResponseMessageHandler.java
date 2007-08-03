@@ -11,7 +11,7 @@ public class OkResponseMessageHandler implements MessageHandler<OkResponse> {
 	public void messageReceived(IoSession session, OkResponse response) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
-		Request activeRequest = connection.getActiveRequest();
+		Request<?> activeRequest = connection.getActiveRequest();
 		AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
 		if (future != null) {
 			// TODO: Determine a mechanism for setting the future's value

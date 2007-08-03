@@ -3,9 +3,7 @@ package edu.byu.cs.adbcj.mysql;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Properties;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
@@ -21,6 +19,7 @@ import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.DbFuture;
+import edu.byu.cs.adbcj.DbSessionFuture;
 import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
 import edu.byu.cs.adbcj.support.RequestAction;
 
@@ -33,11 +32,9 @@ public class MysqlConnectionManager implements ConnectionManager {
 	
 	private final LoginCredentials credentials;
 	
-	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties) {
+	public MysqlConnectionManager(String host, int port, String username, String password, String schema, ExecutorService executorService, Properties properties) {
 		int processorCount = Runtime.getRuntime().availableProcessors() + 1;
-		socketConnector = new SocketConnector(processorCount,
-				new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5L, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>())); // TODO Make configurable
+		socketConnector = new SocketConnector(processorCount, executorService);
 		//socketConnector.setWorkerTimeout(5); // TODO: Make configurable
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
@@ -45,7 +42,6 @@ public class MysqlConnectionManager implements ConnectionManager {
 		DemuxingProtocolCodecFactory codecFactory = new DemuxingProtocolCodecFactory();
 		codecFactory.register(new MessageDecoderFactory() {
 			public MessageDecoder getDecoder() throws Exception {
-				System.out.println("Creating new decoder"); // TODO: Remove debug message
 				return new MysqlMessageDecoder();
 			}
 		});
@@ -62,10 +58,16 @@ public class MysqlConnectionManager implements ConnectionManager {
 		this.credentials = new LoginCredentials(username, password, schema);
 	}
 	
-	public void close() throws DbException {
+	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
+		// TODO: Implement me
 		throw new DbException("Not implemented yet"); // TODO Implement
 	}
 
+	public boolean isClosed() {
+		// TODO: Implement me
+		return false;
+	}
+	
 	public DbFuture<Connection> connect() {
 		SocketAddress address = new InetSocketAddress(host, port);
 		ConnectFuture connectFuture = socketConnector.connect(address);
@@ -82,11 +84,11 @@ public class MysqlConnectionManager implements ConnectionManager {
 				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
 				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
 				
-				connection.enqueueRequest(new RequestAction() {
-					public boolean cancle(boolean mayInterruptIfRunning) {
+				connection.enqueueRequest(new RequestAction<Connection>() {
+					public boolean cancel(boolean mayInterruptIfRunning) {
 						return false;
 					}
-					public void execute() {
+					public void execute(AbstractDbFutureBase<Connection> future) {
 						dbConnectFuture.setValue(connection);
 						dbConnectFuture.setDone();
 					}

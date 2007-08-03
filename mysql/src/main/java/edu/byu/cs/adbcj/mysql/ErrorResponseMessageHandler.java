@@ -12,7 +12,7 @@ public class ErrorResponseMessageHandler implements MessageHandler<ErrorResponse
 	public void messageReceived(IoSession session, ErrorResponse message) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
-		Request activeRequest = connection.getActiveRequest();
+		Request<?> activeRequest = connection.getActiveRequest();
 		AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
 		if (future != null) {
 			future.setException(new DbException(message.getMessage()));

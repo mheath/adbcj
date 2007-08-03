@@ -42,7 +42,7 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		Request activeRequest = connection.getActiveRequest();
+		Request<?> activeRequest = connection.getActiveRequest();
 		if (activeRequest == null) {
 			// TODO Figure out what to do with the exception
 			cause.printStackTrace();

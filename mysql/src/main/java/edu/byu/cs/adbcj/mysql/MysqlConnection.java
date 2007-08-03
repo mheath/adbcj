@@ -59,24 +59,24 @@ public class MysqlConnection extends BaseRequestQueue implements Connection {
 				};
 			} else {
 				// If the close is NOT immediate, schedule the close
-				closeFuture = enqueueRequest(new RequestAction() {
-					private boolean closed = false;
-					public synchronized boolean cancle(boolean mayInterruptIfRunning) {
-						if (!closed) {
+				closeFuture = enqueueRequest(new RequestAction<Void>() {
+					private boolean requestClosed = false;
+					public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+						if (!requestClosed) {
 							unclose();
 							return true;
 						}
 						return false;
 					}
-					public synchronized void execute() {
-						closed = true;
+					public synchronized void execute(AbstractDbFutureBase<Void> future) {
+						requestClosed = true;
 						// Do a close immediate to close the connection
 						close(true);
 					}
 				});
 			}
 		}
-			
+		
 		return newFutureProxy(closeFuture);
 	}
 	
@@ -126,11 +126,11 @@ public class MysqlConnection extends BaseRequestQueue implements Connection {
 
 	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
 		checkClosed();
-		DbFuture<?> future = enqueueRequest(new RequestAction() {
-			public boolean cancle(boolean mayInterruptIfRunning) {
+		DbFuture<ResultSet> future = enqueueRequest(new RequestAction<ResultSet>() {
+			public boolean cancel(boolean mayInterruptIfRunning) {
 				return false;
 			}
-			public void execute() {
+			public void execute(AbstractDbFutureBase<ResultSet> future) {
 				CommandRequest request = new CommandRequest(Command.QUERY, sql);
 				session.write(request);
 			}
@@ -139,6 +139,12 @@ public class MysqlConnection extends BaseRequestQueue implements Connection {
 	}
 
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
+		checkClosed();
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	public DbFuture<Void> ping() {
 		checkClosed();
 		// TODO Auto-generated method stub
 		return null;
@@ -203,7 +209,7 @@ public class MysqlConnection extends BaseRequestQueue implements Connection {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <E> DbSessionFuture<E> newFutureProxy(DbFuture<?> future) {
+	private <E> DbSessionFuture<E> newFutureProxy(DbFuture<E> future) {
 		return new DbSessionFutureProxy<E>((DbFuture<E>)future, this);
 	}
 
@@ -213,18 +219,27 @@ public class MysqlConnection extends BaseRequestQueue implements Connection {
 	//
 	//
 	
+	/*
+	 * Make this method public.
+	 */
 	@Override
-	public synchronized <E> AbstractDbFutureBase<E> enqueueRequest(RequestAction action) {
+	public synchronized <E> AbstractDbFutureBase<E> enqueueRequest(RequestAction<E> action) {
 		return super.enqueueRequest(action);
 	}
 	
+	/*
+	 * Make this method public.
+	 */
 	@Override
-	public Request getActiveRequest() {
+	public <E> Request<E> getActiveRequest() {
 		return super.getActiveRequest();
 	}
 	
+	/*
+	 * Make this method public.
+	 */
 	@Override
-	public synchronized Request makeNextRequestActive() {
+	public synchronized <E> Request<E> makeNextRequestActive() {
 		return super.makeNextRequestActive();
 	}
 }

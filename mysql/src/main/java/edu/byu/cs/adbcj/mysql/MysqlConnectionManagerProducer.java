@@ -3,6 +3,7 @@ package edu.byu.cs.adbcj.mysql;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 
 import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.ConnectionManagerFactory;
@@ -22,7 +23,7 @@ public class MysqlConnectionManagerProducer implements ConnectionManagerProducer
 	private MysqlConnectionManagerProducer() {
 	}
 	
-	public ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
+	public ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService, Properties properties) throws DbException {
 		String host;
 		int port;
 		String database;
@@ -44,7 +45,7 @@ public class MysqlConnectionManagerProducer implements ConnectionManagerProducer
 			throw new DbException(e);
 		}
 		
-		return new MysqlConnectionManager(host, port, username, password, database, properties);
+		return new MysqlConnectionManager(host, port, username, password, database, executorService, properties);
 	}
 
 }

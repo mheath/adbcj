@@ -1,3 +1,7 @@
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.ConnectionManagerFactory;
@@ -16,7 +20,9 @@ public class Test {
 	public static void main(String[] args) throws Exception {
 		Class.forName(MysqlConnectionManagerProducer.class.getName());
 		
-		ConnectionManager connectionManager = ConnectionManagerFactory.createConnectionManager("adbcj:mysql://localhost/test", "mheath", "cockroach");
+		ThreadPoolExecutor executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5L, TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>());
+		ConnectionManager connectionManager = ConnectionManagerFactory.createConnectionManager("adbcj:mysql://localhost/test", "mheath", "cockroach", executorService);
 		DbFuture<Connection> connectFuture = connectionManager.connect();
 		connectFuture.addListener(new DbListener<Connection>() {
 			public void onCompletion(DbFuture<Connection> listener) throws Exception {
@@ -40,6 +46,7 @@ public class Test {
 		closeFuture.get();
 		
 		System.out.println("Closed");
+		executorService.shutdown();
 	}
 
 }
