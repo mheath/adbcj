@@ -1,9 +1,9 @@
 package edu.byu.cs.adbcj.support;
 
-public interface RequestAction {
+public interface RequestAction<T> {
 	
-	void execute();
+	void execute(AbstractDbFutureBase<T> future);
 	
-	boolean cancle(boolean mayInterruptIfRunning);
+	boolean cancel(boolean mayInterruptIfRunning);
 	
 }

@@ -20,6 +20,6 @@ public interface Session {
 	
 	DbSessionFuture<Void> close(boolean immediate) throws DbException;
 	
-	boolean isClosed();
+	boolean isClosed() throws DbException;
 
 }

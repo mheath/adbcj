@@ -1,16 +1,17 @@
 package edu.byu.cs.adbcj;
 
-import java.io.Closeable;
 
 /**
  * 
  * 
  * @author Mike Heath
  */
-public interface ConnectionManager extends Closeable {
+public interface ConnectionManager {
 	
 	DbFuture<Connection> connect();
 	
-	public void close() throws DbException;
+	DbSessionFuture<Void> close(boolean immediate) throws DbException;
+	
+	boolean isClosed(); 
 
 }

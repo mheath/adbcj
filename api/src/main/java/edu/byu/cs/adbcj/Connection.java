@@ -5,4 +5,6 @@ public interface Connection extends Session {
 
 	ConnectionManager getConnectionManager();
 	
+	DbFuture<Void> ping();
+	
 }

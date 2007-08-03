@@ -6,12 +6,12 @@ import java.util.Queue;
 
 public abstract class BaseRequestQueue {
 
-	private final Queue<Request> requestQueue = new LinkedList<Request>();
+	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
 	
-	private Request activeRequest;
+	private Request<?> activeRequest;
 	
-	protected synchronized <E> AbstractDbFutureBase<E> enqueueRequest(final RequestAction action) {
-		final Request request = new Request(action);
+	protected synchronized <E> AbstractDbFutureBase<E> enqueueRequest(final RequestAction<E> action) {
+		final Request<E> request = new Request<E>(action);
 		
 		AbstractDbFutureBase<E> future = new AbstractDbFutureBase<E>() {
 			@Override
@@ -19,7 +19,7 @@ public abstract class BaseRequestQueue {
 				if (removeRequest(request)) {
 					return true;
 				}
-				return request.getAction().cancle(mayInterruptIfRunning);
+				return request.getAction().cancel(mayInterruptIfRunning);
 			}
 		};
 		
@@ -33,57 +33,59 @@ public abstract class BaseRequestQueue {
 		return future;
 	}
 	
-	private synchronized boolean removeRequest(Request request) {
+	private synchronized boolean removeRequest(Request<?> request) {
 		return requestQueue.remove(request);
 	}
 
-	protected synchronized Request makeNextRequestActive() {
-		Request request = requestQueue.poll();
+	@SuppressWarnings("unchecked")
+	protected synchronized <E> Request<E> makeNextRequestActive() {
+		Request<E> request = (Request<E>)requestQueue.poll();
 		setActiveRequest(request);
 		return request;
 	}
 	
-	protected Request getActiveRequest() {
-		return activeRequest;
+	@SuppressWarnings("unchecked")
+	protected <E> Request<E> getActiveRequest() {
+		return (Request<E>)activeRequest;
 	}
 	
 	protected synchronized void cancelPendingRequests(boolean mayInterruptIfRunning) {
-		for (Iterator<Request> i = requestQueue.iterator(); i.hasNext();) {
-			Request request = i.next();
+		for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
+			Request<?> request = i.next();
 			request.getFuture().cancel(mayInterruptIfRunning);
 			i.remove();
 		}
 	}
 	
-	private void setActiveRequest(Request request) {
+	private <T> void setActiveRequest(Request<T> request) {
 		activeRequest = request;
 		if (request != null) {
-			request.getAction().execute();
+			request.getAction().execute(request.getFuture());
 		}
 	}
 	
-	public class Request {
-		private AbstractDbFutureBase<?> future = null;
-		private final RequestAction action;
+	public class Request<T> {
+		private AbstractDbFutureBase<T> future = null;
+		private final RequestAction<T> action;
 		
 		private Object payload;
 		
-		private Request(RequestAction action) {
+		private Request(RequestAction<T> action) {
 			this.action = action;
 		}
 
-		public AbstractDbFutureBase<?> getFuture() {
+		public AbstractDbFutureBase<T> getFuture() {
 			return future;
 		}
 
-		public void setFuture(AbstractDbFutureBase<?> future) {
+		public void setFuture(AbstractDbFutureBase<T> future) {
 			if (this.future != null) {
 				throw new IllegalStateException("future can only be set once");
 			}
 			this.future = future;
 		}
 
-		public RequestAction getAction() {
+		public RequestAction<T> getAction() {
 			return action;
 		}
 

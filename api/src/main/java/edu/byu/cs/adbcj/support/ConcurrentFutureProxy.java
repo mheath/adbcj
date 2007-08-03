@@ -9,7 +9,11 @@ import edu.byu.cs.adbcj.DbException;
 
 public class ConcurrentFutureProxy<T> extends AbstractDbFutureListenerSupport<T> {
 
-	private final Future<T> future;
+	private Future<T> future;
+	
+	public ConcurrentFutureProxy() {
+		// Default constructor
+	}
 	
 	public ConcurrentFutureProxy(Future<T> future) {
 		this.future = future;
@@ -42,6 +46,14 @@ public class ConcurrentFutureProxy<T> extends AbstractDbFutureListenerSupport<T>
 	@Override
 	public boolean isDone() {
 		return future.isDone();
+	}
+
+	public Future<T> getFuture() {
+		return future;
+	}
+
+	public void setFuture(Future<T> future) {
+		this.future = future;
 	}
 	
 }
