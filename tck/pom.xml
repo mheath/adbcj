@@ -1,0 +1,53 @@
+<project
+		xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>edu.byu.cs.adbcj</groupId>
+		<artifactId>adbcj</artifactId>
+		<version>0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>adbcj-tck</artifactId>
+	<packaging>jar</packaging>
+	<name>Asynchronous Database Connectivity in Java - Test Compatibility Kit</name>
+	
+	<dependencies>
+		<dependency>
+			<artifactId>adbcj-api</artifactId>
+			<groupId>edu.byu.cs.adbcj</groupId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<artifactId>adbcj-jdbc</artifactId>
+			<groupId>edu.byu.cs.adbcj</groupId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<artifactId>adbcj-mysql</artifactId>
+			<groupId>edu.byu.cs.adbcj</groupId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<artifactId>adbcj-postgresql</artifactId>
+			<groupId>edu.byu.cs.adbcj</groupId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<artifactId>mysql-connector-java</artifactId>
+			<groupId>mysql</groupId>
+			<version>5.0.5</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<artifactId>postgresql</artifactId>
+			<groupId>postgresql</groupId>
+			<version>8.2-504.jdbc4</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	
+</project>

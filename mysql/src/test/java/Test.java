@@ -46,6 +46,17 @@ public class Test {
 		closeFuture.get();
 		
 		System.out.println("Closed");
+		connectionManager.close(true);
+		Thread.sleep(500);
+		
+		connectionManager.connect().addListener(new DbListener<Connection>() {
+			public void onCompletion(DbFuture<Connection> listener)
+					throws Exception {
+				System.out.println("Made second connection");
+			}
+		}).get().close(true).get();
+		
+		System.out.println("Done");
 		executorService.shutdown();
 	}
 

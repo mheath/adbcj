@@ -20,4 +20,14 @@ import edu.byu.cs.adbcj.Row;
 
 public class MysqlRow implements Row {
 
+	private final MysqlResultSet resultSet;
+	
+	public MysqlRow(MysqlResultSet resultSet) {
+		this.resultSet = resultSet;
+	}
+	
+	public MysqlResultSet getResultSet() {
+		return resultSet;
+	}
+
 }

@@ -17,7 +17,9 @@
 		<module>jdbc</module>
 		<module>mysql</module>
 		<module>postgresql</module>
+		<module>tck</module>
 	</modules>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -29,11 +31,26 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<artifactId>adbcj-api</artifactId>
+				<groupId>${project.groupId}</groupId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<artifactId>adbcj-jdbc</artifactId>
+				<groupId>${project.groupId}</groupId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<artifactId>adbcj-mysql</artifactId>
+				<groupId>${project.groupId}</groupId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<artifactId>adbcj-postgresql</artifactId>
 				<groupId>${project.groupId}</groupId>
 				<version>${project.version}</version>
 			</dependency>
@@ -42,10 +59,11 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.3.1</version>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>5.1</version>
 			<scope>test</scope>
+			<classifier>jdk15</classifier>
 		</dependency>
 	</dependencies>
 </project>

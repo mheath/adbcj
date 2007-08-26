@@ -20,6 +20,6 @@
 			<artifactId>adbcj-api</artifactId>
 			<groupId>edu.byu.cs.adbcj</groupId>
 		</dependency>
-	</dependencies>
+    </dependencies>
 	
 </project>

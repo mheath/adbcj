@@ -258,4 +258,8 @@ public class MysqlConnection extends BaseRequestQueue implements Connection {
 	public synchronized <E> Request<E> makeNextRequestActive() {
 		return super.makeNextRequestActive();
 	}
+
+	public void setClosed(boolean closed) {
+		this.closed = closed;
+	}
 }

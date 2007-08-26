@@ -16,6 +16,7 @@
  */
 package edu.byu.cs.adbcj.mysql;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class OkResponse extends Response {
@@ -29,7 +30,7 @@ public class OkResponse extends Response {
 		super(length, packetNumber);
 		this.affectedRows = affectedRows;
 		this.insertId = insertId;
-		this.serverStatus = serverStatus;
+		this.serverStatus = Collections.unmodifiableSet(serverStatus);
 		this.warningCount = warningCount;
 		this.message = message;
 	}
@@ -52,6 +53,16 @@ public class OkResponse extends Response {
 
 	public String getMessage() {
 		return message;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("OK response (affected rows: %d, insert id: %d, warning count: %d, message: '%s', server status: %s",
+				affectedRows,
+				insertId,
+				warningCount,
+				message,
+				serverStatus.toString());
 	}
 	
 }

@@ -18,6 +18,6 @@ package edu.byu.cs.adbcj;
 
 public interface DbListener<T> {
 
-	void onCompletion(DbFuture<T> listener) throws Exception;
+	void onCompletion(DbFuture<T> future) throws Exception;
 	
 }

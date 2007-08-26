@@ -17,9 +17,11 @@
 package net.toadhead.adbcj.jdbc;
 
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
@@ -51,19 +53,22 @@ public class JdbcConnectionManager implements ConnectionManager {
 
 	public DbFuture<Connection> connect() {
 		final ConcurrentFutureProxy<Connection> future = new ConcurrentFutureProxy<Connection>();
-		executorService.submit(new Callable<Connection>() {
+		Future<Connection> executorFuture = executorService.submit(new Callable<Connection>() {
 			public Connection call() throws Exception {
-				java.sql.Connection jdbcConnection = DriverManager.getConnection(jdbcUrl, properties);
-				
-				JdbcConnection connection = new JdbcConnection(JdbcConnectionManager.this, jdbcConnection);
-				executorService.submit(new Runnable() {
-					public void run() {
-						future.setDone();
-					}
-				});
-				return connection;
+				try {
+					java.sql.Connection jdbcConnection = DriverManager.getConnection(jdbcUrl, properties);
+					JdbcConnection connection = new JdbcConnection(JdbcConnectionManager.this, jdbcConnection);
+					future.setValue(connection);
+					return connection;
+				} catch (SQLException e) {
+					future.setException(new DbException(e));
+					throw e;
+				} finally {
+					future.setDone();
+				}
 			}
 		});
+		future.setFuture(executorFuture);
 		return future;
 	}
 
@@ -87,4 +92,9 @@ public class JdbcConnectionManager implements ConnectionManager {
 		return executorService;
 	}
 
+	@Override
+	public String toString() {
+		return String.format("%s: %s (user: %s)", getClass().getName(), jdbcUrl, properties.get(USER));
+	}
+	
 }

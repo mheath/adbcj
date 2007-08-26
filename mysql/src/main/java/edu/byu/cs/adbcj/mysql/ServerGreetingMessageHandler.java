@@ -24,8 +24,6 @@ public class ServerGreetingMessageHandler implements MessageHandler<ServerGreeti
 	public void messageReceived(IoSession session, ServerGreeting serverGreeting) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
-		System.out.println(serverGreeting.getVersion());
-
 		// Save server greeting
 		connection.setServerGreeting(serverGreeting);
 		

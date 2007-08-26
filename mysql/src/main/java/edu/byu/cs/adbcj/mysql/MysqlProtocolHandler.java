@@ -48,6 +48,7 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		connection.setClosed(true);
 		AbstractDbFutureBase<Void> closeFuture = connection.getCloseFuture();
 		if (closeFuture != null) {
 			closeFuture.setDone();

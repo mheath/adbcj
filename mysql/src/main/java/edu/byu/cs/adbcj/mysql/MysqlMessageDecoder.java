@@ -142,7 +142,8 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			}
 			// TODO Decode row properly
 			in.skip(packetLength);
-			out.write(new ResultSetRowResponse(packetLength, packetNumber, new MysqlRow()));
+			MysqlResultSet currentResultSet = (MysqlResultSet)connection.getActiveRequest().getPayload();
+			out.write(new ResultSetRowResponse(packetLength, packetNumber, new MysqlRow(currentResultSet)));
 			break;
 		default:
 			throw new MysqlException("Unkown decoder state " + state);

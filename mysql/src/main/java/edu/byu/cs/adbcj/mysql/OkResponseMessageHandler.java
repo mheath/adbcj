@@ -28,6 +28,9 @@ public class OkResponseMessageHandler implements MessageHandler<OkResponse> {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
 		Request<?> activeRequest = connection.getActiveRequest();
+		if (activeRequest == null) {
+			throw new IllegalStateException("Received response with no activeRequest " + response);
+		}
 		AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
 		if (future != null) {
 			// TODO: Determine a mechanism for setting the future's value

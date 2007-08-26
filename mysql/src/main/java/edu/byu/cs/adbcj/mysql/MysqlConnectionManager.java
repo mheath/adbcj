@@ -25,6 +25,9 @@ import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
 import org.apache.mina.common.IoFuture;
 import org.apache.mina.common.IoFutureListener;
+import org.apache.mina.common.IoService;
+import org.apache.mina.common.IoServiceListener;
+import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.demux.DemuxingProtocolCodecFactory;
 import org.apache.mina.filter.codec.demux.MessageDecoder;
@@ -35,6 +38,7 @@ import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.DbFuture;
+import edu.byu.cs.adbcj.DbListener;
 import edu.byu.cs.adbcj.DbSessionFuture;
 import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
 import edu.byu.cs.adbcj.support.RequestAction;
@@ -49,7 +53,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 	private final LoginCredentials credentials;
 	
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, ExecutorService executorService, Properties properties) {
-		int processorCount = Runtime.getRuntime().availableProcessors() + 1;
+		int processorCount = Runtime.getRuntime().availableProcessors();
 		socketConnector = new SocketConnector(processorCount, executorService);
 		//socketConnector.setWorkerTimeout(5); // TODO: Make configurable
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
@@ -75,8 +79,21 @@ public class MysqlConnectionManager implements ConnectionManager {
 	}
 	
 	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
-		// TODO: Implement me
-		throw new DbException("Not implemented yet"); // TODO Implement
+		// TODO: Close all open connections
+		socketConnector.addListener(new IoServiceListener() {
+			public void serviceActivated(IoService service) {
+				System.out.println("socketConnector actived");
+			}
+			public void serviceDeactivated(IoService service) {
+				System.out.println("socketConnector deactived");
+			}
+			public void sessionCreated(IoSession session) {
+			}
+			public void sessionDestroyed(IoSession session) {
+			}
+			
+		});
+		return null;
 	}
 
 	public boolean isClosed() {
@@ -105,8 +122,19 @@ public class MysqlConnectionManager implements ConnectionManager {
 						return false;
 					}
 					public void execute(AbstractDbFutureBase<Connection> future) {
-						dbConnectFuture.setValue(connection);
-						dbConnectFuture.setDone();
+						future.setValue(connection);
+					}
+				}).addListener(new DbListener<Connection>() {
+					public void onCompletion(DbFuture<Connection> future) {
+						try {
+							dbConnectFuture.setValue(future.get());
+						} catch (InterruptedException e) {
+							Thread.currentThread().interrupt();
+						} catch (DbException e) {
+							dbConnectFuture.setException(e);
+						} finally {
+							dbConnectFuture.setDone();
+						}
 					}
 				});
 				
@@ -114,6 +142,11 @@ public class MysqlConnectionManager implements ConnectionManager {
 		});
 		
 		return dbConnectFuture;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s: mysql://%s:%d/%s (user: %s)", getClass().getName(), host, port, credentials.getDatabase(), credentials.getUserName());
 	}
 
 }

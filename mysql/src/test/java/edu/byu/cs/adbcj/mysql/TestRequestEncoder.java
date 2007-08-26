@@ -21,11 +21,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.DummySession;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.common.WriteFuture;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
-import org.junit.Assert;
-import org.junit.Test;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class TestRequestEncoder {
 
@@ -63,7 +64,12 @@ public class TestRequestEncoder {
 			}
 		};
 
-		encoder.encode(null, myRequest, new ProtocolEncoderOutput() {
+		// TODO Create utility method for putting dummy connection in a dummy IoSession
+		IoSession ioSession = new DummySession();
+		MysqlConnection connection = new MysqlConnection(null, null, null);
+		connection.setServerGreeting(new ServerGreeting(0, (byte)0, (byte)0, "", 0, null, null, null, null));
+		IoSessionUtil.setMysqlConnection(ioSession, connection);
+		encoder.encode(ioSession, myRequest, new ProtocolEncoderOutput() {
 			public WriteFuture flush() {
 				return null;
 			}
@@ -81,8 +87,8 @@ public class TestRequestEncoder {
 			}
 		});
 		
-		Assert.assertTrue("The RequestEncoder.encode(IoSession, Request, ByteBuffer) method was never called", invokedEncode.get());
-		Assert.assertTrue("The ProtocolEncoderOutput.write(ByteBuffer) method was never called", invokedWrite.get());
+		Assert.assertTrue(invokedEncode.get(), "The RequestEncoder.encode(IoSession, Request, ByteBuffer) method was never called");
+		Assert.assertTrue(invokedWrite.get(), "The ProtocolEncoderOutput.write(ByteBuffer) method was never called");
 	}
 
 }

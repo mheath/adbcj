@@ -16,8 +16,7 @@
  */
 package edu.byu.cs.adbcj.mysql;
 
-import org.junit.Test;
-
+import org.testng.annotations.Test;
 
 public class MysqlCharsetTest {
 
