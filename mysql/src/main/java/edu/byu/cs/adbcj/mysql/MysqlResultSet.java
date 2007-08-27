@@ -16,6 +16,8 @@
  */
 package edu.byu.cs.adbcj.mysql;
 
+import java.util.List;
+
 import edu.byu.cs.adbcj.support.DefaultResultSet;
 
 public class MysqlResultSet extends DefaultResultSet {
@@ -24,4 +26,10 @@ public class MysqlResultSet extends DefaultResultSet {
 		super(fieldCount);
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<MysqlField> getFields() {
+		return (List<MysqlField>)super.getFields();
+	}
+	
 }

@@ -16,7 +16,9 @@
  */
 package edu.byu.cs.adbcj;
 
-public interface Row {
+import java.util.List;
+
+public interface Row extends List<Value> {
 
     ResultSet getResultSet();
     

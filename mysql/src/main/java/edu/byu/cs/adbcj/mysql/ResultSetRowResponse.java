@@ -16,16 +16,18 @@
  */
 package edu.byu.cs.adbcj.mysql;
 
+import edu.byu.cs.adbcj.Row;
+
 public class ResultSetRowResponse extends Response {
 
-	private final MysqlRow row;
+	private final Row row;
 	
-	public ResultSetRowResponse(int packetLength, byte packetNumber, MysqlRow row) {
+	public ResultSetRowResponse(int packetLength, byte packetNumber, Row row) {
 		super(packetLength, packetNumber);
 		this.row = row;
 	}
 	
-	public MysqlRow getRow() {
+	public Row getRow() {
 		return row;
 	}
 	

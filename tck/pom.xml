@@ -48,6 +48,12 @@
 			<version>8.2-504.jdbc4</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<artifactId>slf4j-nop</artifactId>
+			<groupId>org.slf4j</groupId>
+			<version>1.4.3</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 </project>

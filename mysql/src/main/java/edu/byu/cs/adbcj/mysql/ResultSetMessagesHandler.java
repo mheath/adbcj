@@ -39,6 +39,7 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 				throw new DbException("Already processing a result set");
 			}
 			
+			System.out.println("Creating result set");
 			resultSet = new MysqlResultSet(resultSetResponse.getFieldCount());
 			activeRequest.setPayload(resultSet);
 		} else if (message instanceof ResultSetFieldResponse) {
