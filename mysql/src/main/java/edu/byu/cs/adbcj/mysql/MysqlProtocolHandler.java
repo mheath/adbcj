@@ -20,7 +20,7 @@ import org.apache.mina.common.IoSession;
 import org.apache.mina.handler.demux.DemuxingIoHandler;
 
 import edu.byu.cs.adbcj.DbException;
-import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
+import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.AbstractDbFutureListenerSupport;
 import edu.byu.cs.adbcj.support.BaseRequestQueue.Request;
 
@@ -49,7 +49,7 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		connection.setClosed(true);
-		AbstractDbFutureBase<Void> closeFuture = connection.getCloseFuture();
+		DefaultDbFuture<Void> closeFuture = connection.getCloseFuture();
 		if (closeFuture != null) {
 			closeFuture.setDone();
 		}

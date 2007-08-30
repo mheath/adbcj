@@ -20,16 +20,18 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public abstract class BaseRequestQueue {
+import edu.byu.cs.adbcj.Session;
+
+public abstract class BaseRequestQueue implements Session {
 
 	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
 	
 	private Request<?> activeRequest;
 	
-	protected synchronized <E> AbstractDbFutureBase<E> enqueueRequest(final RequestAction<E> action) {
+	protected synchronized <E> DefaultDbSessionFuture<E> enqueueRequest(final RequestAction<E> action) {
 		final Request<E> request = new Request<E>(action);
 		
-		AbstractDbFutureBase<E> future = new AbstractDbFutureBase<E>() {
+		DefaultDbSessionFuture<E> future = new DefaultDbSessionFuture<E>(this) {
 			@Override
 			protected boolean doCancel(boolean mayInterruptIfRunning) {
 				if (removeRequest(request)) {
@@ -49,8 +51,11 @@ public abstract class BaseRequestQueue {
 		return future;
 	}
 	
-	private synchronized boolean removeRequest(Request<?> request) {
-		return requestQueue.remove(request);
+	protected synchronized boolean removeRequest(Request<?> request) {
+		if (request.getAction().canRemove()) {
+			return requestQueue.remove(request);
+		}
+		return false;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -81,7 +86,7 @@ public abstract class BaseRequestQueue {
 	}
 	
 	public class Request<T> {
-		private AbstractDbFutureBase<T> future = null;
+		private DefaultDbSessionFuture<T> future = null;
 		private final RequestAction<T> action;
 		
 		private Object payload;
@@ -90,11 +95,11 @@ public abstract class BaseRequestQueue {
 			this.action = action;
 		}
 
-		public AbstractDbFutureBase<T> getFuture() {
+		public DefaultDbFuture<T> getFuture() {
 			return future;
 		}
 
-		public void setFuture(AbstractDbFutureBase<T> future) {
+		public void setFuture(DefaultDbSessionFuture<T> future) {
 			if (this.future != null) {
 				throw new IllegalStateException("future can only be set once");
 			}

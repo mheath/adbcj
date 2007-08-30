@@ -20,8 +20,11 @@ public interface Session {
 
 	void beginTransaction();
 	
+	// Cancelling a commit will cause the transaction to rollback - TODO Write TCK for this
 	DbSessionFuture<Void> commit();
-	
+
+	// A rollback cannot be cancelled
+	// Rolling back a transaction may cancel pending requests
 	DbSessionFuture<Void> rollback();
 	
 	boolean isInTransaction();
@@ -32,8 +35,12 @@ public interface Session {
 	
 	DbSessionFuture<ResultSet> executeQuery(String sql);
 	
+	DbSessionFuture<Result> executeUpdate(String sql);
+	
 	DbSessionFuture<PreparedStatement> prepareStatement(String sql);
 	
+	DbSessionFuture<PreparedStatement> prepareStatement(Object key, String sql);
+
 	DbSessionFuture<Void> close(boolean immediate) throws DbException;
 	
 	boolean isClosed() throws DbException;

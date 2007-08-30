@@ -16,6 +16,21 @@
  */
 package edu.byu.cs.adbcj;
 
+import java.util.List;
+import java.util.Map;
+
 public interface PreparedStatement {
 
+	List<Object> getParameterKeys();
+	
+	String getNativeSQL();
+	
+	DbFuture<ResultSet> executeQuery(Object... params);
+	
+	DbFuture<ResultSet> executeQuery(Map<Object, Object> params);
+	
+	DbFuture<Result> executeUpdate(Object... params);
+	
+	DbFuture<Result> executeUpdate(Map<Object, Object> params);
+	
 }

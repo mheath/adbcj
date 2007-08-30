@@ -30,6 +30,11 @@ public class DbSessionFutureProxy<T> implements DbSessionFuture<T> {
 	private final DbFuture<T> future;
 	private final Session session;
 	
+	public DbSessionFutureProxy(DbSessionFuture<T> future) {
+		this.future = future;
+		this.session = future.getSession();
+	}
+	
 	public DbSessionFutureProxy(DbFuture<T> future, Session session) {
 		this.future = future;
 		this.session = session;

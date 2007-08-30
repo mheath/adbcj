@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 
 import edu.byu.cs.adbcj.DbException;
 
-public abstract class AbstractDbFutureBase<T> extends AbstractDbFutureListenerSupport<T> {
+public class DefaultDbFuture<T> extends AbstractDbFutureListenerSupport<T> {
 
 	private interface AwaitMethod {
 		void await() throws InterruptedException;
@@ -116,6 +116,8 @@ public abstract class AbstractDbFutureBase<T> extends AbstractDbFutureListenerSu
 		}
 	}
 	
-	protected abstract boolean doCancel(boolean mayInterruptIfRunning);
+	protected boolean doCancel(boolean mayInterruptIfRunning) {
+		return false;
+	}
 	
 }

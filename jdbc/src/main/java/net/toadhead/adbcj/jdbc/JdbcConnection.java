@@ -30,11 +30,12 @@ import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbSessionFuture;
 import edu.byu.cs.adbcj.Field;
 import edu.byu.cs.adbcj.PreparedStatement;
+import edu.byu.cs.adbcj.Result;
 import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.TransactionIsolationLevel;
 import edu.byu.cs.adbcj.Type;
 import edu.byu.cs.adbcj.Value;
-import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
+import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.BaseRequestQueue;
 import edu.byu.cs.adbcj.support.ConcurrentFutureSessionProxy;
 import edu.byu.cs.adbcj.support.DbSessionFutureProxy;
@@ -227,7 +228,17 @@ public class JdbcConnection extends BaseRequestQueue implements Connection {
 		}));
 	}
 
+	public DbSessionFuture<Result> executeUpdate(String sql) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	public DbSessionFuture<PreparedStatement> prepareStatement(Object key, String sql) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -243,16 +254,17 @@ public class JdbcConnection extends BaseRequestQueue implements Connection {
 	 * 
 	 */
 
-	protected <E> AbstractDbFutureBase<E> enqueueCallable(final Callable<E> task) {
-		AbstractDbFutureBase<E> localFuture = enqueueRequest(new RequestAction<E>() {
+	protected <E> DefaultDbFuture<E> enqueueCallable(final Callable<E> task) {
+		DefaultDbFuture<E> localFuture = enqueueRequest(new RequestAction<E>() {
 			private volatile Future<E> future = null;
+			@Override
 			public synchronized boolean cancel(boolean mayInterruptIfRunning) {
 				if (future == null) {
 					return false;
 				}
 				return future.cancel(mayInterruptIfRunning);
 			}
-			public synchronized void execute(final AbstractDbFutureBase<E> future) {
+			public synchronized void execute(final DefaultDbFuture<E> future) {
 				this.future = connectionManager.getExecutorService().submit(new Callable<E>() {
 					public E call() throws Exception {
 						try {

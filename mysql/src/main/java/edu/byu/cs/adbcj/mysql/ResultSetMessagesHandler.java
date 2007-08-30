@@ -21,7 +21,7 @@ import org.apache.mina.handler.demux.MessageHandler;
 
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.ResultSet;
-import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
+import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.BaseRequestQueue.Request;
 
 public class ResultSetMessagesHandler<T extends Response> implements MessageHandler<T> {
@@ -57,7 +57,7 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 				}
 				break;
 			case ROW:
-				AbstractDbFutureBase<ResultSet> currentFuture = (AbstractDbFutureBase<ResultSet>)activeRequest.getFuture();
+				DefaultDbFuture<ResultSet> currentFuture = (DefaultDbFuture<ResultSet>)activeRequest.getFuture();
 				currentFuture.setValue(resultSet);
 				currentFuture.setDone();
 				break;

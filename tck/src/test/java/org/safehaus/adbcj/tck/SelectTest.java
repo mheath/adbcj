@@ -27,9 +27,11 @@ public class SelectTest extends ConnectionManagerDataProvider {
 		try {
 			DbFuture<ResultSet> resultSetFuture = connection.executeQuery("SELECT int_val, str_val FROM simple_values ORDER BY int_val").addListener(new DbListener<ResultSet>() {
 				public void onCompletion(DbFuture<ResultSet> future) throws Exception {
+					System.out.println("In callback");
 					future.get().size();
 					callbacks[0] = true;
 					latch.countDown();
+					System.out.println("Finished callback");
 				}
 			});
 			ResultSet resultSet = resultSetFuture.get();

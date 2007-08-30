@@ -1,0 +1,3 @@
+- Test close to make sure that all operations after close fail
+- Throw error when an update returns a result set or when a select returns an update
+- Add support for chaining result sets.

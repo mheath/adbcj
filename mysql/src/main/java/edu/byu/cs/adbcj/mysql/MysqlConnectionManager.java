@@ -40,7 +40,7 @@ import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbListener;
 import edu.byu.cs.adbcj.DbSessionFuture;
-import edu.byu.cs.adbcj.support.AbstractDbFutureBase;
+import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.RequestAction;
 
 public class MysqlConnectionManager implements ConnectionManager {
@@ -105,7 +105,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 		SocketAddress address = new InetSocketAddress(host, port);
 		ConnectFuture connectFuture = socketConnector.connect(address);
 		
-		final AbstractDbFutureBase<Connection> dbConnectFuture = new AbstractDbFutureBase<Connection>() {
+		final DefaultDbFuture<Connection> dbConnectFuture = new DefaultDbFuture<Connection>() {
 			@Override
 			protected boolean doCancel(boolean mayInterruptIfRunning) {
 				return false;
@@ -118,10 +118,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
 				
 				connection.enqueueRequest(new RequestAction<Connection>() {
-					public boolean cancel(boolean mayInterruptIfRunning) {
-						return false;
-					}
-					public void execute(AbstractDbFutureBase<Connection> future) {
+					public void execute(DefaultDbFuture<Connection> future) {
 						future.setValue(connection);
 					}
 				}).addListener(new DbListener<Connection>() {

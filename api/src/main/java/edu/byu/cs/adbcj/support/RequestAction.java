@@ -16,10 +16,16 @@
  */
 package edu.byu.cs.adbcj.support;
 
-public interface RequestAction<T> {
+public abstract class RequestAction<T> {
 	
-	void execute(AbstractDbFutureBase<T> future);
+	public abstract void execute(DefaultDbFuture<T> future);
 	
-	boolean cancel(boolean mayInterruptIfRunning);
+	public boolean cancel(boolean mayInterruptIfRunning) {
+		return false;
+	}
+	
+	public boolean canRemove() {
+		return true;
+	}
 	
 }
