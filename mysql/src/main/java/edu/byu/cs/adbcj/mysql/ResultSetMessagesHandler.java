@@ -22,7 +22,7 @@ import org.apache.mina.handler.demux.MessageHandler;
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
-import edu.byu.cs.adbcj.support.BaseRequestQueue.Request;
+import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue.Request;
 
 public class ResultSetMessagesHandler<T extends Response> implements MessageHandler<T> {
 

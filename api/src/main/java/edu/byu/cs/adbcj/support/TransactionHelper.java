@@ -6,7 +6,7 @@ import java.util.List;
 public class TransactionHelper {
 
 	private boolean started = false;
-	private List<BaseRequestQueue.Request<?>> requests = new LinkedList<BaseRequestQueue.Request<?>>();
+	private List<AbstractSessionRequestQueue.Request<?>> requests = new LinkedList<AbstractSessionRequestQueue.Request<?>>();
 	
 	public boolean isStarted() {
 		return started;
@@ -16,11 +16,11 @@ public class TransactionHelper {
 		this.started = started;
 	}
 	
-	public List<BaseRequestQueue.Request<?>> getRequests() {
+	public List<AbstractSessionRequestQueue.Request<?>> getRequests() {
 		return requests;
 	}
 	
-	public void addRequests(BaseRequestQueue.Request<?> request) {
+	public void addRequests(AbstractSessionRequestQueue.Request<?> request) {
 		requests.add(request);
 	}
 	

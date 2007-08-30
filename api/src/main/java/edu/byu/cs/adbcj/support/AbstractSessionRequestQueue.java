@@ -22,7 +22,7 @@ import java.util.Queue;
 
 import edu.byu.cs.adbcj.Session;
 
-public abstract class BaseRequestQueue implements Session {
+public abstract class AbstractSessionRequestQueue implements Session {
 
 	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
 	

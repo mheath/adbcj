@@ -20,7 +20,7 @@ import org.apache.mina.common.IoSession;
 import org.apache.mina.handler.demux.MessageHandler;
 
 import edu.byu.cs.adbcj.support.AbstractDbFutureListenerSupport;
-import edu.byu.cs.adbcj.support.BaseRequestQueue.Request;
+import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue.Request;
 
 public class OkResponseMessageHandler implements MessageHandler<OkResponse> {
 

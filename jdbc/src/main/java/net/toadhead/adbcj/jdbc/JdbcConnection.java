@@ -36,7 +36,7 @@ import edu.byu.cs.adbcj.TransactionIsolationLevel;
 import edu.byu.cs.adbcj.Type;
 import edu.byu.cs.adbcj.Value;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
-import edu.byu.cs.adbcj.support.BaseRequestQueue;
+import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue;
 import edu.byu.cs.adbcj.support.ConcurrentFutureSessionProxy;
 import edu.byu.cs.adbcj.support.DbSessionFutureProxy;
 import edu.byu.cs.adbcj.support.DefaultField;
@@ -45,7 +45,7 @@ import edu.byu.cs.adbcj.support.DefaultRow;
 import edu.byu.cs.adbcj.support.DefaultValue;
 import edu.byu.cs.adbcj.support.RequestAction;
 
-public class JdbcConnection extends BaseRequestQueue implements Connection {
+public class JdbcConnection extends AbstractSessionRequestQueue implements Connection {
 
 	private final JdbcConnectionManager connectionManager;
 	private final java.sql.Connection jdbcConnection;

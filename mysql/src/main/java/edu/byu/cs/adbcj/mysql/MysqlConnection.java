@@ -32,11 +32,11 @@ import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.TransactionIsolationLevel;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.DefaultDbSessionFuture;
-import edu.byu.cs.adbcj.support.BaseRequestQueue;
+import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue;
 import edu.byu.cs.adbcj.support.RequestAction;
 import edu.byu.cs.adbcj.support.TransactionHelper;
 
-public class MysqlConnection extends BaseRequestQueue implements Connection {
+public class MysqlConnection extends AbstractSessionRequestQueue implements Connection {
 
 	private final ConnectionManager connectionManager;
 	
