@@ -22,10 +22,9 @@ public class SelectTest extends ConnectionManagerDataProvider {
 		final boolean[] callbacks = {false};
 		final CountDownLatch latch = new CountDownLatch(callbacks.length); 
 		
-		DbFuture<Connection> connectionFuture = connectionManager.connect();
-		Connection connection = connectionFuture.get();
+		Connection connection = connectionManager.connect().get();
 		try {
-			DbFuture<ResultSet> resultSetFuture = connection.executeQuery("SELECT int_val, str_val FROM simple_values ORDER BY int_val").addListener(new DbListener<ResultSet>() {
+			ResultSet resultSet = connection.executeQuery("SELECT int_val, str_val FROM simple_values ORDER BY int_val").addListener(new DbListener<ResultSet>() {
 				public void onCompletion(DbFuture<ResultSet> future) throws Exception {
 					System.out.println("In callback");
 					future.get().size();
@@ -33,8 +32,7 @@ public class SelectTest extends ConnectionManagerDataProvider {
 					latch.countDown();
 					System.out.println("Finished callback");
 				}
-			});
-			ResultSet resultSet = resultSetFuture.get();
+			}).get();
 			
 			Assert.assertEquals(6, resultSet.size());
 			

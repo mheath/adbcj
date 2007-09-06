@@ -10,3 +10,6 @@ INSERT INTO simple_values (int_val, str_val) values (1, 'One');
 INSERT INTO simple_values (int_val, str_val) values (2, 'Two');
 INSERT INTO simple_values (int_val, str_val) values (3, 'Three');
 INSERT INTO simple_values (int_val, str_val) values (4, 'Four');
+
+DROP TABLE IF EXISTS updates;
+CREATE TABLE updates (id int);

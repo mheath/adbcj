@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 import net.toadhead.adbcj.jdbc.JdbcConnectionManagerProducer;
 
 import org.safehaus.adbcj.postgresql.PgConnectionManagerProducer;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
 
 import edu.byu.cs.adbcj.ConnectionManagerFactory;
@@ -28,8 +29,8 @@ public class ConnectionManagerDataProvider {
 	}
 	
 	public static final Object[][] TEST_CONNECTION_DATA = {
-		{"adbcj:jdbc:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
-		{"adbcj:jdbc:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
+		//{"adbcj:jdbc:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
+		//{"adbcj:jdbc:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 		{"adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 		//{"adbcj:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 	};
