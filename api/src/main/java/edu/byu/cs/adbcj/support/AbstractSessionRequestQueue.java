@@ -23,7 +23,6 @@ import java.util.Queue;
 import edu.byu.cs.adbcj.Session;
 
 public abstract class AbstractSessionRequestQueue implements Session {
-
 	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
 	
 	private Request<?> activeRequest;
@@ -42,11 +41,10 @@ public abstract class AbstractSessionRequestQueue implements Session {
 		};
 		
 		request.setFuture(future);
-		
-		if (activeRequest == null) {
-			setActiveRequest(request);
-		} else {
-			requestQueue.add(request);
+		boolean isEmpty = requestQueue.peek() == null && activeRequest == null;
+		requestQueue.add(request);
+		if (isEmpty) {
+			makeNextRequestActive();
 		}
 		return future;
 	}
@@ -78,7 +76,7 @@ public abstract class AbstractSessionRequestQueue implements Session {
 		}
 	}
 	
-	private <T> void setActiveRequest(Request<T> request) {
+	private synchronized <T> void setActiveRequest(Request<T> request) {
 		activeRequest = request;
 		if (request != null) {
 			request.getAction().execute(request.getFuture());
