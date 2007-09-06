@@ -30,11 +30,9 @@ public class ErrorResponseMessageHandler implements MessageHandler<ErrorResponse
 		
 		Request<?> activeRequest = connection.getActiveRequest();
 		AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
-		if (future != null) {
-			future.setException(new DbException(message.getMessage()));
-			future.setDone();
-			connection.makeNextRequestActive();
-		}
+		future.setException(new DbException(message.getMessage()));
+		future.setDone();
+		connection.makeNextRequestActive();
 	}
 
 }

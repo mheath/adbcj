@@ -20,6 +20,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import org.apache.mina.common.IoSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
@@ -30,13 +32,14 @@ import edu.byu.cs.adbcj.PreparedStatement;
 import edu.byu.cs.adbcj.Result;
 import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.TransactionIsolationLevel;
+import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.DefaultDbSessionFuture;
-import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue;
 import edu.byu.cs.adbcj.support.RequestAction;
 import edu.byu.cs.adbcj.support.TransactionHelper;
 
 public class MysqlConnection extends AbstractSessionRequestQueue implements Connection {
+	private final Logger logger = LoggerFactory.getLogger(MysqlConnection.class);
 
 	private final ConnectionManager connectionManager;
 	
@@ -153,10 +156,13 @@ public class MysqlConnection extends AbstractSessionRequestQueue implements Conn
 			public synchronized void execute(DefaultDbFuture<Void> future) {
 				executing = true;
 				if (cancelled) {
-					// TODO: If no requests from transaction have been sent, then we don't have to send rollback because transaction was never started 
-					// TODO: Send rollback
+					if (transactionHelper.isStarted()) {
+						CommandRequest request = new CommandRequest(Command.QUERY, "rollback");
+						session.write(request);
+					}
 				} else {
-					// TODO: Send commit
+					CommandRequest request = new CommandRequest(Command.QUERY, "commit");
+					session.write(request);
 				}
 			}
 			@Override
@@ -187,26 +193,24 @@ public class MysqlConnection extends AbstractSessionRequestQueue implements Conn
 		if (transactionHelper.isStarted()) {
 			return enqueueRequest(new RequestAction<Void>() {
 				public void execute(DefaultDbFuture<Void> future) {
-					// TODO: Schedule rollback
+					CommandRequest request = new CommandRequest(Command.QUERY, "rollback");
+					session.write(request);
 				}
 				// Rollbacks can not be canceled
 				@Override
 				public boolean cancel(boolean mayInterruptIfRunning) {
 					return false;
 				}
-				// Rollbacks can not be canceled
+				// Rollbacks can not be removed from request queue
 				@Override
 				public boolean canRemove() {
 					return false;
 				}
 			});
 		}
-		return new DefaultDbSessionFuture<Void>(this) {
-			@Override
-			protected boolean doCancel(boolean mayInterruptIfRunning) {
-				return false;
-			}
-		};
+		DefaultDbSessionFuture<Void> future = new DefaultDbSessionFuture<Void>(this);
+		future.setDone();
+		return future;
 	}
 
 	private synchronized void cancelPendingRequests(TransactionHelper transactionHelper) {
@@ -220,19 +224,25 @@ public class MysqlConnection extends AbstractSessionRequestQueue implements Conn
 	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
 		checkClosed();
 		// TODO Start transaction if transaction needs to be started
-		DbSessionFuture<ResultSet> future = enqueueRequest(new RequestAction<ResultSet>() {
+		return enqueueRequest(new RequestAction<ResultSet>() {
 			public void execute(DefaultDbFuture<ResultSet> future) {
 				CommandRequest request = new CommandRequest(Command.QUERY, sql);
 				session.write(request);
 			}
 		});
-		return future;
 	}
 	
-	public DbSessionFuture<Result> executeUpdate(String sql) {
+	public DbSessionFuture<Result> executeUpdate(final String sql) {
 		checkClosed();
-		// TODO Auto-generated method stub
-		return null;
+		logger.info("Scheduling update '{}'", sql);
+		// TODO Start transaction if transaction needs to be started
+		return enqueueRequest(new RequestAction<Result>() {
+			public void execute(DefaultDbFuture<Result> future) {
+				logger.info("Sending update '{}'", sql);
+				CommandRequest request = new CommandRequest(Command.QUERY, sql);
+				session.write(request);
+			}
+		});
 	}
 
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
@@ -320,7 +330,7 @@ public class MysqlConnection extends AbstractSessionRequestQueue implements Conn
 	 * Make this method public.
 	 */
 	@Override
-	public synchronized <E> DefaultDbSessionFuture<E> enqueueRequest(RequestAction<E> action) {
+	public <E> DefaultDbSessionFuture<E> enqueueRequest(RequestAction<E> action) {
 		return super.enqueueRequest(action);
 	}
 	
@@ -336,7 +346,7 @@ public class MysqlConnection extends AbstractSessionRequestQueue implements Conn
 	 * Make this method public.
 	 */
 	@Override
-	public synchronized <E> Request<E> makeNextRequestActive() {
+	public <E> Request<E> makeNextRequestActive() {
 		return super.makeNextRequestActive();
 	}
 

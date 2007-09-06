@@ -40,6 +40,7 @@ import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbListener;
 import edu.byu.cs.adbcj.DbSessionFuture;
+import edu.byu.cs.adbcj.Result;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.RequestAction;
 
@@ -117,16 +118,14 @@ public class MysqlConnectionManager implements ConnectionManager {
 				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
 				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
 				
-				connection.enqueueRequest(new RequestAction<Connection>() {
-					public void execute(DefaultDbFuture<Connection> future) {
-						future.setValue(connection);
+				connection.enqueueRequest(new RequestAction<Result>() {
+					public void execute(DefaultDbFuture<Result> future) {
+						dbConnectFuture.setValue(connection);
 					}
-				}).addListener(new DbListener<Connection>() {
-					public void onCompletion(DbFuture<Connection> future) {
+				}).addListener(new DbListener<Result>() {
+					public void onCompletion(DbFuture<Result> future) {
 						try {
-							dbConnectFuture.setValue(future.get());
-						} catch (InterruptedException e) {
-							Thread.currentThread().interrupt();
+							dbConnectFuture.setValue(connection);
 						} catch (DbException e) {
 							dbConnectFuture.setException(e);
 						} finally {

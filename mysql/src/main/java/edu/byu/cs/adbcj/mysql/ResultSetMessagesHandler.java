@@ -60,6 +60,7 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 				DefaultDbFuture<ResultSet> currentFuture = (DefaultDbFuture<ResultSet>)activeRequest.getFuture();
 				currentFuture.setValue(resultSet);
 				currentFuture.setDone();
+				connection.makeNextRequestActive();
 				break;
 			default:
 				throw new MysqlException("Unkown eof response type");
