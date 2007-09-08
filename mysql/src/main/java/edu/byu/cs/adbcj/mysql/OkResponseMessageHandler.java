@@ -36,7 +36,7 @@ public class OkResponseMessageHandler implements MessageHandler<OkResponse> {
 	public void messageReceived(IoSession session, OkResponse response) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
-		logger.info("Response '{}' on connection {}", response, connection);
+		logger.debug("Response '{}' on connection {}", response, connection);
 				
 		Request<?> activeRequest = connection.getActiveRequest();
 		if (activeRequest == null) {

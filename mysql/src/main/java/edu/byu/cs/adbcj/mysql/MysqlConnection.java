@@ -121,10 +121,10 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	
 	public DbSessionFuture<Result> executeUpdate(final String sql) {
 		checkClosed();
-		logger.info("Scheduling update '{}'", sql);
+		logger.debug("Scheduling update '{}'", sql);
 		return enqueueTransactionalRequest(new Request<Result>() {
 			public void execute(DefaultDbFuture<Result> future) {
-				logger.info("Sending update '{}'", sql);
+				logger.debug("Sending update '{}'", sql);
 				CommandRequest request = new CommandRequest(Command.QUERY, sql);
 				session.write(request);
 			}

@@ -260,8 +260,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		CallableRequest<Void> request = new CallableRequest<Void>() {
 					public Void call() throws Exception {
 						transaction.setStarted(true);
-						// TODO: Change to debug
-						logger.info("Changing isolation level to {}", transactionIsolationLevel);
+						logger.debug("Changing isolation level to {}", transactionIsolationLevel);
 						int isolationLevel;
 						switch (transactionIsolationLevel) {
 						case NONE:
@@ -298,11 +297,10 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 			private boolean canceled = false;
 			public Void call() throws Exception {
 				executing = true;
-				// TODO: Change to debug
 				if (canceled) {
 					jdbcConnection.rollback();
 				} else {
-					logger.info("Committing transaction");
+					logger.debug("Committing transaction");
 					jdbcConnection.commit();
 				}
 				return null;
@@ -330,8 +328,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	protected DbSessionFuture<Void> enqueueRollback(Transaction transaction) {
 		CallableRequest<Void> request = new CallableRequest<Void>() {
 			public Void call() throws Exception {
-				// TODO: Change to debug
-				logger.info("Rolling back transaction");
+				logger.debug("Rolling back transaction");
 				jdbcConnection.rollback();
 				return null;
 			}
@@ -345,8 +342,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	protected DbSessionFuture<Void> enqueueStartTransaction(final Transaction transaction) {
 		CallableRequest<Void> request = new CallableRequest<Void>() {
 			public Void call() throws Exception {
-				// TODO: Change to debug
-				logger.info("Starting transaction");
+				logger.debug("Starting transaction");
 				transaction.setStarted(true);
 				jdbcConnection.setAutoCommit(false);
 				return null;
