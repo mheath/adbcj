@@ -19,7 +19,7 @@ package edu.byu.cs.adbcj.mysql;
 import java.nio.charset.CharacterCodingException;
 import java.util.Set;
 
-public class LoginRequest extends Request {
+public class LoginRequest extends MysqlRequest {
 
 	public static final int MAX_PACKET_SIZE = 0x00ffffff;
 	

@@ -61,7 +61,11 @@ public class ConcurrentFutureProxy<T> extends AbstractDbFutureListenerSupport<T>
 	}
 
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		return future.cancel(mayInterruptIfRunning);
+		boolean canceled = future.cancel(mayInterruptIfRunning);
+		if (canceled) {
+			setDone();
+		}
+		return canceled;
 	}
 
 	public boolean isCancelled() {

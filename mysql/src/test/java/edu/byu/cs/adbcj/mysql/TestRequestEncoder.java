@@ -37,7 +37,7 @@ public class TestRequestEncoder {
 		final AtomicBoolean invokedEncode = new AtomicBoolean(false);
 		final AtomicBoolean invokedWrite = new AtomicBoolean(false);
 
-		final Request myRequest = new Request() {
+		final MysqlRequest myRequest = new MysqlRequest() {
 			@Override
 			int getLength(MysqlCharacterSet charset) {
 				return length;
@@ -48,9 +48,9 @@ public class TestRequestEncoder {
 			}
 		};
 		
-		RequestEncoder<Request> encoder = new RequestEncoder<Request>() {
+		RequestEncoder<MysqlRequest> encoder = new RequestEncoder<MysqlRequest>() {
 			@Override
-			protected void encode(IoSession session, Request request, ByteBuffer buffer) throws CharacterCodingException {
+			protected void encode(IoSession session, MysqlRequest request, ByteBuffer buffer) throws CharacterCodingException {
 				invokedEncode.set(true);
 
 				Assert.assertSame(myRequest, request);
@@ -59,7 +59,7 @@ public class TestRequestEncoder {
 				
 				Assert.assertNotNull(buffer);
 			}
-			public Set<Class<Request>> getMessageTypes() {
+			public Set<Class<MysqlRequest>> getMessageTypes() {
 				return null;
 			}
 		};

@@ -18,7 +18,7 @@ package edu.byu.cs.adbcj.mysql;
 
 import java.nio.charset.CharacterCodingException;
 
-public abstract class Request {
+public abstract class MysqlRequest {
 
 	abstract int getLength(MysqlCharacterSet charset) throws CharacterCodingException;
 

@@ -22,7 +22,7 @@ import org.apache.mina.handler.demux.DemuxingIoHandler;
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.AbstractDbFutureListenerSupport;
-import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue.Request;
+import edu.byu.cs.adbcj.support.Request;
 
 public class MysqlProtocolHandler extends DemuxingIoHandler {
 	

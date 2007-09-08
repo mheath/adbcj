@@ -21,18 +21,21 @@ import org.apache.mina.handler.demux.MessageHandler;
 
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.support.AbstractDbFutureListenerSupport;
-import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue.Request;
+import edu.byu.cs.adbcj.support.Request;
 
 public class ErrorResponseMessageHandler implements MessageHandler<ErrorResponse> {
 
 	public void messageReceived(IoSession session, ErrorResponse message) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
-		Request<?> activeRequest = connection.getActiveRequest();
-		AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
-		future.setException(new DbException(message.getMessage()));
-		future.setDone();
-		connection.makeNextRequestActive();
+		try {
+			Request<?> activeRequest = connection.getActiveRequest();
+			AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
+			future.setException(new DbException(message.getMessage()));
+			future.setDone();
+		} finally {
+			connection.makeNextRequestActive();
+		}
 	}
 
 }

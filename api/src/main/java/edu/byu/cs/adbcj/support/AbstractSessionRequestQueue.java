@@ -27,16 +27,14 @@ public abstract class AbstractSessionRequestQueue implements Session {
 	
 	private Request<?> activeRequest;
 	
-	protected synchronized <E> DefaultDbSessionFuture<E> enqueueRequest(final RequestAction<E> action) {
-		final Request<E> request = new Request<E>(action);
-		
+	protected synchronized <E> DefaultDbSessionFuture<E> enqueueRequest(final Request<E> request) {
 		DefaultDbSessionFuture<E> future = new DefaultDbSessionFuture<E>(this) {
 			@Override
 			protected boolean doCancel(boolean mayInterruptIfRunning) {
-				if (removeRequest(request)) {
+				if (requestQueue.remove(request)) {
 					return true;
 				}
-				return request.getAction().cancel(mayInterruptIfRunning);
+				return request.cancel(mayInterruptIfRunning);
 			}
 		};
 		
@@ -49,13 +47,6 @@ public abstract class AbstractSessionRequestQueue implements Session {
 		return future;
 	}
 	
-	protected synchronized boolean removeRequest(Request<?> request) {
-		if (request.getAction().canRemove()) {
-			return requestQueue.remove(request);
-		}
-		return false;
-	}
-
 	@SuppressWarnings("unchecked")
 	protected synchronized <E> Request<E> makeNextRequestActive() {
 		Request<E> request = (Request<E>)requestQueue.poll();
@@ -79,42 +70,8 @@ public abstract class AbstractSessionRequestQueue implements Session {
 	private synchronized <T> void setActiveRequest(Request<T> request) {
 		activeRequest = request;
 		if (request != null) {
-			request.getAction().execute(request.getFuture());
+			request.execute(request.getFuture());
 		}
 	}
 	
-	public class Request<T> {
-		private DefaultDbSessionFuture<T> future = null;
-		private final RequestAction<T> action;
-		
-		private Object payload;
-		
-		private Request(RequestAction<T> action) {
-			this.action = action;
-		}
-
-		public DefaultDbFuture<T> getFuture() {
-			return future;
-		}
-
-		public void setFuture(DefaultDbSessionFuture<T> future) {
-			if (this.future != null) {
-				throw new IllegalStateException("future can only be set once");
-			}
-			this.future = future;
-		}
-
-		public RequestAction<T> getAction() {
-			return action;
-		}
-
-		public Object getPayload() {
-			return payload;
-		}
-
-		public void setPayload(Object payload) {
-			this.payload = payload;
-		}
-
-	}
 }

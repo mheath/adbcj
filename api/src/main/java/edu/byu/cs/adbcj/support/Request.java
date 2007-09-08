@@ -16,8 +16,11 @@
  */
 package edu.byu.cs.adbcj.support;
 
-public abstract class RequestAction<T> {
+public abstract class Request<T> {
 	
+	private DefaultDbSessionFuture<T> future = null;
+	private Object payload;
+
 	public abstract void execute(DefaultDbFuture<T> future);
 	
 	public boolean cancel(boolean mayInterruptIfRunning) {
@@ -28,4 +31,23 @@ public abstract class RequestAction<T> {
 		return true;
 	}
 	
+	public DefaultDbFuture<T> getFuture() {
+		return future;
+	}
+
+	public void setFuture(DefaultDbSessionFuture<T> future) {
+		if (this.future != null) {
+			throw new IllegalStateException("future can only be set once");
+		}
+		this.future = future;
+	}
+
+	public Object getPayload() {
+		return payload;
+	}
+
+	public void setPayload(Object payload) {
+		this.payload = payload;
+	}
+
 }

@@ -27,11 +27,12 @@ import org.slf4j.LoggerFactory;
 import edu.byu.cs.adbcj.Result;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
 import edu.byu.cs.adbcj.support.DefaultResult;
-import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue.Request;
+import edu.byu.cs.adbcj.support.Request;
 
 public class OkResponseMessageHandler implements MessageHandler<OkResponse> {
 	private Logger logger = LoggerFactory.getLogger(OkResponseMessageHandler.class);
 	
+	@SuppressWarnings("unchecked")
 	public void messageReceived(IoSession session, OkResponse response) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
@@ -41,7 +42,7 @@ public class OkResponseMessageHandler implements MessageHandler<OkResponse> {
 		if (activeRequest == null) {
 			throw new IllegalStateException("Received response with no activeRequest " + response);
 		}
-		DefaultDbFuture future = activeRequest.getFuture();
+		DefaultDbFuture<Result> future = (DefaultDbFuture<Result>)activeRequest.getFuture();
 		List<String> warnings = null;
 		if (response.getWarningCount() > 0) {
 			warnings = new LinkedList<String>();

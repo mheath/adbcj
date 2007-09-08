@@ -22,7 +22,7 @@ import org.apache.mina.handler.demux.MessageHandler;
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
-import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue.Request;
+import edu.byu.cs.adbcj.support.Request;
 
 public class ResultSetMessagesHandler<T extends Response> implements MessageHandler<T> {
 
@@ -30,7 +30,7 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 	public void messageReceived(IoSession session, Response message) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
-		Request activeRequest = connection.getActiveRequest();
+		Request<?> activeRequest = connection.getActiveRequest();
 		MysqlResultSet resultSet = (MysqlResultSet)activeRequest.getPayload();
 		
 		if (message instanceof ResultSetResponse) {

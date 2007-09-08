@@ -18,7 +18,7 @@ package edu.byu.cs.adbcj.mysql;
 
 import java.nio.charset.CharacterCodingException;
 
-public class CommandRequest extends Request {
+public class CommandRequest extends MysqlRequest {
 
 	private final Command command;
 	private final String payload;

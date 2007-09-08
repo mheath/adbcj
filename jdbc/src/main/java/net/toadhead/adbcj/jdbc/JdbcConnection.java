@@ -18,8 +18,11 @@ package net.toadhead.adbcj.jdbc;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -35,22 +38,23 @@ import edu.byu.cs.adbcj.ResultSet;
 import edu.byu.cs.adbcj.TransactionIsolationLevel;
 import edu.byu.cs.adbcj.Type;
 import edu.byu.cs.adbcj.Value;
-import edu.byu.cs.adbcj.support.DefaultDbFuture;
-import edu.byu.cs.adbcj.support.AbstractSessionRequestQueue;
+import edu.byu.cs.adbcj.support.AbstractTransactionalSession;
 import edu.byu.cs.adbcj.support.ConcurrentFutureSessionProxy;
-import edu.byu.cs.adbcj.support.DbSessionFutureProxy;
+import edu.byu.cs.adbcj.support.DefaultDbFuture;
+import edu.byu.cs.adbcj.support.DefaultDbSessionFuture;
 import edu.byu.cs.adbcj.support.DefaultField;
+import edu.byu.cs.adbcj.support.DefaultResult;
 import edu.byu.cs.adbcj.support.DefaultResultSet;
 import edu.byu.cs.adbcj.support.DefaultRow;
 import edu.byu.cs.adbcj.support.DefaultValue;
-import edu.byu.cs.adbcj.support.RequestAction;
+import edu.byu.cs.adbcj.support.Request;
 
-public class JdbcConnection extends AbstractSessionRequestQueue implements Connection {
+public class JdbcConnection extends AbstractTransactionalSession implements Connection {
 
 	private final JdbcConnectionManager connectionManager;
 	private final java.sql.Connection jdbcConnection;
 	
-	private DbFuture<Void> closeFuture;
+	private DbSessionFuture<Void> closeFuture;
 	private volatile boolean closed = false;
 	
 	public JdbcConnection(JdbcConnectionManager connectionManager, java.sql.Connection jdbcConnection) {
@@ -60,37 +64,6 @@ public class JdbcConnection extends AbstractSessionRequestQueue implements Conne
 
 	public ConnectionManager getConnectionManager() {
 		return connectionManager;
-	}
-
-	public void beginTransaction() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public DbSessionFuture<Void> commit() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public DbSessionFuture<Void> rollback() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public boolean isInTransaction() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	public TransactionIsolationLevel getTransactionIsolationLevel() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void setTransactionIsolationLevel(
-			TransactionIsolationLevel transactionIsolationLevel) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	public synchronized DbSessionFuture<Void> close(boolean immediate) throws DbException {
@@ -125,15 +98,15 @@ public class JdbcConnection extends AbstractSessionRequestQueue implements Conne
 				localFuture.setFuture(future);
 				closeFuture = localFuture;
 			} else {
-				closeFuture = enqueueCallable(new Callable<Void>() {
+				closeFuture = enqueueRequest(new CallableRequest<Void>() {
 					public Void call() throws Exception {
 						jdbcConnection.close();
 						return null;
 					}
-				}) ;
+				});
 			}
 		}
-		return newFutureProxy(closeFuture);
+		return closeFuture;
 	}
 
 	private synchronized void unclose() {
@@ -150,7 +123,8 @@ public class JdbcConnection extends AbstractSessionRequestQueue implements Conne
 	}
 
 	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
-		return newFutureProxy(enqueueCallable(new Callable<ResultSet>() {
+		checkClosed();
+		return enqueueTransactionalRequest(new CallableRequest<ResultSet>() {
 			public ResultSet call() throws Exception {
 				Statement jdbcStatement = jdbcConnection.createStatement();
 				java.sql.ResultSet jdbcResultSet = null;
@@ -225,25 +199,44 @@ public class JdbcConnection extends AbstractSessionRequestQueue implements Conne
 				}
 			}
 
-		}));
+		});
 	}
 
-	public DbSessionFuture<Result> executeUpdate(String sql) {
-		// TODO Auto-generated method stub
-		return null;
+	public DbSessionFuture<Result> executeUpdate(final String sql) {
+		checkClosed();
+		return enqueueTransactionalRequest(new CallableRequest<Result>() {
+			public Result call() throws Exception {
+				Statement statement = jdbcConnection.createStatement();
+				try {
+					statement.execute(sql);
+					List<String> warnings = new LinkedList<String>();
+					SQLWarning sqlWarnings = statement.getWarnings();
+					while (sqlWarnings != null) {
+						warnings.add(sqlWarnings.getLocalizedMessage());
+						sqlWarnings = sqlWarnings.getNextWarning();
+					}
+					return new DefaultResult((long)statement.getUpdateCount(), warnings);
+				} finally {
+					statement.close();
+				}
+			}
+		});
 	}
 	
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
+		checkClosed();
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	public DbSessionFuture<PreparedStatement> prepareStatement(Object key, String sql) {
+		checkClosed();
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public DbFuture<Void> ping() {
+		checkClosed();
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -253,44 +246,89 @@ public class JdbcConnection extends AbstractSessionRequestQueue implements Conne
 	 * End of API methods 
 	 * 
 	 */
-
-	protected <E> DefaultDbFuture<E> enqueueCallable(final Callable<E> task) {
-		DefaultDbFuture<E> localFuture = enqueueRequest(new RequestAction<E>() {
-			private volatile Future<E> future = null;
-			@Override
-			public synchronized boolean cancel(boolean mayInterruptIfRunning) {
-				if (future == null) {
-					return false;
-				}
-				return future.cancel(mayInterruptIfRunning);
-			}
-			public synchronized void execute(final DefaultDbFuture<E> future) {
-				this.future = connectionManager.getExecutorService().submit(new Callable<E>() {
-					public E call() throws Exception {
-						try {
-							E value = task.call();
-							future.setValue(value);
-							return value;
-						} catch (Exception e) {
-							if (e instanceof DbException) {
-								future.setException((DbException)e);
-							} else {
-								future.setException(new DbException(e));
-							}
-							throw e;
-						} finally {
-							future.setDone();
-						}
-					}
-				});
-			}
-		});
-		return localFuture;
-	}
 	
-	@SuppressWarnings("unchecked")
-	private <E> DbSessionFuture<E> newFutureProxy(DbFuture<E> future) {
-		return new DbSessionFutureProxy<E>((DbFuture<E>)future, this);
+	// *********** Transaction method implementations **************************
+	
+	@Override
+	protected DbSessionFuture<Void> enqueueChangeIsolationLevel(Transaction transaction,
+			final TransactionIsolationLevel transactionIsolationLevel) {
+		CallableRequest<Void> request = new CallableRequest<Void>() {
+					public Void call() throws Exception {
+						int isolationLevel;
+						switch (transactionIsolationLevel) {
+						case NONE:
+							isolationLevel = java.sql.Connection.TRANSACTION_NONE;
+							break;
+						case READ_COMMITTED:
+							isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
+							break;
+						case READ_UNCOMMITTED:
+							isolationLevel = java.sql.Connection.TRANSACTION_READ_UNCOMMITTED;
+							break;
+						case REPEATABLE_READ:
+							isolationLevel = java.sql.Connection.TRANSACTION_REPEATABLE_READ;
+							break;
+						case SERIALIZABLE:
+							isolationLevel = java.sql.Connection.TRANSACTION_SERIALIZABLE;
+							break;
+						default:
+							throw new DbException("Can't handle transaction isolation level " + transactionIsolationLevel);
+						}
+						jdbcConnection.setTransactionIsolation(isolationLevel);
+						return null;
+					}
+				};
+		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+		transaction.addRequest(request);
+		return future;
+	}
+
+	@Override
+	protected DbSessionFuture<Void> enqueueCommit(Transaction transaction) {
+		CallableRequest<Void> request = new CallableRequest<Void>() {
+			public Void call() throws Exception {
+				jdbcConnection.commit();
+				return null;
+			}
+		};
+		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+		transaction.addRequest(request);
+		return future;
+	}
+
+	@Override
+	protected DbSessionFuture<Void> enqueueRollback(Transaction transaction) {
+		CallableRequest<Void> request = new CallableRequest<Void>() {
+			public Void call() throws Exception {
+				jdbcConnection.rollback();
+				return null;
+			}
+		};
+		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+		transaction.addRequest(request);
+		return future;
+	}
+
+	@Override
+	protected DbSessionFuture<Void> enqueueStartTransaction(Transaction transaction) {
+		CallableRequest<Void> request = new CallableRequest<Void>() {
+			public Void call() throws Exception {
+				jdbcConnection.setAutoCommit(false);
+				return null;
+			}
+		};
+		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+		transaction.addRequest(request);
+		return future;
+	}
+
+	// *********** JDBC Specific method implementations ************************
+	
+	@Override
+	protected void checkClosed() {
+		if (isClosed()) {
+			throw new DbException("Connection is closed");
+		}
 	}
 
 	private Type convertJdbcToAdbcjType(int columnType) {
@@ -360,6 +398,41 @@ public class JdbcConnection extends AbstractSessionRequestQueue implements Conne
 		default:
 			throw new IllegalStateException("Don't know how to handle column type" + columnType);	
 		}
+	}
+	
+	private abstract class CallableRequest<E> extends Request<E> implements Callable<E> {
+		private volatile Future<E> future = null;
+
+		@Override
+		public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+			if (future == null) {
+				return false;
+			}
+			return future.cancel(mayInterruptIfRunning);
+		}
+		@Override
+		public synchronized void execute(final DefaultDbFuture<E> future) {
+			this.future = connectionManager.getExecutorService().submit(new Callable<E>() {
+				public E call() throws Exception {
+					try {
+						E value = CallableRequest.this.call();
+						future.setValue(value);
+						return value;
+					} catch (Exception e) {
+						if (e instanceof DbException) {
+							future.setException((DbException)e);
+						} else {
+							future.setException(new DbException(e));
+						}
+						throw e;
+					} finally {
+						future.setDone();
+						makeNextRequestActive();
+					}
+				}
+			});
+		}
+
 	}
 
 }

@@ -25,9 +25,6 @@ import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
 import org.apache.mina.common.IoFuture;
 import org.apache.mina.common.IoFutureListener;
-import org.apache.mina.common.IoService;
-import org.apache.mina.common.IoServiceListener;
-import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.demux.DemuxingProtocolCodecFactory;
 import org.apache.mina.filter.codec.demux.MessageDecoder;
@@ -42,7 +39,7 @@ import edu.byu.cs.adbcj.DbListener;
 import edu.byu.cs.adbcj.DbSessionFuture;
 import edu.byu.cs.adbcj.Result;
 import edu.byu.cs.adbcj.support.DefaultDbFuture;
-import edu.byu.cs.adbcj.support.RequestAction;
+import edu.byu.cs.adbcj.support.Request;
 
 public class MysqlConnectionManager implements ConnectionManager {
 
@@ -81,19 +78,6 @@ public class MysqlConnectionManager implements ConnectionManager {
 	
 	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
 		// TODO: Close all open connections
-		socketConnector.addListener(new IoServiceListener() {
-			public void serviceActivated(IoService service) {
-				System.out.println("socketConnector actived");
-			}
-			public void serviceDeactivated(IoService service) {
-				System.out.println("socketConnector deactived");
-			}
-			public void sessionCreated(IoSession session) {
-			}
-			public void sessionDestroyed(IoSession session) {
-			}
-			
-		});
 		return null;
 	}
 
@@ -118,16 +102,19 @@ public class MysqlConnectionManager implements ConnectionManager {
 				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
 				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
 				
-				connection.enqueueRequest(new RequestAction<Result>() {
+				connection.enqueueRequest(new Request<Result>() {
 					public void execute(DefaultDbFuture<Result> future) {
 						dbConnectFuture.setValue(connection);
 					}
 				}).addListener(new DbListener<Result>() {
 					public void onCompletion(DbFuture<Result> future) {
 						try {
+							future.get();
 							dbConnectFuture.setValue(connection);
 						} catch (DbException e) {
 							dbConnectFuture.setException(e);
+						} catch (InterruptedException e) {
+							dbConnectFuture.setException(new DbException(e));
 						} finally {
 							dbConnectFuture.setDone();
 						}

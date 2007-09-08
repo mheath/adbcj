@@ -23,7 +23,7 @@ import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 import org.apache.mina.filter.codec.demux.MessageEncoder;
 
-public abstract class RequestEncoder<T extends Request> implements MessageEncoder<T> {
+public abstract class RequestEncoder<T extends MysqlRequest> implements MessageEncoder<T> {
 
 	protected static final int REQUEST_HEADER_SIZE = 4;
 
