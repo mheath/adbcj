@@ -50,7 +50,15 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		if (!isInTransaction()) {
 			throw new DbException("Not currently in a transaction, cannot commit");
 		}
-		return enqueueCommit(transaction);
+		if (transaction.isBeginScheduled()) {
+			DbSessionFuture<Void> future = enqueueCommit(transaction);
+			transaction = null;
+			return future;
+		}
+		DefaultDbSessionFuture<Void> future = new DefaultDbSessionFuture<Void>(this);
+		future.setDone();
+		transaction = null;
+		return future;
 	}
 	
 	public synchronized DbSessionFuture<Void> rollback() {
@@ -60,10 +68,13 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		}
 		transaction.cancelPendingRequests();
 		if (transaction.isStarted()) {
-			return enqueueRollback(transaction);
+			DbSessionFuture<Void> future = enqueueRollback(transaction);
+			transaction = null;
+			return future;
 		}
 		DefaultDbSessionFuture<Void> future = new DefaultDbSessionFuture<Void>(this);
 		future.setDone();
+		transaction = null;
 		return future;
 	}
 
@@ -152,7 +163,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		
 		public void cancelPendingRequests() {
 			for (Request<?> request : requests) {
-				request.cancel(false);
+				request.getFuture().cancel(false);
 			}
 		}
 		

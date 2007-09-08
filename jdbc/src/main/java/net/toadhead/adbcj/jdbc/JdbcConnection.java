@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.DbException;
@@ -50,7 +53,9 @@ import edu.byu.cs.adbcj.support.DefaultValue;
 import edu.byu.cs.adbcj.support.Request;
 
 public class JdbcConnection extends AbstractTransactionalSession implements Connection {
-
+	
+	private final Logger logger = LoggerFactory.getLogger(JdbcConnection.class);
+	
 	private final JdbcConnectionManager connectionManager;
 	private final java.sql.Connection jdbcConnection;
 	
@@ -250,10 +255,13 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	// *********** Transaction method implementations **************************
 	
 	@Override
-	protected DbSessionFuture<Void> enqueueChangeIsolationLevel(Transaction transaction,
+	protected DbSessionFuture<Void> enqueueChangeIsolationLevel(final Transaction transaction,
 			final TransactionIsolationLevel transactionIsolationLevel) {
 		CallableRequest<Void> request = new CallableRequest<Void>() {
 					public Void call() throws Exception {
+						transaction.setStarted(true);
+						// TODO: Change to debug
+						logger.info("Changing isolation level to {}", transactionIsolationLevel);
 						int isolationLevel;
 						switch (transactionIsolationLevel) {
 						case NONE:
@@ -284,11 +292,33 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	}
 
 	@Override
-	protected DbSessionFuture<Void> enqueueCommit(Transaction transaction) {
+	protected DbSessionFuture<Void> enqueueCommit(final Transaction transaction) {
 		CallableRequest<Void> request = new CallableRequest<Void>() {
+			private boolean executing = false;
+			private boolean canceled = false;
 			public Void call() throws Exception {
-				jdbcConnection.commit();
+				executing = true;
+				// TODO: Change to debug
+				if (canceled) {
+					jdbcConnection.rollback();
+				} else {
+					logger.info("Committing transaction");
+					jdbcConnection.commit();
+				}
 				return null;
+			}
+			@Override
+			public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+				if (executing) {
+					return false;
+				}
+				canceled = true;
+				transaction.cancelPendingRequests();
+				return true;
+			}
+			@Override
+			public boolean canRemove() {
+				return !transaction.isStarted();
 			}
 		};
 		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
@@ -300,6 +330,8 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	protected DbSessionFuture<Void> enqueueRollback(Transaction transaction) {
 		CallableRequest<Void> request = new CallableRequest<Void>() {
 			public Void call() throws Exception {
+				// TODO: Change to debug
+				logger.info("Rolling back transaction");
 				jdbcConnection.rollback();
 				return null;
 			}
@@ -310,9 +342,12 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	}
 
 	@Override
-	protected DbSessionFuture<Void> enqueueStartTransaction(Transaction transaction) {
+	protected DbSessionFuture<Void> enqueueStartTransaction(final Transaction transaction) {
 		CallableRequest<Void> request = new CallableRequest<Void>() {
 			public Void call() throws Exception {
+				// TODO: Change to debug
+				logger.info("Starting transaction");
+				transaction.setStarted(true);
 				jdbcConnection.setAutoCommit(false);
 				return null;
 			}
@@ -331,6 +366,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		}
 	}
 
+	// TODO: Move this into Type enum
 	private Type convertJdbcToAdbcjType(int columnType) {
 		switch (columnType) {
 		case Types.ARRAY:

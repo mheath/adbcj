@@ -165,7 +165,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 			@Override
 			public void execute(DefaultDbFuture<Void> future) {
 				synchronized (MysqlConnection.this) {
-					transaction.setStarted(false);
+					transaction.setStarted(true);
 					CommandRequest request = new CommandRequest(Command.QUERY, "begin");
 					session.write(request);
 				}
@@ -178,9 +178,9 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	
 	@Override
 	protected DbSessionFuture<Void> enqueueCommit(final Transaction transaction) {
-		return enqueueRequest(new Request<Void>() {
-			private volatile boolean executing = false;
-			private volatile boolean cancelled = false;
+		Request<Void> request = new Request<Void>() {
+			private boolean executing = false;
+			private boolean cancelled = false;
 			public synchronized void execute(DefaultDbFuture<Void> future) {
 				executing = true;
 				if (cancelled) {
@@ -202,17 +202,20 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 				transaction.cancelPendingRequests();
 				return true;
 			}
-			// Commit can not be removed - if commit gets cancelled, it is converted to a rollback
+			// Commit can not be removed if transaction has been started
 			@Override
 			public boolean canRemove() {
-				return false;
+				return !transaction.isStarted();
 			}
-		});
+		};
+		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+		transaction.addRequest(request);
+		return future;
 	}
 	
 	@Override
 	protected DbSessionFuture<Void> enqueueRollback(Transaction transaction) {
-		return enqueueRequest(new Request<Void>() {
+		Request<Void> request = new Request<Void>() {
 			@Override
 			public void execute(DefaultDbFuture<Void> future) {
 				sendRollback();
@@ -225,11 +228,14 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 			public boolean canRemove() {
 				return false;
 			}
-		});
+		};
+		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+		transaction.addRequest(request);
+		return future;
 	}
 	
 	@Override
-	protected DbSessionFuture<Void> enqueueChangeIsolationLevel(Transaction transaction,
+	protected DbSessionFuture<Void> enqueueChangeIsolationLevel(final Transaction transaction,
 			final TransactionIsolationLevel transactionIsolationLevel) {
 		Request<Void> request = new Request<Void>() {
 			@Override

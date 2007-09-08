@@ -20,18 +20,15 @@ public class UpdateTest extends ConnectionManagerDataProvider {
 
 		try {
 			// Clear out updates table
-			System.err.println("Clearing updates table");
 			Result result = connection.executeUpdate("DELETE FROM updates").get();
 			assertNotNull(result);
 
 			// Insert a row
-			System.err.println("Inserting");
 			result = connection.executeUpdate("INSERT INTO updates (id) VALUES (1)").get();
 			assertNotNull(result);
 			assertEquals(result.getAffectedRows(), Long.valueOf(1));
 	
 			// Select the row
-			System.err.println("Selecting row");
 			ResultSet rs = connection.executeQuery("SELECT id FROM updates").get();
 			assertNotNull(rs);
 			assertEquals(rs.size(), 1);
@@ -40,19 +37,16 @@ public class UpdateTest extends ConnectionManagerDataProvider {
 			assertEquals(value.getField().getColumnLabel(), "id");
 	
 			// Update nothing
-			System.err.println("Updating nothing");
 			result = connection.executeUpdate("UPDATE updates SET id=1 WHERE id=2").get();
 			assertNotNull(result);
 			assertEquals(result.getAffectedRows(), Long.valueOf(0));
 			
 			// Update inserted row
-			System.err.println("Updating row");
 			result = connection.executeUpdate("UPDATE updates SET id=2").get();
 			assertNotNull(result);
 			assertEquals(result.getAffectedRows(), Long.valueOf(1));
 			
 			// Delete inserted row
-			System.err.println("Deleting row");
 			result = connection.executeUpdate("DELETE FROM updates WHERE id=2").get();
 			assertNotNull(result);
 			assertEquals(result.getAffectedRows(), Long.valueOf(1));
