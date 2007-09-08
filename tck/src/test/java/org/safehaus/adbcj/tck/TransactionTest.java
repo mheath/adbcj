@@ -99,5 +99,44 @@ public class TransactionTest extends ConnectionManagerDataProvider {
 			connection.close(true);
 		}
 	}
-	
+
+	@Test(dataProvider="connectionManagerDataProvider")
+	public void testCommit(ConnectionManager connectionManager) throws Exception {
+		Connection connection = connectionManager.connect().get();
+		Connection connection2 = connectionManager.connect().get();
+		try {
+			// Clear out updates table
+			Result result = connection.executeUpdate("DELETE FROM updates").get();
+			assertNotNull(result);
+
+			connection.beginTransaction();
+
+			// Insert a row
+			result = connection.executeUpdate("INSERT INTO updates (id) VALUES (1)").get();
+			assertNotNull(result);
+			assertEquals(result.getAffectedRows(), Long.valueOf(1));
+			
+			// Make sure second connection can't see data
+			ResultSet rs = connection2.executeQuery("SELECT id FROM updates").get();
+			assertNotNull(rs);
+			assertEquals(rs.size(), 0);
+			
+			connection.commit().get();
+			
+			// Make sure both connections can see data
+			rs = connection.executeQuery("SELECT id FROM updates").get();
+			assertNotNull(rs);
+			assertEquals(rs.size(), 1);
+			assertEquals(rs.get(0).get(0).getInt(), 1);
+			
+			rs = connection2.executeQuery("SELECT id FROM updates").get();
+			assertNotNull(rs);
+			assertEquals(rs.size(), 1);
+			assertEquals(rs.get(0).get(0).getInt(), 1);
+			
+		} finally {
+			connection.close(true);
+			connection2.close(true);
+		}
+	}
 }
