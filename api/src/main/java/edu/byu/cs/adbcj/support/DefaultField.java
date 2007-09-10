@@ -21,6 +21,7 @@ import edu.byu.cs.adbcj.Type;
 
 public class DefaultField implements Field {
 
+	private final int index;
 	private final String catalogName;
 	private final String schemaName;
 	private final String tableLabel;
@@ -42,6 +43,7 @@ public class DefaultField implements Field {
 	private final String fieldClassName;
 	
 	public DefaultField(
+			int index,
 			String catalogName,
 			String schemaName,
 			String tableLabel,
@@ -62,6 +64,7 @@ public class DefaultField implements Field {
 			boolean writable,
 			String fieldClassName
 			) {
+		this.index = index;
 		this.catalogName = catalogName;
 		this.schemaName = schemaName;
 		this.tableLabel = tableLabel;
@@ -81,6 +84,10 @@ public class DefaultField implements Field {
 		this.signed = signed;
 		this.writable = writable;
 		this.fieldClassName = fieldClassName;
+	}
+	
+	public int getIndex() {
+		return index;
 	}
 	
 	public String getCatalogName() {
@@ -158,4 +165,25 @@ public class DefaultField implements Field {
 	public boolean isWritable() {
 		return writable;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + index;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final DefaultField other = (DefaultField)obj;
+		return index == other.index;
+	}
+	
 }

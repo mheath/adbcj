@@ -142,6 +142,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 					// Add fields
 					for (int i = 1; i <= columnCount; i++) {
 						Field field = new DefaultField(
+								i - 1,
 								metaData.getCatalogName(i),
 								metaData.getSchemaName(i),
 								metaData.getTableName(i),

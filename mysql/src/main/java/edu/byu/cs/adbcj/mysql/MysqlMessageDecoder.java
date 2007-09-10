@@ -50,6 +50,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 
 	private State state = State.CONNECTING;
 	private int fieldPacketCount = 0;
+	private int fieldIndex = 0;
 
 	public MessageDecoderResult decodable(IoSession session, ByteBuffer in) {
 		in.order(ByteOrder.LITTLE_ENDIAN);
@@ -59,7 +60,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		}
 
 		int length = in.getUnsignedMediumInt();
-		if (in.remaining() < length + 1) {
+		if (in.remaining() < length + 1) { // TODO: Fix + 1 length for binary length encoding
 			return NEED_DATA;
 		}
 
@@ -134,6 +135,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			out.flush();
 
 			state = State.ROW;
+			fieldIndex = 0;
 			break;
 		case ROW:
 			fieldCount = in.get();
@@ -258,7 +260,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		int decimals = buffer.getUnsigned();
 		buffer.getShort(); // Skip filler
 		long fieldDefault = getBinaryLengthEncoding(buffer);
-		MysqlField field = new MysqlField(catalogName, schemaName, tableLabel, tableName, fieldType, columnLabel,
+		MysqlField field = new MysqlField(fieldIndex++, catalogName, schemaName, tableLabel, tableName, fieldType, columnLabel,
 				columnName, 0, // Figure out precision
 				decimals, charSet, length, flags, fieldDefault);
 		return new ResultSetFieldResponse(packetLength, packetNumber, field);

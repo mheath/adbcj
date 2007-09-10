@@ -29,6 +29,7 @@ public class MysqlField extends DefaultField {
 	private final long fieldDefault;
 	
 	public MysqlField(
+			int index,
 			String catalogName,
 			String schemaName,
 			String tableLabel,
@@ -44,6 +45,7 @@ public class MysqlField extends DefaultField {
 			long fieldDefault) {
 		
 		super(
+				index,
 				catalogName,
 				schemaName,
 				tableLabel,

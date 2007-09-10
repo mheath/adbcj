@@ -16,9 +16,9 @@
  */
 package edu.byu.cs.adbcj;
 
-import java.util.List;
+import java.util.Map;
 
-public interface Row extends List<Value> {
+public interface Row extends Map<Object, Value> {
 
     ResultSet getResultSet();
     

@@ -18,6 +18,8 @@ package edu.byu.cs.adbcj;
 
 public interface Field {
 
+	int getIndex();
+	
 	String getCatalogName();
 	
 	String getFieldClassName();

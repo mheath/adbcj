@@ -17,7 +17,7 @@ import edu.byu.cs.adbcj.Row;
 // TODO Write test for result set metadata
 public class SelectTest extends ConnectionManagerDataProvider {
 
-	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
+	@Test(dataProvider="connectionManagerDataProvider")
 	public void testSimpleIntSelect(ConnectionManager connectionManager) throws DbException, InterruptedException {
 		final boolean[] callbacks = {false};
 		final CountDownLatch latch = new CountDownLatch(callbacks.length); 
