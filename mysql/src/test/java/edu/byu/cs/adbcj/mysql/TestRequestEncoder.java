@@ -59,7 +59,7 @@ public class TestRequestEncoder {
 				
 				Assert.assertNotNull(buffer);
 			}
-			public Set<Class<MysqlRequest>> getMessageTypes() {
+			public Set<Class<? extends MysqlRequest>> getMessageTypes() {
 				return null;
 			}
 		};

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.ConnectionManagerFactory;
+import edu.byu.cs.adbcj.ConnectionManagerProvider;
 import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbListener;
 import edu.byu.cs.adbcj.DbSessionFuture;
@@ -22,7 +22,7 @@ public class Test {
 		
 		ThreadPoolExecutor executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5L, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>());
-		ConnectionManager connectionManager = ConnectionManagerFactory.createConnectionManager("adbcj:mysql://localhost/test", "mheath", "cockroach", executorService);
+		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/test", "mheath", "cockroach", executorService);
 		DbFuture<Connection> connectFuture = connectionManager.connect();
 		connectFuture.addListener(new DbListener<Connection>() {
 			public void onCompletion(DbFuture<Connection> listener) throws Exception {

@@ -15,11 +15,29 @@
  *
  */package edu.byu.cs.adbcj;
 
+/**
+ * A connection to a specific database.  <code>Connection</code> objects are obtained using
+ * {@link ConnectionManager#connect()}.
+ * 
+ * @author Mike Heath
+ * @see DbSession
+ * @see ConnectionManager
+ */
+public interface Connection extends DbSession {
 
-public interface Connection extends Session {
-
+	/**
+	 * Returns the instance of the connection manager that created this connection.
+	 * 
+	 * @return  The connection manager instance that created this connection.
+	 */
 	ConnectionManager getConnectionManager();
 	
+	/**
+	 * Sends a noop operation to the database server.  This is useful to test an idle connection to see if it is still
+	 * working properly.
+	 * 
+	 * @return  A DbFuture representing the pending completion of the ping
+	 */
 	DbFuture<Void> ping();
 	
 }

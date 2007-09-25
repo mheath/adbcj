@@ -7,7 +7,7 @@ import net.toadhead.adbcj.jdbc.JdbcConnectionManagerProducer;
 import org.safehaus.adbcj.postgresql.PgConnectionManagerProducer;
 import org.testng.annotations.DataProvider;
 
-import edu.byu.cs.adbcj.ConnectionManagerFactory;
+import edu.byu.cs.adbcj.ConnectionManagerProvider;
 import edu.byu.cs.adbcj.mysql.MysqlConnectionManagerProducer;
 
 public class ConnectionManagerDataProvider {
@@ -47,7 +47,7 @@ public class ConnectionManagerDataProvider {
 			CONNECTION_MANAGERS = new Object[TEST_CONNECTION_DATA.length][1];
 			for (int i = 0 ; i < TEST_CONNECTION_DATA.length; i++) {
 				Object[] connectParams = TEST_CONNECTION_DATA[i];
-				CONNECTION_MANAGERS[i] = new Object[] {ConnectionManagerFactory.createConnectionManager(
+				CONNECTION_MANAGERS[i] = new Object[] {ConnectionManagerProvider.createConnectionManager(
 						connectParams[0].toString(),
 						connectParams[1].toString(),
 						connectParams[2].toString(),

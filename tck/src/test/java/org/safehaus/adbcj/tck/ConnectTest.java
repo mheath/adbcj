@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 import edu.byu.cs.adbcj.Connection;
 import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.ConnectionManagerFactory;
+import edu.byu.cs.adbcj.ConnectionManagerProvider;
 import edu.byu.cs.adbcj.DbException;
 import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbListener;
@@ -57,7 +57,7 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 			final boolean[] callbacks = {false};
 			final CountDownLatch latch = new CountDownLatch(2);
 
-			ConnectionManager connectionManager = ConnectionManagerFactory.createConnectionManager(url, user, "__BADPASSWORD__", executorService);
+			ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, "__BADPASSWORD__", executorService);
 			DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
 				public void onCompletion(DbFuture<Connection> future) throws Exception {
 					callbacks[0] = true;

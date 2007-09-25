@@ -2,3 +2,4 @@
 - Throw error when an update returns a result set or when a select returns an update
 - Add support for chaining result sets.
 - Add test for fetching generated keys
+- Test row.get for all the different types of keys it takes.

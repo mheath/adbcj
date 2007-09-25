@@ -22,7 +22,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.ConnectionManagerFactory;
+import edu.byu.cs.adbcj.ConnectionManagerProvider;
 import edu.byu.cs.adbcj.ConnectionManagerProducer;
 import edu.byu.cs.adbcj.DbException;
 
@@ -32,7 +32,7 @@ public class MysqlConnectionManagerProducer implements ConnectionManagerProducer
 	public static final int DEFAULT_PORT = 3306;
 	
 	static {
-		ConnectionManagerFactory.registerConnectionManagerProducer(PROTOCOL, new MysqlConnectionManagerProducer());
+		ConnectionManagerProvider.registerConnectionManagerProducer(PROTOCOL, new MysqlConnectionManagerProducer());
 	}
 	
 	

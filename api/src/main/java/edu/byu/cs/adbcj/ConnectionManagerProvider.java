@@ -24,13 +24,13 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 
-public class ConnectionManagerFactory {
+public class ConnectionManagerProvider {
 
 	public static final String ADBCJ_PROTOCOL = "adbcj";
 
 	private static final Map<String, ConnectionManagerProducer> CONNECTION_MANAGER_PRODUCERS = new HashMap<String, ConnectionManagerProducer>();
 	
-	private ConnectionManagerFactory () {}
+	private ConnectionManagerProvider () {}
 	
 	public static ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService) throws DbException {
 		return createConnectionManager(url, username, password, executorService, null);
@@ -63,11 +63,11 @@ public class ConnectionManagerFactory {
 	}
 	
 	private static synchronized ConnectionManagerProducer getConnectionManagerProducer(String protocol, Properties properties) {
-		ConnectionManagerProducer factory = CONNECTION_MANAGER_PRODUCERS.get(protocol);
-		if (factory == null) {
-			throw new DbException(String.format("No driver connection factory registered with protocol '%s'", protocol));
+		ConnectionManagerProducer provider = CONNECTION_MANAGER_PRODUCERS.get(protocol);
+		if (provider == null) {
+			throw new DbException(String.format("No driver connection provider registered with protocol '%s'", protocol));
 		}
-		return factory;
+		return provider;
 	}
 	
 

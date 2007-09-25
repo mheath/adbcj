@@ -16,7 +16,7 @@
  */
 package edu.byu.cs.adbcj.mysql;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.mina.common.ByteBuffer;
@@ -58,8 +58,10 @@ public class LoginRequestEncoder extends RequestEncoder<LoginRequest> {
 		buffer.put((byte)0);
 	}
 
-	public Set<Class<LoginRequest>> getMessageTypes() {
-		return Collections.singleton(LoginRequest.class); 
+	public Set<Class<? extends LoginRequest>> getMessageTypes() {
+		Set<Class<? extends LoginRequest>> type = new HashSet<Class<? extends LoginRequest>>();
+		type.add(LoginRequest.class);
+		return type;
 	}
 
 } 

@@ -17,17 +17,17 @@
 package edu.byu.cs.adbcj.support;
 
 import edu.byu.cs.adbcj.DbSessionFuture;
-import edu.byu.cs.adbcj.Session;
+import edu.byu.cs.adbcj.DbSession;
 
 public class DefaultDbSessionFuture<T> extends DefaultDbFuture<T> implements DbSessionFuture<T> {
 
-	private final Session session;
+	private final DbSession session;
 	
-	public DefaultDbSessionFuture(Session session) {
+	public DefaultDbSessionFuture(DbSession session) {
 		this.session = session;
 	}
 	
-	public Session getSession() {
+	public DbSession getSession() {
 		return session;
 	}
 

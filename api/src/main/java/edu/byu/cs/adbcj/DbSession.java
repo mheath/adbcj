@@ -16,7 +16,7 @@
  */
 package edu.byu.cs.adbcj;
 
-public interface Session {
+public interface DbSession {
 
 	void beginTransaction();
 	

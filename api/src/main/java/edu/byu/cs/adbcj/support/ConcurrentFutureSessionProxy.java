@@ -19,22 +19,22 @@ package edu.byu.cs.adbcj.support;
 import java.util.concurrent.Future;
 
 import edu.byu.cs.adbcj.DbSessionFuture;
-import edu.byu.cs.adbcj.Session;
+import edu.byu.cs.adbcj.DbSession;
 
 public class ConcurrentFutureSessionProxy<T> extends ConcurrentFutureProxy<T> implements DbSessionFuture<T> {
 
-	private final Session session;
+	private final DbSession session;
 	
-	public ConcurrentFutureSessionProxy(Session session) {
+	public ConcurrentFutureSessionProxy(DbSession session) {
 		this.session = session;
 	}
 	
-	public ConcurrentFutureSessionProxy(Future<T> future, Session session) {
+	public ConcurrentFutureSessionProxy(Future<T> future, DbSession session) {
 		super(future);
 		this.session = session;
 	}
 	
-	public Session getSession() {
+	public DbSession getSession() {
 		return session;
 	}
 

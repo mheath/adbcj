@@ -16,7 +16,7 @@
  */
 package edu.byu.cs.adbcj.mysql;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.mina.common.ByteBuffer;
@@ -34,8 +34,9 @@ public class CommandRequestEncoder extends RequestEncoder<CommandRequest> {
 		}
 	}
 
-	public Set<Class<CommandRequest>> getMessageTypes() {
-		return Collections.singleton(CommandRequest.class);
+	public Set<Class<? extends CommandRequest>> getMessageTypes() {
+		Set<Class<? extends CommandRequest>> type = new HashSet<Class<? extends CommandRequest>>();
+		type.add(CommandRequest.class);
+		return type;
 	}
-
 }

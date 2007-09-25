@@ -20,9 +20,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import edu.byu.cs.adbcj.Session;
+import edu.byu.cs.adbcj.DbSession;
 
-public abstract class AbstractSessionRequestQueue implements Session {
+public abstract class AbstractSessionRequestQueue implements DbSession {
 	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
 	
 	private Request<?> activeRequest;
