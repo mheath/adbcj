@@ -28,7 +28,7 @@ public class ConnectionManagerProvider {
 
 	public static final String ADBCJ_PROTOCOL = "adbcj";
 
-	private static final Map<String, ConnectionManagerProducer> CONNECTION_MANAGER_PRODUCERS = new HashMap<String, ConnectionManagerProducer>();
+	private static final Map<String, ConnectionManagerFactory> CONNECTION_MANAGER_FACTORIES = new HashMap<String, ConnectionManagerFactory>();
 	
 	private ConnectionManagerProvider () {}
 	
@@ -50,24 +50,24 @@ public class ConnectionManagerProvider {
 			URI driverUri = new URI(uri.getSchemeSpecificPart());
 			String protocol = driverUri.getScheme();
 			
-			ConnectionManagerProducer producer = getConnectionManagerProducer(protocol, properties);
-			return producer.createConnectionManager(url, username, password, executorService, properties);
+			ConnectionManagerFactory factory = getConnectionManagerFactory(protocol, properties);
+			return factory.createConnectionManager(url, username, password, executorService, properties);
 		} catch (URISyntaxException e) {
 			throw new DbException("Invalid connection URL: " + url);
 		}
 		
 	}
 	
-	public static synchronized void registerConnectionManagerProducer(String protocol, ConnectionManagerProducer producer) {
-		CONNECTION_MANAGER_PRODUCERS.put(protocol, producer);
+	public static synchronized void registerConnectionManagerFactory(String protocol, ConnectionManagerFactory factory) {
+		CONNECTION_MANAGER_FACTORIES.put(protocol, factory);
 	}
 	
-	private static synchronized ConnectionManagerProducer getConnectionManagerProducer(String protocol, Properties properties) {
-		ConnectionManagerProducer provider = CONNECTION_MANAGER_PRODUCERS.get(protocol);
-		if (provider == null) {
-			throw new DbException(String.format("No driver connection provider registered with protocol '%s'", protocol));
+	private static synchronized ConnectionManagerFactory getConnectionManagerFactory(String protocol, Properties properties) {
+		ConnectionManagerFactory factory = CONNECTION_MANAGER_FACTORIES.get(protocol);
+		if (factory == null) {
+			throw new DbException(String.format("No adbcj driver registered with protocol '%s'", protocol));
 		}
-		return provider;
+		return factory;
 	}
 	
 

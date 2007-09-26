@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package edu.byu.cs.adbcj.mysql;
+package net.toadhead.adbcj.jdbc;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,45 +23,33 @@ import java.util.concurrent.ExecutorService;
 
 import edu.byu.cs.adbcj.ConnectionManager;
 import edu.byu.cs.adbcj.ConnectionManagerProvider;
-import edu.byu.cs.adbcj.ConnectionManagerProducer;
+import edu.byu.cs.adbcj.ConnectionManagerFactory;
 import edu.byu.cs.adbcj.DbException;
 
-public class MysqlConnectionManagerProducer implements ConnectionManagerProducer {
+public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 
-	public static final String PROTOCOL = "mysql";
-	public static final int DEFAULT_PORT = 3306;
-	
+	private static final String PROTOCOL = "jdbc";
+
 	static {
-		ConnectionManagerProvider.registerConnectionManagerProducer(PROTOCOL, new MysqlConnectionManagerProducer());
+		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL,
+				new JdbcConnectionManagerFactory());
+
 	}
-	
-	
-	private MysqlConnectionManagerProducer() {
-	}
-	
-	public ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService, Properties properties) throws DbException {
-		String host;
-		int port;
-		String database;
-		/*
-		 * Parse URL
-		 */
+
+	public ConnectionManager createConnectionManager(String url,
+			String username, String password, ExecutorService executorService,
+			Properties properties) throws DbException {
 		try {
 			URI uri = new URI(url);
 			// Throw away the 'adbcj' protocol part of the URL
 			uri = new URI(uri.getSchemeSpecificPart());
 
-			host = uri.getHost();
-			port = uri.getPort();
-			if (port < 0) {
-				port = DEFAULT_PORT;
-			}
-			database = uri.getPath().substring(1);
+			String jdbcUrl = uri.toString();
+
+			return new JdbcConnectionManager(jdbcUrl, username, password, executorService, properties);
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}
-		
-		return new MysqlConnectionManager(host, port, username, password, database, executorService, properties);
 	}
 
 }

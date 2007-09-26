@@ -9,7 +9,7 @@ import edu.byu.cs.adbcj.DbFuture;
 import edu.byu.cs.adbcj.DbListener;
 import edu.byu.cs.adbcj.DbSessionFuture;
 import edu.byu.cs.adbcj.ResultSet;
-import edu.byu.cs.adbcj.mysql.MysqlConnectionManagerProducer;
+import edu.byu.cs.adbcj.mysql.MysqlConnectionManagerFactory;
 
 
 public class Test {
@@ -18,7 +18,7 @@ public class Test {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		Class.forName(MysqlConnectionManagerProducer.class.getName());
+		Class.forName(MysqlConnectionManagerFactory.class.getName());
 		
 		ThreadPoolExecutor executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5L, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>());
