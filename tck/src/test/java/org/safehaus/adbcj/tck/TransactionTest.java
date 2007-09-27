@@ -3,15 +3,15 @@ package org.safehaus.adbcj.tck;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+import org.safehaus.adbcj.Connection;
+import org.safehaus.adbcj.ConnectionManager;
+import org.safehaus.adbcj.DbException;
+import org.safehaus.adbcj.Result;
+import org.safehaus.adbcj.ResultSet;
+import org.safehaus.adbcj.Value;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import edu.byu.cs.adbcj.Connection;
-import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.DbException;
-import edu.byu.cs.adbcj.Result;
-import edu.byu.cs.adbcj.ResultSet;
-import edu.byu.cs.adbcj.Value;
 
 public class TransactionTest extends ConnectionManagerDataProvider {
 

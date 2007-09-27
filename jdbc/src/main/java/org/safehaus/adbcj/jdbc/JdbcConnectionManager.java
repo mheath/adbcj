@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package net.toadhead.adbcj.jdbc;
+package org.safehaus.adbcj.jdbc;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -23,13 +23,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import edu.byu.cs.adbcj.Connection;
-import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.DbException;
-import edu.byu.cs.adbcj.DbFuture;
-import edu.byu.cs.adbcj.DbSessionFuture;
-import edu.byu.cs.adbcj.support.ConcurrentFutureProxy;
+import org.safehaus.adbcj.Connection;
+import org.safehaus.adbcj.ConnectionManager;
+import org.safehaus.adbcj.DbException;
+import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.DbSessionFuture;
 
+import org.safehaus.adbcj.support.ConcurrentFutureProxy;
 
 public class JdbcConnectionManager implements ConnectionManager {
 

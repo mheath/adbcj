@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package net.toadhead.adbcj.jdbc;
+package org.safehaus.adbcj.jdbc;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -26,31 +26,31 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import org.safehaus.adbcj.Connection;
+import org.safehaus.adbcj.ConnectionManager;
+import org.safehaus.adbcj.DbException;
+import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.DbSessionFuture;
+import org.safehaus.adbcj.Field;
+import org.safehaus.adbcj.PreparedStatement;
+import org.safehaus.adbcj.Result;
+import org.safehaus.adbcj.ResultSet;
+import org.safehaus.adbcj.TransactionIsolationLevel;
+import org.safehaus.adbcj.Type;
+import org.safehaus.adbcj.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.byu.cs.adbcj.Connection;
-import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.DbException;
-import edu.byu.cs.adbcj.DbFuture;
-import edu.byu.cs.adbcj.DbSessionFuture;
-import edu.byu.cs.adbcj.Field;
-import edu.byu.cs.adbcj.PreparedStatement;
-import edu.byu.cs.adbcj.Result;
-import edu.byu.cs.adbcj.ResultSet;
-import edu.byu.cs.adbcj.TransactionIsolationLevel;
-import edu.byu.cs.adbcj.Type;
-import edu.byu.cs.adbcj.Value;
-import edu.byu.cs.adbcj.support.AbstractTransactionalSession;
-import edu.byu.cs.adbcj.support.ConcurrentFutureSessionProxy;
-import edu.byu.cs.adbcj.support.DefaultDbFuture;
-import edu.byu.cs.adbcj.support.DefaultDbSessionFuture;
-import edu.byu.cs.adbcj.support.DefaultField;
-import edu.byu.cs.adbcj.support.DefaultResult;
-import edu.byu.cs.adbcj.support.DefaultResultSet;
-import edu.byu.cs.adbcj.support.DefaultRow;
-import edu.byu.cs.adbcj.support.DefaultValue;
-import edu.byu.cs.adbcj.support.Request;
+import org.safehaus.adbcj.support.AbstractTransactionalSession;
+import org.safehaus.adbcj.support.ConcurrentFutureSessionProxy;
+import org.safehaus.adbcj.support.DefaultDbFuture;
+import org.safehaus.adbcj.support.DefaultDbSessionFuture;
+import org.safehaus.adbcj.support.DefaultField;
+import org.safehaus.adbcj.support.DefaultResult;
+import org.safehaus.adbcj.support.DefaultResultSet;
+import org.safehaus.adbcj.support.DefaultRow;
+import org.safehaus.adbcj.support.DefaultValue;
+import org.safehaus.adbcj.support.Request;
 
 public class JdbcConnection extends AbstractTransactionalSession implements Connection {
 	

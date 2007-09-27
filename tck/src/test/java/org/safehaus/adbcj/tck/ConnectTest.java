@@ -5,15 +5,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.safehaus.adbcj.Connection;
+import org.safehaus.adbcj.ConnectionManager;
+import org.safehaus.adbcj.ConnectionManagerProvider;
+import org.safehaus.adbcj.DbException;
+import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.DbListener;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import edu.byu.cs.adbcj.Connection;
-import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.ConnectionManagerProvider;
-import edu.byu.cs.adbcj.DbException;
-import edu.byu.cs.adbcj.DbFuture;
-import edu.byu.cs.adbcj.DbListener;
 
 // TODO Test non-immediate close and make sure any pending queries get called
 // TODO Test immediate close and make sure pending queries get canceled

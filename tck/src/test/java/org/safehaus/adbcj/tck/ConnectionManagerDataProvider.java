@@ -2,13 +2,13 @@ package org.safehaus.adbcj.tck;
 
 import java.util.concurrent.Executors;
 
-import net.toadhead.adbcj.jdbc.JdbcConnectionManagerFactory;
 
+import org.safehaus.adbcj.ConnectionManagerProvider;
+import org.safehaus.adbcj.jdbc.JdbcConnectionManagerFactory;
+import org.safehaus.adbcj.mysql.MysqlConnectionManagerFactory;
 import org.safehaus.adbcj.postgresql.PgConnectionManagerFactory;
 import org.testng.annotations.DataProvider;
 
-import edu.byu.cs.adbcj.ConnectionManagerProvider;
-import edu.byu.cs.adbcj.mysql.MysqlConnectionManagerFactory;
 
 public class ConnectionManagerDataProvider {
 

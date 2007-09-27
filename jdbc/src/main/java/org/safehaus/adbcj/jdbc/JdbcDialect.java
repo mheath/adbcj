@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package net.toadhead.adbcj.jdbc;
+package org.safehaus.adbcj.jdbc;
 
 public interface JdbcDialect {
 

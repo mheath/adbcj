@@ -3,10 +3,11 @@ package org.safehaus.adbcj.postgresql;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
-import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.ConnectionManagerProvider;
-import edu.byu.cs.adbcj.ConnectionManagerFactory;
-import edu.byu.cs.adbcj.DbException;
+import org.safehaus.adbcj.ConnectionManager;
+import org.safehaus.adbcj.ConnectionManagerFactory;
+import org.safehaus.adbcj.ConnectionManagerProvider;
+import org.safehaus.adbcj.DbException;
+
 
 public class PgConnectionManagerFactory implements ConnectionManagerFactory {
 
