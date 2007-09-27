@@ -2,14 +2,15 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import edu.byu.cs.adbcj.Connection;
-import edu.byu.cs.adbcj.ConnectionManager;
-import edu.byu.cs.adbcj.ConnectionManagerProvider;
-import edu.byu.cs.adbcj.DbFuture;
-import edu.byu.cs.adbcj.DbListener;
-import edu.byu.cs.adbcj.DbSessionFuture;
-import edu.byu.cs.adbcj.ResultSet;
-import edu.byu.cs.adbcj.mysql.MysqlConnectionManagerFactory;
+import org.safehaus.adbcj.Connection;
+import org.safehaus.adbcj.ConnectionManager;
+import org.safehaus.adbcj.ConnectionManagerProvider;
+import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.DbListener;
+import org.safehaus.adbcj.DbSessionFuture;
+import org.safehaus.adbcj.ResultSet;
+import org.safehaus.adbcj.mysql.MysqlConnectionManagerFactory;
+
 
 
 public class Test {
