@@ -18,22 +18,22 @@
 	<dependencies>
 		<dependency>
 			<artifactId>adbcj-api</artifactId>
-			<groupId>edu.byu.cs.adbcj</groupId>
+			<groupId>org.safehaus.adbcj</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<artifactId>adbcj-jdbc</artifactId>
-			<groupId>edu.byu.cs.adbcj</groupId>
+			<groupId>org.safehaus.adbcj</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<artifactId>adbcj-mysql</artifactId>
-			<groupId>edu.byu.cs.adbcj</groupId>
+			<groupId>org.safehaus.adbcj</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<artifactId>adbcj-postgresql</artifactId>
-			<groupId>edu.byu.cs.adbcj</groupId>
+			<groupId>org.safehaus.adbcj</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
