@@ -17,13 +17,25 @@
 package org.safehaus.adbcj.mysql;
 
 import org.apache.mina.common.IoSession;
+import org.safehaus.adbcj.DbException;
 
 public class IoSessionUtil {
+	
+	private static final long TIMEOUT = 5000;
 	
 	private static final String CONNECTION_KEY = MysqlConnection.class.getName();
 
 	public static MysqlConnection getMysqlConnection(IoSession session) {
-		return (MysqlConnection)session.getAttribute(CONNECTION_KEY);
+		// If we connect and the connect future's callback has not been invoked, we need to wait for the connection to get set
+		long startTime = System.currentTimeMillis();
+		while (System.currentTimeMillis() - startTime < TIMEOUT) {
+			MysqlConnection connection = (MysqlConnection)session.getAttribute(CONNECTION_KEY);
+			if (connection != null) {
+				return connection;
+			}
+			Thread.yield();
+		}
+		throw new IllegalStateException("Timed out trying to get connection");
 	}
 	
 	public static void setMysqlConnection(IoSession session, MysqlConnection connection) {

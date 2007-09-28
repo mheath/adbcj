@@ -13,3 +13,7 @@ INSERT INTO simple_values (int_val, str_val) values (4, 'Four');
 
 DROP TABLE IF EXISTS updates;
 CREATE TABLE updates (id int);
+
+DROP TABLE IF EXISTS locks;
+CREATE TABLE locks (name varchar(255) primary key not null);
+INSERT INTO locks(name) VALUES ('lock');

@@ -58,20 +58,24 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		Request<?> activeRequest = connection.getActiveRequest();
-		if (activeRequest == null) {
-			// TODO Figure out what to do with the exception
+		if (connection == null) {
 			cause.printStackTrace();
 		} else {
-			AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
-			if (future != null) {
-				if (cause instanceof DbException) {
-					future.setException((DbException)cause);
-				} else {
-					future.setException(new DbException(cause));
+			Request<?> activeRequest = connection.getActiveRequest();
+			if (activeRequest == null) {
+				// TODO Figure out what to do with the exception
+				cause.printStackTrace();
+			} else {
+				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
+				if (future != null) {
+					if (cause instanceof DbException) {
+						future.setException((DbException)cause);
+					} else {
+						future.setException(new DbException(cause));
+					}
+					future.setDone();
+					connection.makeNextRequestActive();
 				}
-				future.setDone();
-				connection.makeNextRequestActive();
 			}
 		}
 	}
