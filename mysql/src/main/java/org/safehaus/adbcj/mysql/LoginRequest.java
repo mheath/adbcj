@@ -69,7 +69,7 @@ public class LoginRequest extends MysqlRequest {
 	}
 
 	public int getMaxPacketSize() {
-		return MAX_PACKET_SIZE; // TODO: Make this configurable
+		return MAX_PACKET_SIZE; // TODO Make MySQL max packet size configurable
 	}
 
 	public MysqlCharacterSet getCharSet() {

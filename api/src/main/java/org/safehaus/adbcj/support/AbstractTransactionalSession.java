@@ -81,11 +81,11 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	protected synchronized <E> DbSessionFuture<E> enqueueTransactionalRequest(Request<E> request) {
 		// Check to see if we're in a transaction
 		if (transaction != null) {
-			// TODO: Check to see if transaction is in failed state and return future that indicates the error
+			// TODO Check to see if transaction is in failed state and return future that indicates the error
 			// Schedule starting transaction with database if possible
 			if (!transaction.isBeginScheduled()) {
 				// Set isolation level if necessary
-				// TODO: If changing isolation level fails, we need to rollback transaction
+				// TODO If changing isolation level fails, we need to rollback transaction
 				if (transactionIsolationLevel != serverSideIsolationLevel) {
 					enqueueChangeIsolationLevel(transaction, transactionIsolationLevel).addListener(new DbListener<Void>() {
 						private TransactionIsolationLevel privateIsolationLevel = transactionIsolationLevel;
@@ -96,7 +96,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 						}
 					});
 				}
-				// TODO: If starting transaction fails, we need to indicate error
+				// TODO If starting transaction fails, we need to indicate error
 				enqueueStartTransaction(transaction);
 				transaction.setBeginScheduled(true);
 			}

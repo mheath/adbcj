@@ -73,12 +73,12 @@ public class JdbcConnectionManager implements ConnectionManager {
 	}
 
 	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
-		// TODO Implement me
+		// TODO Implement JdbcConnectionManager.close(boolean immediate)
 		throw new IllegalStateException("Not implemented");
 	}
 
 	public boolean isClosed() {
-		// TODO Implement me
+		// TODO Implement JdbcConnectionManager.isClosed()
 		throw new IllegalStateException("Not implemented");
 	}
 

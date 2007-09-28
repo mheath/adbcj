@@ -62,7 +62,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		}
 
 		int length = in.getUnsignedMediumInt();
-		if (in.remaining() < length + 1) { // TODO: Fix + 1 length for binary length encoding
+		if (in.remaining() < length + 1) { // TODO Fix + 1 length for binary length encoding
 			return NEED_DATA;
 		}
 

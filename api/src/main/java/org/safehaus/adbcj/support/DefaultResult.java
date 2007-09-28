@@ -22,13 +22,12 @@ public class DefaultResult implements Result {
 	}
 
 	public DbFuture<ResultSet> getGeneratedKeys() {
-		// TODO Implement me
+		// TODO Implement DefaultResult.getGeneratedKeys()
 		throw new IllegalStateException("Not yet implemented");
 	}
 
 	public List<String> getWarnings() {
-		// TODO Auto-generated method stub
-		return null;
+		return warnings;
 	}
 
 }

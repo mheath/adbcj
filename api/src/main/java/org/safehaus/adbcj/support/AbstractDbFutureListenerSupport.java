@@ -44,7 +44,7 @@ public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> 
 				try {
 					listener.onCompletion(this);
 				} catch (Exception e) {
-					// TODO: Handle exception
+					// TODO Handle exception thrown by invoked callback
 					e.printStackTrace();
 				}
 			}
@@ -78,7 +78,7 @@ public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> 
 				try {
 					listener.onCompletion(this);
 				} catch (Exception e) {
-					// TODO: Handle this exception in connection manager
+					// TODO Handle callback's exception in connection manager
 					e.printStackTrace();
 				}
 			}

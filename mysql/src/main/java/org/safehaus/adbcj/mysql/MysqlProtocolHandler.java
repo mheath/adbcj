@@ -66,7 +66,7 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 
 			Request<?> activeRequest = connection.getActiveRequest();
 			if (activeRequest == null) {
-				// TODO Figure out what to do with the exception
+				// TODO Pass exception to ConnectionManager when we have exception handling implemented for the ConnectionManager
 				cause.printStackTrace();
 			} else {
 				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();

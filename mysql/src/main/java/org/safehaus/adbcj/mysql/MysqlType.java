@@ -84,6 +84,6 @@ public enum MysqlType {
 	}
 
 	public String getClassName() {
-		return ""; // TODO Figure out
+		return ""; // TODO Figure out what should be returned for a MySQL type class name
 	}
 }

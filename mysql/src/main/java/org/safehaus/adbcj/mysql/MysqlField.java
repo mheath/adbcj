@@ -61,10 +61,10 @@ public class MysqlField extends DefaultField {
 				mysqlType.isCurrency(),
 				false,
 				!flags.contains(FieldFlag.NOT_NULL),
-				true, // TODO figure this out
-				false, // TODO figure this out
+				true, // TODO Determine how to handle currency flag for MySQL driver
+				false, // TODO Determine what to do with definitely writable flag for MySQL driver
 				!flags.contains(FieldFlag.UNSIGNED),
-				false, // TODO figure this out
+				false, // TODO Determine what to do with writable flag for MySQL driver
 				mysqlType.getClassName());
 		this.mysqlType = mysqlType;
 		this.characterSet = characterSet;

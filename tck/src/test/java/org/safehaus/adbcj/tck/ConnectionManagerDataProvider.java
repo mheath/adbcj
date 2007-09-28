@@ -14,7 +14,7 @@ public class ConnectionManagerDataProvider {
 
 	static {
 		try {
-			// Make sure static portions of each of these classes gets invoked  TODO: Find a better way to register drivers
+			// Make sure static portions of each of these classes gets invoked  TODO Find a better way to register drivers
 			Class.forName(JdbcConnectionManagerFactory.class.getName());
 			Class.forName(MysqlConnectionManagerFactory.class.getName());
 			Class.forName(PgConnectionManagerFactory.class.getName());

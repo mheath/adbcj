@@ -144,19 +144,20 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
 		checkClosed();
-		// TODO Auto-generated method stub
-		return null;
+		// TODO Implement MySQL prepareStatement(String sql)
+		throw new IllegalStateException("Not yet implemented");
 	}
 	
 	public DbSessionFuture<PreparedStatement> prepareStatement(Object key, String sql) {
-		// TODO Auto-generated method stub
-		return null;
+		checkClosed();
+		// TODO Implement MySQL prepareStatement(Object key, String sql)
+		throw new IllegalStateException("Not yet implemented");
 	}
 	
 	public DbFuture<Void> ping() {
 		checkClosed();
-		// TODO Auto-generated method stub
-		return null;
+		// TODO Implement MySQL ping()
+		throw new IllegalStateException("Not yet implemented");
 	}
 
 	// ************* Transaction method implementations ******************************************

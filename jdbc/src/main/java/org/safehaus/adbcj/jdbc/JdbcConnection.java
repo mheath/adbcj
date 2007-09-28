@@ -246,20 +246,20 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
 		checkClosed();
-		// TODO Auto-generated method stub
-		return null;
+		// TODO Implement JDBC prepareStatement(String sql)
+		throw new IllegalStateException("Not yet implemented");
 	}
 	
 	public DbSessionFuture<PreparedStatement> prepareStatement(Object key, String sql) {
 		checkClosed();
-		// TODO Auto-generated method stub
-		return null;
+		// TODO Implement JDBC prepareStatement(Object key, String sql)
+		throw new IllegalStateException("Not yet implemented");
 	}
 
 	public DbFuture<Void> ping() {
 		checkClosed();
-		// TODO Auto-generated method stub
-		return null;
+		// TODO Implement JDBC ping()
+		throw new IllegalStateException("Not yet implemented");
 	}
 	
 	/*
@@ -377,7 +377,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		}
 	}
 
-	// TODO: Move this into Type enum
+	// TODO Move this into Type enum
 	private Type convertJdbcToAdbcjType(int columnType) {
 		switch (columnType) {
 		case Types.ARRAY:

@@ -52,7 +52,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, ExecutorService executorService, Properties properties) {
 		int processorCount = Runtime.getRuntime().availableProcessors();
 		socketConnector = new SocketConnector(processorCount, executorService);
-		//socketConnector.setWorkerTimeout(5); // TODO: Make configurable
+		//socketConnector.setWorkerTimeout(5); // TODO Make MINA worker timeout configurable in MysqlConnectionManager
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
 		
@@ -76,13 +76,13 @@ public class MysqlConnectionManager implements ConnectionManager {
 	}
 	
 	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
-		// TODO: Close all open connections
-		return null;
+		// TODO Implement MysqlConnectionManager.close(boolean immediate)
+		throw new IllegalStateException("Not yet implemented");
 	}
 
 	public boolean isClosed() {
-		// TODO: Implement me
-		return false;
+		// TODO Implement MysqlConnectionManager.isClosed()
+		throw new IllegalStateException("Not yet implemented");
 	}
 	
 	public DbFuture<Connection> connect() {
