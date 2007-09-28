@@ -31,7 +31,7 @@ public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 	public static final String PROTOCOL = "mysql";
 	public static final int DEFAULT_PORT = 3306;
 	
-	static {
+	static void register() {
 		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL, new MysqlConnectionManagerFactory());
 	}
 	

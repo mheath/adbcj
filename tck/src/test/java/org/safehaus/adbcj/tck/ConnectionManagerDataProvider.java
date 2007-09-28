@@ -2,11 +2,7 @@ package org.safehaus.adbcj.tck;
 
 import java.util.concurrent.Executors;
 
-
 import org.safehaus.adbcj.ConnectionManagerProvider;
-import org.safehaus.adbcj.jdbc.JdbcConnectionManagerFactory;
-import org.safehaus.adbcj.mysql.MysqlConnectionManagerFactory;
-import org.safehaus.adbcj.postgresql.PgConnectionManagerFactory;
 import org.testng.annotations.DataProvider;
 
 
@@ -14,10 +10,10 @@ public class ConnectionManagerDataProvider {
 
 	static {
 		try {
-			// Make sure static portions of each of these classes gets invoked  TODO Find a better way to register drivers
-			Class.forName(JdbcConnectionManagerFactory.class.getName());
-			Class.forName(MysqlConnectionManagerFactory.class.getName());
-			Class.forName(PgConnectionManagerFactory.class.getName());
+			// Make sure static portions of each of these classes gets invoked
+			org.safehaus.adbcj.jdbc.Adbcj.init();
+			org.safehaus.adbcj.mysql.Adbcj.init();
+			org.safehaus.adbcj.postgresql.Adbcj.init();
 			
 			// Load the needed JDBC drivers
 			Class.forName("com.mysql.jdbc.Driver");

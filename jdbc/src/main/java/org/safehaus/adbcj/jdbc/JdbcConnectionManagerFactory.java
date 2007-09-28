@@ -31,7 +31,7 @@ public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 
 	private static final String PROTOCOL = "jdbc";
 
-	static {
+	static void register() {
 		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL,
 				new JdbcConnectionManagerFactory());
 

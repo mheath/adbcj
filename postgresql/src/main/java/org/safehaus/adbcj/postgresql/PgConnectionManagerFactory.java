@@ -13,7 +13,7 @@ public class PgConnectionManagerFactory implements ConnectionManagerFactory {
 
 	private static final String PROTOCOL = "postgresql";
 
-	static {
+	static void register() {
 		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL,
 				new PgConnectionManagerFactory());
 
