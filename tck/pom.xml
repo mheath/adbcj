@@ -49,7 +49,7 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<artifactId>slf4j-simple</artifactId>
+			<artifactId>slf4j-log4j12</artifactId>
 			<groupId>org.slf4j</groupId>
 			<version>1.4.3</version>
 			<scope>test</scope>

@@ -42,7 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.safehaus.adbcj.support.AbstractTransactionalSession;
-import org.safehaus.adbcj.support.ConcurrentFutureSessionProxy;
+import org.safehaus.adbcj.support.DbSessionFutureConcurrentProxy;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultDbSessionFuture;
 import org.safehaus.adbcj.support.DefaultField;
@@ -72,12 +72,12 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	}
 
 	public synchronized DbSessionFuture<Void> close(boolean immediate) throws DbException {
-		if (!closed) {
+		if (!isClosed()) {
 			closed = true;
 			
 			if (immediate) {
 				cancelPendingRequests(true);
-				final ConcurrentFutureSessionProxy<Void> localFuture = new ConcurrentFutureSessionProxy<Void>(this) {
+				final DbSessionFutureConcurrentProxy<Void> localFuture = new DbSessionFutureConcurrentProxy<Void>(this) {
 					/**
 					 * If the future gets cancelled, unclose the connection.
 					 */
@@ -104,9 +104,24 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				closeFuture = localFuture;
 			} else {
 				closeFuture = enqueueRequest(new CallableRequest<Void>() {
-					public Void call() throws Exception {
+					private boolean started = false;
+					private boolean cancelled = false;
+					public synchronized Void call() throws Exception {
+						if (cancelled) {
+							return null;
+						}
+						started = true;
 						jdbcConnection.close();
 						return null;
+					}
+					@Override
+					public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+						if (started) {
+							return false;
+						}
+						cancelled = true;
+						unclose();
+						return true;
 					}
 				});
 			}
@@ -121,7 +136,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	
 	public boolean isClosed() {
 		try {
-			return closed && jdbcConnection.isClosed();
+			return closed || jdbcConnection.isClosed();
 		} catch (SQLException e) {
 			throw new DbException(e);
 		}
@@ -311,13 +326,12 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				if (executing) {
 					return false;
 				}
+				if (transaction.isStarted()) {
+					return false;
+				}
 				canceled = true;
 				transaction.cancelPendingRequests();
 				return true;
-			}
-			@Override
-			public boolean canRemove() {
-				return !transaction.isStarted();
 			}
 		};
 		DefaultDbSessionFuture<Void> future = enqueueRequest(request);

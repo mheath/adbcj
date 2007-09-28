@@ -29,8 +29,11 @@ import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.Value;
 import org.safehaus.adbcj.support.DefaultRow;
 import org.safehaus.adbcj.support.DefaultValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MysqlMessageDecoder extends MessageDecoderAdapter {
+	private static final Logger logger = LoggerFactory.getLogger(MysqlMessageDecoder.class);
 
 	private static final byte NULL_VALUE = (byte)0xfb;
 
@@ -75,7 +78,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		final byte packetNumber = in.get();
 		final int startPosition = in.position();
 
-		System.out.println(state);
+		logger.debug("Decoding in state {}", state);
 		switch (state) {
 		case CONNECTING:
 			ServerGreeting serverGreeting = decodeServerGreeting(packetLength, packetNumber, in);
@@ -110,7 +113,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 				}
 
 				// Create result set response
-				System.out.println("Sending result set response");
+				logger.debug("Sending result set response up filter chain");
 				ResultSetResponse resultSetResponse = new ResultSetResponse(packetLength, packetNumber,
 						fieldPacketCount, extra);
 				out.write(resultSetResponse);

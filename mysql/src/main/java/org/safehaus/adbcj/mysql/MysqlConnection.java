@@ -66,6 +66,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 			closed = true;
 	
 			if (immediate) {
+				logger.debug("Executing immediate close");
 				// If the close is immediate, cancel pending requests and send request to server
 				cancelPendingRequests(true);
 				session.write(new CommandRequest(Command.QUIT));
@@ -80,15 +81,24 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 				// If the close is NOT immediate, schedule the close
 				closeFuture = enqueueRequest(new Request<Void>() {
 					private boolean requestClosed = false;
+					private boolean cancelled = false;
 					@Override
 					public synchronized boolean cancel(boolean mayInterruptIfRunning) {
 						if (!requestClosed) {
+							logger.debug("Cancelling close");
+							cancelled = true;
 							unclose();
 							return true;
 						}
+						logger.debug("Close in progress, cannot cancel");
 						return false;
 					}
 					public synchronized void execute(DefaultDbFuture<Void> future) {
+						if (cancelled) {
+							makeNextRequestActive();
+							return;
+						}
+						logger.debug("Executing deferred close");
 						requestClosed = true;
 						// Do a close immediate to close the connection
 						close(true);
@@ -101,6 +111,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	}
 	
 	private synchronized void unclose() {
+		logger.debug("Unclosing");
 		this.closeFuture = null;
 		closed = false;
 	}
@@ -197,15 +208,13 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 				if (executing) {
 					return false;
 				}
+				if (transaction.isStarted()) {
+					return false;
+				}
 				// If commit is not executing, indicate that commit has been canceled and do rollback
 				cancelled = true;
 				transaction.cancelPendingRequests();
 				return true;
-			}
-			// Commit can not be removed if transaction has been started
-			@Override
-			public boolean canRemove() {
-				return !transaction.isStarted();
 			}
 		};
 		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
@@ -222,10 +231,6 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 			}
 			@Override
 			public boolean cancel(boolean mayInterruptIfRunning) {
-				return false;
-			}
-			@Override
-			public boolean canRemove() {
 				return false;
 			}
 		};

@@ -13,7 +13,7 @@ import static org.testng.Assert.*;
 
 public class SelectForUpdateTest extends ConnectionManagerDataProvider {
 
-	@Test(dataProvider="connectionManagerDataProvider")
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testSelectForUpdate(ConnectionManager connectionManager) throws Exception {
 		final boolean[] invoked = {false, false};
 		final AtomicBoolean locked = new AtomicBoolean(false);
@@ -24,17 +24,17 @@ public class SelectForUpdateTest extends ConnectionManagerDataProvider {
 		
 		// Get lock on locks table
 		conn1.beginTransaction();
-		conn1.executeQuery("SELECT name FROM locks WHERE name='lock' FOR UPDATE").addListener(new DbListener<ResultSet>() {
+		TestUtils.selectForUpdate(conn1, new DbListener<ResultSet>() {
 			public void onCompletion(DbFuture<ResultSet> future) throws Exception {
 				locked.set(true);
 				invoked[0] = true;
 			}
-		}).get();;
+		}).get();
 		System.out.println("Obtained lock on locks table");
 		
 		// Try to get lock with second connection
 		conn2.beginTransaction();
-		DbFuture<ResultSet> future = conn2.executeQuery("SELECT name FROM locks WHERE name='lock' FOR UPDATE").addListener(new DbListener<ResultSet>() {
+		DbFuture<ResultSet> future = TestUtils.selectForUpdate(conn2, new DbListener<ResultSet>() {
 			public void onCompletion(DbFuture<ResultSet> future) throws Exception {
 				System.out.println("In second callback");
 				invoked[1] = true;

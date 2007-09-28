@@ -22,8 +22,12 @@ import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.support.AbstractDbFutureListenerSupport;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MysqlProtocolHandler extends DemuxingIoHandler {
+	
+	private final Logger logger = LoggerFactory.getLogger(MysqlProtocolHandler.class);
 	
 	@SuppressWarnings("unchecked")
 	public MysqlProtocolHandler() {
@@ -41,7 +45,7 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
-		System.out.println("Session created"); // TODO Replace with logging
+		logger.debug("Session created");
 	}
 	
 	@Override
@@ -52,15 +56,14 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 		if (closeFuture != null) {
 			closeFuture.setDone();
 		}
-		System.out.println("Session closed"); // TODO Replace with logging
+		logger.debug("Session closed");
 	}
 	
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		if (connection == null) {
-			cause.printStackTrace();
-		} else {
+		try {
+			MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+
 			Request<?> activeRequest = connection.getActiveRequest();
 			if (activeRequest == null) {
 				// TODO Figure out what to do with the exception
@@ -77,6 +80,9 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 					connection.makeNextRequestActive();
 				}
 			}
+		} catch (IllegalStateException e) {
+			cause.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 	

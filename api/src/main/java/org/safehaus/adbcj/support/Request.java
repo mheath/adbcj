@@ -24,10 +24,6 @@ public abstract class Request<T> {
 	public abstract void execute(DefaultDbFuture<T> future);
 	
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		return false;
-	}
-	
-	public boolean canRemove() {
 		return true;
 	}
 	

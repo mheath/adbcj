@@ -21,15 +21,15 @@ import java.util.concurrent.Future;
 import org.safehaus.adbcj.DbSession;
 import org.safehaus.adbcj.DbSessionFuture;
 
-public class ConcurrentFutureSessionProxy<T> extends ConcurrentFutureProxy<T> implements DbSessionFuture<T> {
+public class DbSessionFutureConcurrentProxy<T> extends DbFutureConcurrentProxy<T> implements DbSessionFuture<T> {
 
 	private final DbSession session;
 	
-	public ConcurrentFutureSessionProxy(DbSession session) {
+	public DbSessionFutureConcurrentProxy(DbSession session) {
 		this.session = session;
 	}
 	
-	public ConcurrentFutureSessionProxy(Future<T> future, DbSession session) {
+	public DbSessionFutureConcurrentProxy(Future<T> future, DbSession session) {
 		super(future);
 		this.session = session;
 	}

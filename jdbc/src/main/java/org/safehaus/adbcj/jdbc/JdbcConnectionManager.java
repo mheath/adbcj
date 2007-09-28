@@ -29,7 +29,7 @@ import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbFuture;
 import org.safehaus.adbcj.DbSessionFuture;
 
-import org.safehaus.adbcj.support.ConcurrentFutureProxy;
+import org.safehaus.adbcj.support.DbFutureConcurrentProxy;
 
 public class JdbcConnectionManager implements ConnectionManager {
 
@@ -52,7 +52,7 @@ public class JdbcConnectionManager implements ConnectionManager {
 	}
 
 	public DbFuture<Connection> connect() {
-		final ConcurrentFutureProxy<Connection> future = new ConcurrentFutureProxy<Connection>();
+		final DbFutureConcurrentProxy<Connection> future = new DbFutureConcurrentProxy<Connection>();
 		Future<Connection> executorFuture = executorService.submit(new Callable<Connection>() {
 			public Connection call() throws Exception {
 				try {

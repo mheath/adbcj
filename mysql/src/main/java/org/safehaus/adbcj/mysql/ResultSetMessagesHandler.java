@@ -22,8 +22,12 @@ import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResultSetMessagesHandler<T extends Response> implements MessageHandler<T> {
+	
+	private final Logger logger = LoggerFactory.getLogger(ResultSetMessagesHandler.class); 
 
 	@SuppressWarnings("unchecked")
 	public void messageReceived(IoSession session, Response message) throws Exception {
@@ -38,7 +42,7 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 				throw new DbException("Already processing a result set");
 			}
 			
-			System.out.println("Creating result set");
+			logger.debug("Creating result set");
 			resultSet = new MysqlResultSet(resultSetResponse.getFieldCount());
 			activeRequest.setPayload(resultSet);
 		} else if (message instanceof ResultSetFieldResponse) {
@@ -57,8 +61,10 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 				break;
 			case ROW:
 				DefaultDbFuture<ResultSet> currentFuture = (DefaultDbFuture<ResultSet>)activeRequest.getFuture();
-				currentFuture.setValue(resultSet);
-				currentFuture.setDone();
+				if (!currentFuture.isCancelled()) {
+					currentFuture.setValue(resultSet);
+					currentFuture.setDone();
+				}
 				connection.makeNextRequestActive();
 				break;
 			default:

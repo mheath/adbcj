@@ -31,10 +31,14 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 		DefaultDbSessionFuture<E> future = new DefaultDbSessionFuture<E>(this) {
 			@Override
 			protected boolean doCancel(boolean mayInterruptIfRunning) {
-				if (requestQueue.remove(request)) {
-					return true;
+				boolean canceled = request.cancel(mayInterruptIfRunning);
+				if (canceled) {
+					requestQueue.remove(request);
 				}
-				return request.cancel(mayInterruptIfRunning);
+				if (canceled && request == activeRequest) {
+					makeNextRequestActive();
+				}
+				return canceled;
 			}
 		};
 		

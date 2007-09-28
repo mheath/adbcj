@@ -23,18 +23,18 @@ import java.util.concurrent.TimeoutException;
 
 import org.safehaus.adbcj.DbException;
 
-public class ConcurrentFutureProxy<T> extends AbstractDbFutureListenerSupport<T> {
+public class DbFutureConcurrentProxy<T> extends AbstractDbFutureListenerSupport<T> {
 
 	private Future<T> future;
 
 	private volatile boolean set = false;
 	private volatile T value;
 	
-	public ConcurrentFutureProxy() {
+	public DbFutureConcurrentProxy() {
 		// Default constructor
 	}
 	
-	public ConcurrentFutureProxy(Future<T> future) {
+	public DbFutureConcurrentProxy(Future<T> future) {
 		this.future = future;
 	}
 
@@ -77,7 +77,7 @@ public class ConcurrentFutureProxy<T> extends AbstractDbFutureListenerSupport<T>
 		if (super.isDone()) {
 			return true;
 		}
-		return future.isDone();
+		return future == null ? false : future.isDone();
 	}
 
 	public Future<T> getFuture() {
