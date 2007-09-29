@@ -20,10 +20,10 @@ public interface DbSession {
 
 	void beginTransaction();
 	
-	// Cancelling a commit will cause the transaction to rollback - TODO Write TCK for this
+	// Canceling a commit will cause the transaction to rollback - TODO Write a TCK test to test that canceling a commit converts it to a rollback
 	DbSessionFuture<Void> commit();
 
-	// A rollback cannot be cancelled
+	// A rollback cannot be canceled
 	// Rolling back a transaction may cancel pending requests
 	DbSessionFuture<Void> rollback();
 	

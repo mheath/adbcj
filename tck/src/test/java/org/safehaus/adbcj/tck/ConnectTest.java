@@ -74,6 +74,8 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 
 	@Test(dataProvider="connectionManagerDataProvider")
 	public void testCancelClose(ConnectionManager connectionManager) throws DbException, InterruptedException {
+		final boolean[] closeCallback = {false, false};
+		
 		// This connection is used for doing a select for update lock
 		Connection lockConnection = connectionManager.connect().get();
 		Connection connectionToClose = connectionManager.connect().get();
@@ -87,7 +89,12 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 			connectionToClose.beginTransaction();
 			DbFuture<ResultSet> future = TestUtils.selectForUpdate(connectionToClose);
 
-			DbSessionFuture<Void> closeFuture = connectionToClose.close(false);
+			DbSessionFuture<Void> closeFuture = connectionToClose.close(false).addListener(new DbListener<Void>() {
+				public void onCompletion(DbFuture<Void> future) throws Exception {
+					closeCallback[0] = true;
+					closeCallback[1] = future.isCancelled();
+				}
+			});
 			assertTrue(connectionToClose.isClosed(), "This connection should be flagged as closed now");
 			assertTrue(closeFuture.cancel(false), "The connection close should have cancelled properly");
 			assertFalse(connectionToClose.isClosed(), "This connection should not be closed because we canceled the close");
@@ -109,6 +116,9 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 			lockConnection.close(true);
 			connectionToClose.close(true);
 		}
+		// Make sure the close's callback was invoked properly
+		assertTrue(closeCallback[0], "The close callback was not invoked when cancelled");
+		assertTrue(closeCallback[1], "The close future did not indicate the close was cancelled");
 	}
 	
 //	@Test(dataProvider="urlDataProvider", timeOut=5000)

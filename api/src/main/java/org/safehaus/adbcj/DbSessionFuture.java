@@ -19,6 +19,8 @@ package org.safehaus.adbcj;
 
 public interface DbSessionFuture<T> extends DbFuture<T> {
 
+	public DbSessionFuture<T> addListener(DbListener<T> listener);
+	
 	DbSession getSession();
 
 }

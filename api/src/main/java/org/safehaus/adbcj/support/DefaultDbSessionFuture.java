@@ -16,12 +16,19 @@
  */
 package org.safehaus.adbcj.support;
 
+import org.safehaus.adbcj.DbListener;
 import org.safehaus.adbcj.DbSession;
 import org.safehaus.adbcj.DbSessionFuture;
 
 public class DefaultDbSessionFuture<T> extends DefaultDbFuture<T> implements DbSessionFuture<T> {
 
 	private final DbSession session;
+	
+	@Override
+	public DbSessionFuture<T> addListener(DbListener<T> listener) {
+		super.addListener(listener);
+		return this;
+	}
 	
 	public DefaultDbSessionFuture(DbSession session) {
 		this.session = session;
