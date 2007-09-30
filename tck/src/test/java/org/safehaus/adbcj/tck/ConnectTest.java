@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 
 public class ConnectTest extends ConnectionManagerDataProvider {
 
-//	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testConnectImmediateClose(ConnectionManager connectionManager) throws DbException, InterruptedException {
 		final boolean[] callbacks = {false, false};
 		final CountDownLatch latch = new CountDownLatch(2);
@@ -53,7 +53,7 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 		assertTrue(callbacks[1], "Callback on close future was not invoked");
 	}
 
-//	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testConnectNonImmediateClose(ConnectionManager connectionManager) throws DbException, InterruptedException {
 		final boolean[] callbacks = {false};
 		final CountDownLatch latch = new CountDownLatch(1);
@@ -121,7 +121,7 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 		assertTrue(closeCallback[1], "The close future did not indicate the close was cancelled");
 	}
 	
-//	@Test(dataProvider="urlDataProvider", timeOut=5000)
+	@Test(dataProvider="urlDataProvider", timeOut=5000)
 	public void testConnectBadCredentials(String url, String user, String password) throws InterruptedException {
 		ExecutorService executorService = Executors.newCachedThreadPool();
 		try {
@@ -143,7 +143,7 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 				assertTrue(!connectFuture.isCancelled(), "Connect future should not be marked as cancelled");
 			}
 			latch.await(1, TimeUnit.SECONDS);
-			assertTrue(callbacks[0], "Connect future callback was not invoked when connect failed");
+			assertTrue(callbacks[0], "Connect future callback was invoked with connect failure");
 		} finally {
 			executorService.shutdown();
 		}
