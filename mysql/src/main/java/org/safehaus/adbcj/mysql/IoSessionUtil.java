@@ -17,7 +17,6 @@
 package org.safehaus.adbcj.mysql;
 
 import org.apache.mina.common.IoSession;
-import org.safehaus.adbcj.DbException;
 
 public class IoSessionUtil {
 	

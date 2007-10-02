@@ -316,8 +316,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		if (length > Integer.MAX_VALUE) {
 			throw new MysqlException("String too long to decode");
 		}
-		// TODO Add support to MINA for reading fixed length strings that may
-		// contain nulls
+		// TODO Add support to MINA for reading fixed length strings that may contain nulls
 		return buffer.getString((int)length, charSet.getCharset().newDecoder());
 	}
 
