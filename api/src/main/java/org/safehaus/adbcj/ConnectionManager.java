@@ -24,7 +24,7 @@ public interface ConnectionManager {
 	
 	DbFuture<Connection> connect();
 	
-	DbSessionFuture<Void> close(boolean immediate) throws DbException;
+	DbFuture<Void> close(boolean immediate) throws DbException;
 	
 	boolean isClosed(); 
 
