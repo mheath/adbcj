@@ -1,5 +1,6 @@
 package org.safehaus.adbcj.tck;
 
+import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,10 +21,10 @@ import org.testng.annotations.Test;
 
 // TODO Test non-immediate close and make sure any pending queries get called
 // TODO Test immediate close and make sure pending queries get canceled
-// TODO Test connecting to bogus database to make sure we can cancel connect future
-// TODO Test callbacks
 
 public class ConnectTest extends ConnectionManagerDataProvider {
+
+	private static final String UNREACHABLE_HOST = "1.0.0.1";
 
 	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testConnectImmediateClose(ConnectionManager connectionManager) throws DbException, InterruptedException {
@@ -126,7 +127,7 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 		ExecutorService executorService = Executors.newCachedThreadPool();
 		try {
 			final boolean[] callbacks = {false};
-			final CountDownLatch latch = new CountDownLatch(2);
+			final CountDownLatch latch = new CountDownLatch(1);
 
 			ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, "__BADPASSWORD__", executorService);
 			DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
@@ -142,10 +143,46 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 				assertTrue(connectFuture.isDone(), "Connect future should be marked done even though it failed");
 				assertTrue(!connectFuture.isCancelled(), "Connect future should not be marked as cancelled");
 			}
-			latch.await(1, TimeUnit.SECONDS);
-			assertTrue(callbacks[0], "Connect future callback was invoked with connect failure");
+			assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
+			assertTrue(callbacks[0], "Connect future callback was not invoked with connect failure");
 		} finally {
 			executorService.shutdown();
+		}
+	}
+	
+	@Test(dataProvider="urlDataProvider", timeOut=5000)
+	public void testConnectCancel(String url, String user, String password) throws Exception {
+		StringBuilder urlBuilder = new StringBuilder();
+		
+		URI connectUrl = new URI(url);
+		String scheme = connectUrl.getScheme();
+		while (scheme != null) {
+			urlBuilder.append(scheme).append(":");
+			connectUrl = new URI(connectUrl.getSchemeSpecificPart());
+			scheme = connectUrl.getScheme();
+		}
+		
+		urlBuilder.append("//").append(UNREACHABLE_HOST);
+		urlBuilder.append(connectUrl.getPath());
+		
+		ExecutorService executorService = Executors.newCachedThreadPool();
+		try {
+			final boolean[] callbacks = {false};
+			final CountDownLatch latch = new CountDownLatch(1);
+			
+			ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(urlBuilder.toString(), "dummyuser", "dummypassword", executorService);
+			DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
+				public void onCompletion(DbFuture<Connection> future) throws Exception {
+					callbacks[0] = true;
+					latch.countDown();
+				}
+			});
+			assertTrue(connectFuture.cancel(true), "Connection to unreachable host was not canceled");
+			assertTrue(connectFuture.isCancelled());
+			assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
+			assertTrue(callbacks[0], "Connect future callback was not invoked with connect cancellation");
+		} finally {
+			//executorService.shutdown();
 		}
 	}
 	
