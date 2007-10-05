@@ -20,7 +20,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
-import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.IoBuffer;
 
 public enum MysqlCharacterSet {
 	BIG5_CHINESE_CI      ((byte)1, "Big5"),
@@ -192,7 +192,7 @@ public enum MysqlCharacterSet {
 		 if (charset == null) {
 			 return 0;
 		 }
-		 ByteBuffer buf = ByteBuffer.allocate(1024);
+		 IoBuffer buf = IoBuffer.allocate(1024);
 		 buf.setAutoExpand(true);
 		 buf.putString(s, charset.newEncoder());
 		 

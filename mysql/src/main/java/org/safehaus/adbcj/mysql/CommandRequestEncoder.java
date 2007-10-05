@@ -19,13 +19,13 @@ package org.safehaus.adbcj.mysql;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 
 public class CommandRequestEncoder extends RequestEncoder<CommandRequest> {
 
 	@Override
-	protected void encode(IoSession session, CommandRequest request, ByteBuffer buffer)	throws Exception {
+	protected void encode(IoSession session, CommandRequest request, IoBuffer buffer) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
 		buffer.put(request.getCommand().getCommandCode());

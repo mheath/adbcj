@@ -19,13 +19,13 @@ package org.safehaus.adbcj.mysql;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 
 public class LoginRequestEncoder extends RequestEncoder<LoginRequest> {
 
 	@Override
-	protected void encode(IoSession session, LoginRequest request, ByteBuffer buffer) throws Exception {
+	protected void encode(IoSession session, LoginRequest request, IoBuffer buffer) throws Exception {
 		// Encode inital part of authentication request
 		buffer.putEnumSetShort(request.getCapabilities());
 		buffer.putEnumSetShort(request.getExtendedCapabilities());

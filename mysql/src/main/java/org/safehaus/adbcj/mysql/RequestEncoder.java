@@ -18,7 +18,7 @@ package org.safehaus.adbcj.mysql;
 
 import java.nio.ByteOrder;
 
-import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 import org.apache.mina.filter.codec.demux.MessageEncoder;
@@ -32,7 +32,7 @@ public abstract class RequestEncoder<T extends MysqlRequest> implements MessageE
 		
 		int length = request.getLength(connection.getServerGreeting().getCharacterSet());
 
-		ByteBuffer buffer = ByteBuffer.allocate(length + REQUEST_HEADER_SIZE);
+		IoBuffer buffer = IoBuffer.allocate(length + REQUEST_HEADER_SIZE);
 		buffer.order(ByteOrder.LITTLE_ENDIAN);
 		
 		buffer.put((byte)(length & 0xFF));
@@ -47,6 +47,6 @@ public abstract class RequestEncoder<T extends MysqlRequest> implements MessageE
 		out.write(buffer);
 	}
 
-	abstract protected void encode(IoSession session, T request, ByteBuffer buffer) throws Exception;
+	abstract protected void encode(IoSession session, T request, IoBuffer buffer) throws Exception;
 	
 }

@@ -20,7 +20,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.CharacterCodingException;
 import java.util.Set;
 
-import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.apache.mina.filter.codec.demux.MessageDecoderAdapter;
@@ -54,7 +54,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 	private int fieldPacketCount = 0;
 	private int fieldIndex = 0;
 
-	public MessageDecoderResult decodable(IoSession session, ByteBuffer in) {
+	public MessageDecoderResult decodable(IoSession session, IoBuffer in) {
 		in.order(ByteOrder.LITTLE_ENDIAN);
 
 		if (in.remaining() < 3) {
@@ -69,7 +69,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		return OK;
 	}
 
-	public MessageDecoderResult decode(IoSession session, ByteBuffer in, ProtocolDecoderOutput out) throws Exception {
+	public MessageDecoderResult decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
 		in.order(ByteOrder.LITTLE_ENDIAN);
@@ -194,7 +194,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		return OK;
 	}
 
-	private ErrorResponse decodeErrorResponse(MysqlConnection connection, ByteBuffer buffer, final int packetLength,
+	private ErrorResponse decodeErrorResponse(MysqlConnection connection, IoBuffer buffer, final int packetLength,
 			final byte packetNumber, final int startPosition) throws CharacterCodingException {
 		int errorNumber = buffer.getUnsignedShort();
 		buffer.get(); // Throw away sqlstate marker
@@ -205,7 +205,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		return response;
 	}
 
-	protected ServerGreeting decodeServerGreeting(int length, byte packetNumber, ByteBuffer buffer)
+	protected ServerGreeting decodeServerGreeting(int length, byte packetNumber, IoBuffer buffer)
 			throws CharacterCodingException {
 		byte protocol = buffer.get();
 		String version = buffer.getString(MysqlCharacterSet.ASCII_BIN.getCharset().newDecoder());
@@ -227,7 +227,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 				serverStatus);
 	}
 
-	protected OkResponse decodeOkResponse(MysqlConnection connection, ByteBuffer in, final int packetLength,
+	protected OkResponse decodeOkResponse(MysqlConnection connection, IoBuffer in, final int packetLength,
 			final byte packetNumber, final int startPosition) throws CharacterCodingException {
 		long affectedRows = getBinaryLengthEncoding(in);
 		long insertId = 0;
@@ -244,7 +244,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		return response;
 	}
 
-	protected ResultSetFieldResponse decodeFieldResponse(MysqlConnection connection, ByteBuffer buffer,
+	protected ResultSetFieldResponse decodeFieldResponse(MysqlConnection connection, IoBuffer buffer,
 			int packetLength, byte packetNumber) throws CharacterCodingException {
 		String catalogName = decodeLengthCodedString(buffer, connection.getCharacterSet());
 		String schemaName = decodeLengthCodedString(buffer, connection.getCharacterSet());
@@ -268,7 +268,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		return new ResultSetFieldResponse(packetLength, packetNumber, field);
 	}
 
-	protected EofResponse decodeEofResponse(ByteBuffer in, final int packetLength, final byte packetNumber,
+	protected EofResponse decodeEofResponse(IoBuffer in, final int packetLength, final byte packetNumber,
 			EofResponse.Type type) {
 		// Create EOF response
 		byte fieldCount = in.get();
@@ -284,7 +284,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		return response;
 	}
 
-	private long getBinaryLengthEncoding(ByteBuffer buffer) {
+	private long getBinaryLengthEncoding(IoBuffer buffer) {
 		// This is documented at
 		// http://forge.mysql.com/wiki/MySQL_Internals_ClientServer_Protocol#Elements
 		int firstByte = buffer.getUnsigned();
@@ -310,7 +310,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		throw new DbException("Recieved a length value we don't know how to handle");
 	}
 
-	private String decodeLengthCodedString(ByteBuffer buffer, MysqlCharacterSet charSet)
+	private String decodeLengthCodedString(IoBuffer buffer, MysqlCharacterSet charSet)
 			throws CharacterCodingException {
 		long length = getBinaryLengthEncoding(buffer);
 		if (length > Integer.MAX_VALUE) {

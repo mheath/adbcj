@@ -20,7 +20,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.DummySession;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.common.WriteFuture;
@@ -56,7 +56,7 @@ public class TestRequestEncoder {
 		
 		RequestEncoder<MysqlRequest> encoder = new RequestEncoder<MysqlRequest>() {
 			@Override
-			protected void encode(IoSession session, MysqlRequest request, ByteBuffer buffer) throws CharacterCodingException {
+			protected void encode(IoSession session, MysqlRequest request, IoBuffer buffer) throws CharacterCodingException {
 				invokedEncode.set(true);
 
 				Assert.assertSame(myRequest, request);
@@ -83,7 +83,7 @@ public class TestRequestEncoder {
 			public void mergeAll() {
 			}
 
-			public void write(ByteBuffer buf) {
+			public void write(IoBuffer buf) {
 				invokedWrite.set(true);
 				Assert.assertEquals((byte)0xef, buf.get());
 				Assert.assertEquals((byte)0xcd, buf.get());
