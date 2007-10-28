@@ -1,0 +1,12 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite thread-count="5" verbose="1" name="Failed suite [adbcj-postgresql]" junit="false" annotations="JDK">
+  <test name="org.safehaus.adbcj.postgresql.TestPasswordEncryption(failed)" junit="false" annotations="JDK">
+    <classes>
+      <class name="org.safehaus.adbcj.postgresql.TestPasswordEncryption">
+        <methods>
+          <include name="testMD5Hash"/>
+        </methods>
+      </class>
+    </classes>
+  </test>
+</suite>
