@@ -25,12 +25,12 @@ import org.safehaus.adbcj.support.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MysqlProtocolHandler extends DemuxingIoHandler {
+public class MysqlIoHandler extends DemuxingIoHandler {
 	
-	private final Logger logger = LoggerFactory.getLogger(MysqlProtocolHandler.class);
+	private final Logger logger = LoggerFactory.getLogger(MysqlIoHandler.class);
 	
 	@SuppressWarnings("unchecked")
-	public MysqlProtocolHandler() {
+	public MysqlIoHandler() {
 		addMessageHandler(ServerGreeting.class, new ServerGreetingMessageHandler());
 		addMessageHandler(OkResponse.class, new OkResponseMessageHandler());
 		addMessageHandler(ErrorResponse.class, new ErrorResponseMessageHandler());
@@ -45,7 +45,8 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 	
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
-		logger.debug("Session created");
+		logger.debug("IoSession created");
+		IoSessionUtil.init(session);
 	}
 	
 	@Override
@@ -56,26 +57,25 @@ public class MysqlProtocolHandler extends DemuxingIoHandler {
 		if (closeFuture != null) {
 			closeFuture.setDone();
 		}
-		logger.debug("Session closed");
+		logger.debug("IoSession closed");
 	}
 	
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
+		logger.debug("Caught exception: ", cause);
 		try {
 			MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
-			Request<?> activeRequest = connection.getActiveRequest();
-			if (activeRequest == null) {
-				// TODO Pass exception to ConnectionManager when we have exception handling implemented for the ConnectionManager
+			if (connection == null) {
 				cause.printStackTrace();
 			} else {
-				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
-				if (future != null) {
-					if (cause instanceof DbException) {
-						future.setException((DbException)cause);
-					} else {
-						future.setException(new DbException(cause));
-					}
+				Request<?> activeRequest = connection.getActiveRequest();
+				if (activeRequest == null || activeRequest.getFuture() == null) {
+					// TODO Pass exception to ConnectionManager when we have exception handling implemented for the ConnectionManager
+					cause.printStackTrace();
+				} else {
+					AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
+					future.setException(DbException.wrap(cause));
 					future.setDone();
 					connection.makeNextRequestActive();
 				}
