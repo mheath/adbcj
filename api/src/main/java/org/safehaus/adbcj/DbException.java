@@ -20,6 +20,14 @@ public class DbException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
+	public static DbException wrap(Throwable cause) {
+		if (cause instanceof DbException) {
+			return(DbException)cause;
+		} else {
+			return new DbException(cause);
+		}
+	}
+	
 	public DbException() {
 		super();
 	}
