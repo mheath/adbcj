@@ -25,12 +25,6 @@
 			<groupId>org.apache.mina</groupId>
 			<version>2.0.0-M1-SNAPSHOT</version>
 		</dependency>
-		<dependency>
-			<artifactId>slf4j-simple</artifactId>
-			<groupId>org.slf4j</groupId>
-			<version>1.4.3</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 	
 </project>
