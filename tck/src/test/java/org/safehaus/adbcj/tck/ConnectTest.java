@@ -150,7 +150,7 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 		}
 	}
 	
-	@Test(dataProvider="urlDataProvider", timeOut=5000)
+	@Test(dataProvider="urlDataProvider", timeOut=60000)
 	public void testConnectCancel(String url, String user, String password) throws Exception {
 		StringBuilder urlBuilder = new StringBuilder();
 		
