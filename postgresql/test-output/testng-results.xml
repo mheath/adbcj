@@ -1,0 +1,14 @@
+<testng-results>
+  <reporter-output>
+  </reporter-output>
+  <suite name="adbcj-postgresql">
+    <groups>
+    </groups>
+    <test name="org.safehaus.adbcj.postgresql.TestPasswordEncryption">
+      <class name="org.safehaus.adbcj.postgresql.TestPasswordEncryption">
+        <test-method status="PASS" signature="testMD5Hash()" name="testMD5Hash" duration-ms="14" started-at="2007-10-16T17:54:32Z" finished-at="2007-10-16T17:54:32Z">
+        </test-method>
+      </class>
+    </test>
+  </suite>
+</testng-results>
