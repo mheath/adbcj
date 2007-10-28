@@ -29,13 +29,12 @@ import org.safehaus.adbcj.PreparedStatement;
 import org.safehaus.adbcj.Result;
 import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.TransactionIsolationLevel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.safehaus.adbcj.support.AbstractTransactionalSession;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultDbSessionFuture;
 import org.safehaus.adbcj.support.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MysqlConnection extends AbstractTransactionalSession implements Connection {
 	private final Logger logger = LoggerFactory.getLogger(MysqlConnection.class);
@@ -247,6 +246,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 			@Override
 			public void execute(DefaultDbFuture<Void> future) {
 				// TODO Set transaction isolation level
+				makeNextRequestActive();
 			}
 		};
 		transaction.addRequest(request);
@@ -335,6 +335,14 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	@Override
 	public <E> Request<E> getActiveRequest() {
 		return super.getActiveRequest();
+	}
+	
+	public DefaultDbFuture<?> getActiveFuture() {
+		// TODO Return connect future or close future if we need to
+		if (getActiveRequest() == null) {
+			return null;
+		}
+		return getActiveRequest().getFuture();
 	}
 	
 	/*
