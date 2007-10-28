@@ -40,28 +40,25 @@ public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 	}
 	
 	public ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService, Properties properties) throws DbException {
-		String host;
-		int port;
-		String database;
-		/*
-		 * Parse URL
-		 */
 		try {
+			/*
+			 * Parse URL
+			 */
 			URI uri = new URI(url);
 			// Throw away the 'adbcj' protocol part of the URL
 			uri = new URI(uri.getSchemeSpecificPart());
 
-			host = uri.getHost();
-			port = uri.getPort();
+			String host = uri.getHost();
+			int port = uri.getPort();
 			if (port < 0) {
 				port = DEFAULT_PORT;
 			}
-			database = uri.getPath().substring(1);
+			String schema = uri.getPath().substring(1);
+
+			return new MysqlConnectionManager(host, port, username, password, schema, executorService, properties);
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}
-		
-		return new MysqlConnectionManager(host, port, username, password, database, executorService, properties);
 	}
 
 }
