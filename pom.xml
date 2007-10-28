@@ -65,6 +65,48 @@
 			<scope>test</scope>
 			<classifier>jdk15</classifier>
 		</dependency>
+		<dependency>
+			<artifactId>slf4j-log4j12</artifactId>
+			<groupId>org.slf4j</groupId>
+			<version>1.4.3</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
+
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<inherited>false</inherited>
+				<configuration>
+					<aggregate>true</aggregate>
+					<breakiterator>true</breakiterator>
+					<charset>UTF-8</charset>
+					<docencoding>UTF-8</docencoding>
+					<windowtitle>Asynchronous Database Connectivity in Java ${project.version} API Documentation</windowtitle>
+					<doctitle>Asynchronous Database Connectivity in Java ${project.version} API Documentation</doctitle>
+					<encoding>UTF-8</encoding>
+					<links>
+						<link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+					</links>
+					<locale>en_US</locale>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<inherited>false</inherited>
+				<configuration>
+					<aggregate>true</aggregate>
+					<inputEncoding>UTF-8</inputEncoding>
+					<outputEncoding>UTF-8</outputEncoding>
+					<windowTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</windowTitle>
+					<docTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</docTitle>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
+
 </project>
 
