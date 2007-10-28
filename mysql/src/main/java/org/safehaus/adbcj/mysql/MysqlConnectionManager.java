@@ -17,10 +17,8 @@
 package org.safehaus.adbcj.mysql;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
@@ -44,12 +42,13 @@ import org.slf4j.LoggerFactory;
 
 public class MysqlConnectionManager implements ConnectionManager {
 	
+	public static final String CODEC_NAME = MysqlConnectionManager.class.getName() + ".codec";
+
 	private final Logger logger = LoggerFactory.getLogger(MysqlConnectionManager.class);
 
 	private final NioSocketConnector socketConnector;
 	
-	private final String host;
-	private final int port;
+	private final InetSocketAddress address;
 	
 	private final LoginCredentials credentials;
 	
@@ -71,12 +70,11 @@ public class MysqlConnectionManager implements ConnectionManager {
 		codecFactory.register(new LoginRequestEncoder());
 		codecFactory.register(new CommandRequestEncoder());
 
-		filterChain.addLast("codec", new ProtocolCodecFilter(codecFactory)); // TODO Make filter name a constant
+		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(codecFactory));
 		
-		socketConnector.setHandler(new MysqlProtocolHandler());
+		socketConnector.setHandler(new MysqlIoHandler());
 		
-		this.host = host;
-		this.port = port;
+		address = new InetSocketAddress(host, port);
 		
 		this.credentials = new LoginCredentials(username, password, schema);
 	}
@@ -103,28 +101,29 @@ public class MysqlConnectionManager implements ConnectionManager {
 	}
 	
 	public DbFuture<Connection> connect() {
-		SocketAddress address = new InetSocketAddress(host, port);
+		if (isClosed()) {
+			throw new DbException("Connection manager closed");
+		}
 		final ConnectFuture connectFuture = socketConnector.connect(address);
-		final AtomicBoolean connected = new AtomicBoolean(false);
 		
 		final DefaultDbFuture<Connection> dbConnectFuture = new DefaultDbFuture<Connection>() {
 			@Override
 			protected boolean doCancel(boolean mayInterruptIfRunning) {
 				logger.trace("Cancelling connect");
-				if (!connected.get()) {
+				connectFuture.cancel();
+				if (connectFuture.isCanceled()) {
+					logger.trace("Canceled connect");
 					connectFuture.cancel();
-					logger.trace("Connection canceled");
 					return true;
 				}
-				logger.trace("Connection already established, can't cancel");
+				logger.trace("Did not cancel connect");
 				return false;
 			}
 		};
 		
 		connectFuture.addListener(new IoFutureListener() {
 			public void operationComplete(IoFuture future) {
-				connected.set(true);
-				logger.trace("Connection completed from {}", MysqlConnectionManager.this);
+				logger.trace("Completed connection to {}", MysqlConnectionManager.this);
 				
 				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
 				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
@@ -156,7 +155,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 	
 	@Override
 	public String toString() {
-		return String.format("%s: mysql://%s:%d/%s (user: %s)", getClass().getName(), host, port, credentials.getDatabase(), credentials.getUserName());
+		return String.format("%s: mysql://%s:%d/%s (user: %s)", getClass().getName(), address.getHostName(), address.getPort(), credentials.getDatabase(), credentials.getUserName());
 	}
 
 }
