@@ -16,8 +16,6 @@
  */
 package org.safehaus.adbcj;
 
-public interface SessionPool {
+public interface DbSessionPool extends DbSessionProvider {
 
-	DbFuture<DbSession> getSession();
-	
 }

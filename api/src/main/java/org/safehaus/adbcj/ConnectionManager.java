@@ -20,7 +20,7 @@
  * 
  * @author Mike Heath
  */
-public interface ConnectionManager {
+public interface ConnectionManager extends DbSessionProvider {
 	
 	DbFuture<Connection> connect();
 	
