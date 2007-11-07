@@ -68,16 +68,17 @@ public class MysqlIoHandler extends DemuxingIoHandler {
 		if (connection != null) {
 			Request<?> activeRequest = connection.getActiveRequest();
 			if (activeRequest != null) {
-				Transaction transaction = (Transaction)activeRequest.getTransaction();
-				if (transaction != null) {
-					transaction.cancelPendingRequests();
-				}
-
 				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
 				if (!future.isDone()) {
 					try {
 						future.setException(DbException.wrap(connection, cause));
 						future.setDone();
+
+						Transaction transaction = (Transaction)activeRequest.getTransaction();
+						if (transaction != null) {
+							transaction.cancelPendingRequests();
+						}
+
 						return;
 					} catch (Throwable e) {
 						// TODO Handle exception in ConnectionManager
