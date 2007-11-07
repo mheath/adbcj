@@ -15,6 +15,11 @@ public class PgException extends DbException {
 		this.fields = fields;
 	}
 
+	public PgException(PgConnection connection, String message) {
+		super(connection, message);
+		this.fields = null;
+	}
+
 	public PgException(PgConnection connection, String message, Map<ErrorField, String> fields) {
 		super(connection, message);
 		this.fields = fields;

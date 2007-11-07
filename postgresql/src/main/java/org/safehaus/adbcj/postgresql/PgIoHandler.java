@@ -64,16 +64,23 @@ public class PgIoHandler extends IoHandlerAdapter {
 			} else {
 				Request<?> request = connection.getActiveRequest();
 				if (request != null) {
-					Transaction transaction = (Transaction)request.getTransaction();
-					if (transaction != null) {
-						transaction.cancelPendingRequests();
-					}
-
 					if (!future.isDone()) {
-						future = request.getFuture();
-						errorOutFuture(connection, future, cause);
-						connection.makeNextRequestActive();
-						return;
+						try {
+							future = request.getFuture();
+							errorOutFuture(connection, future, cause);
+	
+							Transaction transaction = (Transaction)request.getTransaction();
+							if (transaction != null) {
+								transaction.cancelPendingRequests();
+							}
+	
+							return;
+						} catch (Exception e) {
+							// Hand exception over to connection manager
+							e.printStackTrace();
+						} finally {
+							connection.makeNextRequestActive();
+						}
 					}
 				}
 			}
@@ -247,7 +254,9 @@ public class PgIoHandler extends IoHandlerAdapter {
 		future = request.getFuture();
 		switch (backendMessage.getStatus()) {
 		case TRANSACTION:
-			// TODO Check to see if we think we're running in a transaction and if status is not 'T', throw an error
+			if (request.getTransaction() == null) {
+				throw new PgException(connection, "A transactional request returned outside of a transaction");
+			}
 		case IDLE:
 			future.setDone();
 			connection.makeNextRequestActive();
