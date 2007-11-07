@@ -4,16 +4,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.safehaus.adbcj.DbException;
-import org.safehaus.adbcj.DbFuture;
-import org.safehaus.adbcj.DbListener;
 import org.safehaus.adbcj.DbSessionFuture;
-import org.safehaus.adbcj.TransactionIsolationLevel;
 
 public abstract class AbstractTransactionalSession extends AbstractSessionRequestQueue {
 	
 	private volatile Transaction transaction;
-	private volatile TransactionIsolationLevel transactionIsolationLevel = TransactionIsolationLevel.READ_COMMITTED;
-	private volatile TransactionIsolationLevel serverSideIsolationLevel = TransactionIsolationLevel.READ_COMMITTED;
 	
 	public boolean isInTransaction() {
 		checkClosed();
@@ -26,23 +21,6 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 			throw new DbException("Cannot begin new transaction.  Current transaction needs to be committed or rolled back");
 		}
 		transaction = new Transaction();
-	}
-
-	public TransactionIsolationLevel getTransactionIsolationLevel() {
-		checkClosed();
-		return transactionIsolationLevel;
-	}
-
-	public synchronized void setTransactionIsolationLevel(TransactionIsolationLevel transactionIsolationLevel) {
-		checkClosed();
-		if (transactionIsolationLevel == null) {
-			throw new NullPointerException("Cannot set transactionIsolationLevel to null");
-		}
-		if (isInTransaction() && transaction.isBeginScheduled()) {
-			throw new DbException("Can't change transaction isolation level of running transaction.");
-		} else {
-			this.transactionIsolationLevel = transactionIsolationLevel; 
-		}
 	}
 
 	public synchronized DbSessionFuture<Void> commit() {
@@ -85,18 +63,6 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 			// Schedule starting transaction with database if possible
 			if (!transaction.isBeginScheduled()) {
 				// Set isolation level if necessary
-				// TODO If changing isolation level fails, we need to rollback transaction
-				if (transactionIsolationLevel != serverSideIsolationLevel) {
-					enqueueChangeIsolationLevel(transaction, transactionIsolationLevel).addListener(new DbListener<Void>() {
-						private TransactionIsolationLevel privateIsolationLevel = transactionIsolationLevel;
-						public void onCompletion(DbFuture<Void> future) throws Exception {
-							if (!future.isCancelled()) {
-								serverSideIsolationLevel = privateIsolationLevel;
-							}
-						}
-					});
-				}
-				// TODO If starting transaction fails, we need to indicate error
 				enqueueStartTransaction(transaction);
 				transaction.setBeginScheduled(true);
 			}
@@ -105,24 +71,125 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		return enqueueRequest(request);
 	}
 
+	protected abstract void sendBegin() throws Exception;
+
+	protected abstract void sendCommit() throws Exception;
+
+	protected abstract void sendRollback() throws Exception;
+	
 	// Begin transaction enqueueing needs to be synchronized on this and needs to set transaction.setStarted(true)
 	// Request must be queued up in Transaction
-	protected abstract DbSessionFuture<Void> enqueueStartTransaction(Transaction transaction);
+	private DbSessionFuture<Void> enqueueStartTransaction(final Transaction transaction) {
+		Request<Void> request = createBeginRequest(transaction);
+		return enqueueTransactionalRequest(transaction, request);
+	}
+
+	protected Request<Void> createBeginRequest(final Transaction transaction) {
+		return new BeginRequest(transaction);
+	}
 	
 	// Canceled commit needs to execute rollback
-	protected abstract DbSessionFuture<Void> enqueueCommit(Transaction transaction);
+	private DbSessionFuture<Void> enqueueCommit(final Transaction transaction) {
+		Request<Void> request = createCommitRequest(transaction);
+		return enqueueTransactionalRequest(transaction, request);
+		
+	}
+
+	protected Request<Void> createCommitRequest(final Transaction transaction) {
+		return new CommitRequest(transaction);
+	}
 	
 	// Rollback cannot be canceled or removed
-	protected abstract DbSessionFuture<Void> enqueueRollback(Transaction transaction);
+	private DbSessionFuture<Void> enqueueRollback(Transaction transaction) {
+		Request<Void> request = createRollbackRequest();
+		return enqueueTransactionalRequest(transaction, request);
+	}
 
-	// Request must be queued up in Transaction
-	protected abstract DbSessionFuture<Void> enqueueChangeIsolationLevel(Transaction transaction, TransactionIsolationLevel transactionIsolationLevel);
-	
+	protected Request<Void> createRollbackRequest() {
+		return new RollbackRequest();
+	}
+
+	private DbSessionFuture<Void> enqueueTransactionalRequest(final Transaction transaction, Request<Void> request) {
+		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+		transaction.addRequest(request);
+		return future;
+	}
+
 	/**
 	 * Throws DbException if session is closed
 	 */
-	protected abstract void checkClosed();
+	protected abstract void checkClosed() throws DbException;
 	
+	protected class BeginRequest extends Request<Void> {
+		private final Transaction transaction;
+
+		private BeginRequest(Transaction transaction) {
+			this.transaction = transaction;
+		}
+
+		@Override
+		public void execute() throws Exception {
+			synchronized (AbstractTransactionalSession.this) {
+				transaction.setStarted(true);
+			}
+			sendBegin();
+		}
+	}
+
+	protected class CommitRequest extends Request<Void> {
+		private final Transaction transaction;
+		private boolean executing = false;
+		private boolean cancelled = false;
+
+		private CommitRequest(Transaction transaction) {
+			this.transaction = transaction;
+		}
+
+		public synchronized void execute() throws Exception {
+			executing = true;
+			if (cancelled) {
+				if (transaction.isStarted()) {
+					sendRollback();
+				}
+			} else {
+				sendCommit();
+			}
+		}
+
+		@Override
+		public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+			// If commit has already started, it can't be stopped
+			if (executing) {
+				return false;
+			}
+			if (transaction.isStarted()) {
+				return false;
+			}
+			// If commit is not executing, indicate that commit has been canceled and do rollback
+			cancelled = true;
+			transaction.cancelPendingRequests();
+			return true;
+		}
+		
+		@Override
+		public boolean canRemove() {
+			return false;
+		}
+	}
+
+	protected class RollbackRequest extends Request<Void> {
+		@Override
+		public void execute() throws Exception {
+			sendRollback();
+		}
+
+		@Override
+		// Return false because a rollback cannot be canceled
+		public boolean cancel(boolean mayInterruptIfRunning) {
+			return false;
+		}
+	}
+
 	protected class Transaction {
 
 		private volatile boolean started = false;

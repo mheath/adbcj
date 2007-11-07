@@ -21,14 +21,18 @@ public abstract class Request<T> {
 	private DefaultDbSessionFuture<T> future = null;
 	private Object payload;
 
-	public abstract void execute(DefaultDbFuture<T> future);
+	public abstract void execute() throws Exception;
 	
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		return true;
 	}
 	
-	public DefaultDbFuture<T> getFuture() {
+	public DefaultDbSessionFuture<T> getFuture() {
 		return future;
+	}
+	
+	public boolean canRemove() {
+		return true;
 	}
 
 	public void setFuture(DefaultDbSessionFuture<T> future) {

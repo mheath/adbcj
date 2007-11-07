@@ -29,9 +29,10 @@ public interface DbSession {
 	
 	boolean isInTransaction();
 	
-	TransactionIsolationLevel getTransactionIsolationLevel();
-	
-	void setTransactionIsolationLevel(TransactionIsolationLevel transactionIsolationLevel);
+	// TODO Make transaction isolation level a parameter in the config stuff
+//	TransactionIsolationLevel getTransactionIsolationLevel();
+//	
+//	void setTransactionIsolationLevel(TransactionIsolationLevel transactionIsolationLevel);
 	
 	DbSessionFuture<ResultSet> executeQuery(String sql);
 	

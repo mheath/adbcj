@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 
 public class ConnectionManagerProvider {
 
@@ -34,7 +32,7 @@ public class ConnectionManagerProvider {
 	private ConnectionManagerProvider () {}
 	
 	public static ConnectionManager createConnectionManager(String url, String username, String password) throws DbException {
-		return createConnectionManager(url, username, password, Executors.newCachedThreadPool(), null);
+		return createConnectionManager(url, username, password, null, null);
 	}
 
 	public static ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService) throws DbException {

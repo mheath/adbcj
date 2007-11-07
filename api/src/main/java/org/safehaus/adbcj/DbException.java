@@ -16,6 +16,7 @@
  */
 package org.safehaus.adbcj;
 
+// TODO: DbException should return the DbSession where the exception occurred
 public class DbException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;

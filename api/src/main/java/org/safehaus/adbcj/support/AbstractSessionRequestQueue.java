@@ -20,11 +20,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbSession;
 
 public abstract class AbstractSessionRequestQueue implements DbSession {
 	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
 	
+	// Access must by synchronized on this
 	private Request<?> activeRequest;
 	
 	protected synchronized <E> DefaultDbSessionFuture<E> enqueueRequest(final Request<E> request) {
@@ -32,11 +34,17 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 			@Override
 			protected boolean doCancel(boolean mayInterruptIfRunning) {
 				boolean canceled = request.cancel(mayInterruptIfRunning);
-				if (canceled) {
-					requestQueue.remove(request);
-				}
-				if (canceled && request == activeRequest) {
-					makeNextRequestActive();
+				boolean removed = false;
+				synchronized (AbstractSessionRequestQueue.this) {
+					if (canceled) {
+						if (request.canRemove()) {
+							removed = requestQueue.remove(request);
+						}
+					}
+					// If we canceled the current request, make the next request active
+					if (removed && request == activeRequest) {
+						makeNextRequestActive();
+					}
 				}
 				return canceled;
 			}
@@ -59,7 +67,7 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected <E> Request<E> getActiveRequest() {
+	protected synchronized <E> Request<E> getActiveRequest() {
 		return (Request<E>)activeRequest;
 	}
 	
@@ -74,7 +82,14 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 	private synchronized <T> void setActiveRequest(Request<T> request) {
 		activeRequest = request;
 		if (request != null) {
-			request.execute(request.getFuture());
+			try {
+				request.execute();
+			} catch (Throwable e) {
+				DefaultDbSessionFuture<T> future = request.getFuture();
+				future.setException(DbException.wrap(e));
+				future.setDone();
+				makeNextRequestActive();
+			}
 		}
 	}
 	
