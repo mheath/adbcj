@@ -70,7 +70,7 @@ public class MysqlIoHandler extends DemuxingIoHandler {
 				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
 				if (!future.isDone()) {
 					try {
-						future.setException(DbException.wrap(cause));
+						future.setException(DbException.wrap(connection, cause));
 						future.setDone();
 						return;
 					} catch (Throwable e) {

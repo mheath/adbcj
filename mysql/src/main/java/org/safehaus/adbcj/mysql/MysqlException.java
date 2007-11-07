@@ -21,12 +21,12 @@ import org.safehaus.adbcj.DbException;
 public class MysqlException extends DbException {
 	private static final long serialVersionUID = 1L;
 
-	public MysqlException(String message, Throwable cause) {
-		super(message, cause);
+	public MysqlException(MysqlConnection connection, String message, Throwable cause) {
+		super(connection, message, cause);
 	}
 
-	public MysqlException(String message) {
-		super(message);
+	public MysqlException(MysqlConnection connection, String message) {
+		super(connection, message);
 	}
 
 }

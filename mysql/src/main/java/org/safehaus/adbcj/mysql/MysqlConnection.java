@@ -236,7 +236,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 
 	protected void checkClosed() {
 		if (isClosed()) {
-			throw new DbException("This connection has been closed");
+			throw new DbException(this, "This connection has been closed");
 		}
 	}
 

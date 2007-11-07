@@ -39,11 +39,11 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 		if (message instanceof ResultSetResponse) {
 			ResultSetResponse resultSetResponse = (ResultSetResponse)message;
 			if (resultSet != null) {
-				throw new DbException("Already processing a result set");
+				throw new DbException(connection, "Already processing a result set");
 			}
 			
 			logger.debug("Creating result set");
-			resultSet = new MysqlResultSet(resultSetResponse.getFieldCount());
+			resultSet = new MysqlResultSet(connection, resultSetResponse.getFieldCount());
 			activeRequest.setPayload(resultSet);
 		} else if (message instanceof ResultSetFieldResponse) {
 			ResultSetFieldResponse fieldResponse = (ResultSetFieldResponse)message;
@@ -56,7 +56,7 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 			switch (eof.getType()) {
 			case FIELD:
 				if (resultSet.getFieldCount() != resultSet.getFields().size()) {
-					throw new MysqlException("Did not read the specified number of fields");
+					throw new MysqlException(connection, "Did not read the specified number of fields");
 				}
 				break;
 			case ROW:
@@ -68,7 +68,7 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 				connection.makeNextRequestActive();
 				break;
 			default:
-				throw new MysqlException("Unkown eof response type");
+				throw new MysqlException(connection, "Unkown eof response type");
 			}
 		} else {
 			throw new IllegalStateException("Don't know how to handle message of type " + message.getClass().getName());

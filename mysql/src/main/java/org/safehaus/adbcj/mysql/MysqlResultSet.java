@@ -20,17 +20,21 @@ import java.util.List;
 
 import org.safehaus.adbcj.support.DefaultResultSet;
 
-
 public class MysqlResultSet extends DefaultResultSet {
 
-	public MysqlResultSet(int fieldCount) {
-		super(fieldCount);
+	public MysqlResultSet(MysqlConnection connection, int fieldCount) {
+		super(connection, fieldCount);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<MysqlField> getFields() {
 		return (List<MysqlField>)super.getFields();
+	}
+	
+	@Override
+	public MysqlConnection getSession() {
+		return (MysqlConnection)super.getSession();
 	}
 	
 }

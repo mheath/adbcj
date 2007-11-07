@@ -18,12 +18,12 @@ package org.safehaus.adbcj.mysql;
 
 import org.apache.mina.common.IoSession;
 import org.apache.mina.handler.demux.MessageHandler;
-import org.safehaus.adbcj.DbException;
 
 public class ErrorResponseMessageHandler implements MessageHandler<ErrorResponse> {
 
 	public void messageReceived(IoSession session, ErrorResponse message) throws Exception {
-		throw new DbException(message.getMessage());
+		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		throw new MysqlException(connection, message.getMessage());
 	}
 
 }
