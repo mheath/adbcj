@@ -18,6 +18,7 @@ import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultResult;
 import org.safehaus.adbcj.support.DefaultRow;
 import org.safehaus.adbcj.support.Request;
+import org.safehaus.adbcj.support.AbstractTransactionalSession.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,18 +58,24 @@ public class PgIoHandler extends IoHandlerAdapter {
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		if (connection != null) {
 			DefaultDbFuture<?> future = connection.getConnectFuture();
-			if (future == null) {
-				Request<?> request = connection.getActiveRequest();
-				// TODO: Make sure that if we're in a transaction, the transaction is canceled
-				if (request != null) {
-					future = request.getFuture();
-					errorOutFuture(connection, future, cause);
-					connection.makeNextRequestActive();
-					return;
-				}
-			} else {
+			if (future != null) {
 				errorOutFuture(connection, future, cause);
 				return;
+			} else {
+				Request<?> request = connection.getActiveRequest();
+				if (request != null) {
+					Transaction transaction = (Transaction)request.getTransaction();
+					if (transaction != null) {
+						transaction.cancelPendingRequests();
+					}
+
+					if (!future.isDone()) {
+						future = request.getFuture();
+						errorOutFuture(connection, future, cause);
+						connection.makeNextRequestActive();
+						return;
+					}
+				}
 			}
 		}
 		// Hand exception over to connection manager
