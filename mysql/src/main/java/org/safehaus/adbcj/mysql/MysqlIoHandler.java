@@ -22,6 +22,7 @@ import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.support.AbstractDbFutureListenerSupport;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.Request;
+import org.safehaus.adbcj.support.AbstractTransactionalSession.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +68,11 @@ public class MysqlIoHandler extends DemuxingIoHandler {
 		if (connection != null) {
 			Request<?> activeRequest = connection.getActiveRequest();
 			if (activeRequest != null) {
+				Transaction transaction = (Transaction)activeRequest.getTransaction();
+				if (transaction != null) {
+					transaction.cancelPendingRequests();
+				}
+
 				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
 				if (!future.isDone()) {
 					try {
