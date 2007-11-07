@@ -20,7 +20,8 @@ public abstract class Request<T> {
 	
 	private DefaultDbSessionFuture<T> future = null;
 	private Object payload;
-
+	private Object transaction;
+	
 	public abstract void execute() throws Exception;
 	
 	public boolean cancel(boolean mayInterruptIfRunning) {
@@ -50,4 +51,12 @@ public abstract class Request<T> {
 		this.payload = payload;
 	}
 
+	public Object getTransaction() {
+		return transaction;
+	}
+
+	public void setTransaction(Object transaction) {
+		this.transaction = transaction;
+	}
+	
 }

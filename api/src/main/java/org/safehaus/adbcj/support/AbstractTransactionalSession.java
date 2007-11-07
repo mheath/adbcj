@@ -28,13 +28,14 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		if (!isInTransaction()) {
 			throw new DbException(this, "Not currently in a transaction, cannot commit");
 		}
+		DbSessionFuture<Void> future;
 		if (transaction.isBeginScheduled()) {
-			DbSessionFuture<Void> future = enqueueCommit(transaction);
-			transaction = null;
+			future = enqueueCommit(transaction);
 			return future;
+		} else {
+			// If transaction was not started, don't worry about committing transaction
+			future = DefaultDbSessionFuture.createCompletedFuture(this, null);
 		}
-		DefaultDbSessionFuture<Void> future = new DefaultDbSessionFuture<Void>(this);
-		future.setDone();
 		transaction = null;
 		return future;
 	}
@@ -44,14 +45,13 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		if (!isInTransaction()) {
 			throw new DbException(this, "Not currently in a transaction, cannot rollback");
 		}
-		transaction.cancelPendingRequests();
-		if (transaction.isStarted()) {
-			DbSessionFuture<Void> future = enqueueRollback(transaction);
-			transaction = null;
-			return future;
+		DbSessionFuture<Void> future;
+		if (transaction.isBeginScheduled()) {
+			transaction.cancelPendingRequests();
+			future = enqueueRollback(transaction);
+		} else {
+			future = DefaultDbSessionFuture.createCompletedFuture(this, null);
 		}
-		DefaultDbSessionFuture<Void> future = new DefaultDbSessionFuture<Void>(this);
-		future.setDone();
 		transaction = null;
 		return future;
 	}
@@ -59,7 +59,10 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	protected synchronized <E> DbSessionFuture<E> enqueueTransactionalRequest(Request<E> request) {
 		// Check to see if we're in a transaction
 		if (transaction != null) {
-			// TODO Check to see if transaction is in failed state and return future that indicates the error
+			if (transaction.isCanceled()) {
+				return DefaultDbSessionFuture.createCompletedErrorFuture(
+						this, new DbException(this, "Could not execute request; transaction is in failed state"));
+			}
 			// Schedule starting transaction with database if possible
 			if (!transaction.isBeginScheduled()) {
 				// Set isolation level if necessary
@@ -188,12 +191,14 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		public boolean cancel(boolean mayInterruptIfRunning) {
 			return false;
 		}
+
 	}
 
-	protected class Transaction {
+	public class Transaction {
 
 		private volatile boolean started = false;
 		private volatile boolean beginScheduled = false;
+		private volatile boolean canceled = false;
 		private List<Request<?>> requests = new LinkedList<Request<?>>();
 		
 		/**
@@ -225,12 +230,21 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		}
 		
 		public void addRequest(Request<?> request) {
-			requests.add(request);
+			synchronized (AbstractTransactionalSession.this) {
+				requests.add(request);
+			}
+		}
+		
+		public boolean isCanceled() {
+			return canceled;
 		}
 		
 		public void cancelPendingRequests() {
-			for (Request<?> request : requests) {
-				request.getFuture().cancel(false);
+			canceled = true;
+			synchronized (AbstractTransactionalSession.this) {
+				for (Request<?> request : requests) {
+					request.getFuture().cancel(false);
+				}
 			}
 		}
 		

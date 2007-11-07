@@ -16,6 +16,7 @@
  */
 package org.safehaus.adbcj.support;
 
+import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbListener;
 import org.safehaus.adbcj.DbSession;
 import org.safehaus.adbcj.DbSessionFuture;
@@ -23,6 +24,20 @@ import org.safehaus.adbcj.DbSessionFuture;
 public class DefaultDbSessionFuture<T> extends DefaultDbFuture<T> implements DbSessionFuture<T> {
 
 	private final DbSession session;
+	
+	public static <T> DefaultDbSessionFuture<T> createCompletedFuture(DbSession session, T value) {
+		DefaultDbSessionFuture<T> future = new DefaultDbSessionFuture<T>(session);
+		future.setValue(value);
+		future.setDone();
+		return future;
+	}
+	
+	public static <T> DefaultDbSessionFuture<T> createCompletedErrorFuture(DbSession session, DbException exception) {
+		DefaultDbSessionFuture<T> future = new DefaultDbSessionFuture<T>(session);
+		future.setException(exception);
+		future.setDone();
+		return future;
+	}
 	
 	@Override
 	public DbSessionFuture<T> addListener(DbListener<T> listener) {
