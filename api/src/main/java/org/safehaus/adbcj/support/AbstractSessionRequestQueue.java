@@ -86,7 +86,7 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 				request.execute();
 			} catch (Throwable e) {
 				DefaultDbSessionFuture<T> future = request.getFuture();
-				future.setException(DbException.wrap(e));
+				future.setException(DbException.wrap(this, e));
 				future.setDone();
 				makeNextRequestActive();
 			}

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.safehaus.adbcj.DbException;
+import org.safehaus.adbcj.DbSession;
 import org.safehaus.adbcj.Field;
 import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.Row;
@@ -31,6 +32,8 @@ import org.safehaus.adbcj.Row;
 
 public class DefaultResultSet extends AbstractList<Row> implements ResultSet {
 
+	private final DbSession session;
+	
 	private final int fieldCount;
 	private final List<Field> fields;
 	
@@ -38,7 +41,8 @@ public class DefaultResultSet extends AbstractList<Row> implements ResultSet {
 	
 	private final Map<Object, Field> fieldMapping = new HashMap<Object, Field>();
 	
-	public DefaultResultSet(int fieldCount) {
+	public DefaultResultSet(DbSession session, int fieldCount) {
+		this.session = session;
 		this.fieldCount = fieldCount;
 		fields = new ArrayList<Field>(fieldCount);
 	}
@@ -59,7 +63,7 @@ public class DefaultResultSet extends AbstractList<Row> implements ResultSet {
 
 	public void addField(Field field) {
 		if (fields.size() >= fieldCount) {
-			throw new DbException("Field count exceeded");
+			throw new DbException(session, "Field count exceeded");
 		}
 		fields.add(field);
 	}
@@ -122,5 +126,9 @@ public class DefaultResultSet extends AbstractList<Row> implements ResultSet {
 			}
 		}
 		return null;
+	}
+	
+	public DbSession getSession() {
+		return session;
 	}
 }

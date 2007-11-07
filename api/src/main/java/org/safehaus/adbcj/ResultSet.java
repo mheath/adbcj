@@ -23,4 +23,6 @@ public interface ResultSet extends List<Row> {
 	List<? extends Field> getFields();
 	
 	Field getField(Object key);
+	
+	DbSession getSession();
 }

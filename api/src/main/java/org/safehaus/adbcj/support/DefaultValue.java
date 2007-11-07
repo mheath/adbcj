@@ -49,7 +49,7 @@ public class DefaultValue implements Value {
 		if (value instanceof Date) {
 			return (Date)value;
 		}
-		throw new DbException(String.format("%s is not a date", value.toString()));
+		throw new DbException(field.getResultSet().getSession(), String.format("%s is not a date", value.toString()));
 	}
 
 	public double getDouble() {

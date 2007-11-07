@@ -18,7 +18,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	public synchronized void beginTransaction() {
 		checkClosed();
 		if (isInTransaction()) {
-			throw new DbException("Cannot begin new transaction.  Current transaction needs to be committed or rolled back");
+			throw new DbException(this, "Cannot begin new transaction.  Current transaction needs to be committed or rolled back");
 		}
 		transaction = new Transaction();
 	}
@@ -26,7 +26,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	public synchronized DbSessionFuture<Void> commit() {
 		checkClosed();
 		if (!isInTransaction()) {
-			throw new DbException("Not currently in a transaction, cannot commit");
+			throw new DbException(this, "Not currently in a transaction, cannot commit");
 		}
 		if (transaction.isBeginScheduled()) {
 			DbSessionFuture<Void> future = enqueueCommit(transaction);
@@ -42,7 +42,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	public synchronized DbSessionFuture<Void> rollback() {
 		checkClosed();
 		if (!isInTransaction()) {
-			throw new DbException("Not currently in a transaction, cannot rollback");
+			throw new DbException(this, "Not currently in a transaction, cannot rollback");
 		}
 		transaction.cancelPendingRequests();
 		if (transaction.isStarted()) {

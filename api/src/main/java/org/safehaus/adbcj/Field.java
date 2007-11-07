@@ -18,6 +18,8 @@ package org.safehaus.adbcj;
 
 public interface Field {
 
+	ResultSet getResultSet();
+	
 	int getIndex();
 	
 	String getCatalogName();

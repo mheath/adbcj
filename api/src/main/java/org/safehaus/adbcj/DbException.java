@@ -16,33 +16,52 @@
  */
 package org.safehaus.adbcj;
 
-// TODO: DbException should return the DbSession where the exception occurred
 public class DbException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
-	public static DbException wrap(Throwable cause) {
+	private final DbSession session;
+	
+	public static DbException wrap(DbSession session, Throwable cause) {
 		if (cause instanceof DbException) {
 			return(DbException)cause;
 		} else {
-			return new DbException(cause);
+			return new DbException(session, cause);
 		}
 	}
 	
-	public DbException() {
-		super();
-	}
-
-	public DbException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
 	public DbException(String message) {
 		super(message);
+		session = null;
 	}
-
+	
 	public DbException(Throwable cause) {
 		super(cause);
+		session = null;
+	}
+	
+	public DbException(DbSession session) {
+		super();
+		this.session = session;
 	}
 
+	public DbException(DbSession session, String message, Throwable cause) {
+		super(message, cause);
+		this.session = session;
+	}
+
+	public DbException(DbSession session, String message) {
+		super(message);
+		this.session = session;
+	}
+
+	public DbException(DbSession session, Throwable cause) {
+		super(cause);
+		this.session = session;
+	}
+
+	public DbSession getSession() {
+		return session;
+	}
+	
 }
