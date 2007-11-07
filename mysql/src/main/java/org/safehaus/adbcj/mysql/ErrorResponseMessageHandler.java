@@ -20,22 +20,10 @@ import org.apache.mina.common.IoSession;
 import org.apache.mina.handler.demux.MessageHandler;
 import org.safehaus.adbcj.DbException;
 
-import org.safehaus.adbcj.support.AbstractDbFutureListenerSupport;
-import org.safehaus.adbcj.support.Request;
-
 public class ErrorResponseMessageHandler implements MessageHandler<ErrorResponse> {
 
 	public void messageReceived(IoSession session, ErrorResponse message) throws Exception {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		
-		try {
-			Request<?> activeRequest = connection.getActiveRequest();
-			AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
-			future.setException(new DbException(message.getMessage()));
-			future.setDone();
-		} finally {
-			connection.makeNextRequestActive();
-		}
+		throw new DbException(message.getMessage());
 	}
 
 }

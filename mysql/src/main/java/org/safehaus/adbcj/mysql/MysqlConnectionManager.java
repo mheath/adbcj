@@ -126,10 +126,8 @@ public class MysqlConnectionManager implements ConnectionManager {
 				logger.trace("Completed connection to {}", MysqlConnectionManager.this);
 				
 				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
-				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
-				
 				connection.enqueueRequest(new Request<Result>() {
-					public void execute(DefaultDbFuture<Result> future) {
+					public void execute() {
 						dbConnectFuture.setValue(connection);
 					}
 				}).addListener(new DbListener<Result>() {
@@ -146,7 +144,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 						}
 					}
 				});
-				
+				IoSessionUtil.setMysqlConnection(future.getSession(), connection);
 			}
 		});
 		

@@ -28,7 +28,6 @@ import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.PreparedStatement;
 import org.safehaus.adbcj.Result;
 import org.safehaus.adbcj.ResultSet;
-import org.safehaus.adbcj.TransactionIsolationLevel;
 import org.safehaus.adbcj.support.AbstractTransactionalSession;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultDbSessionFuture;
@@ -47,7 +46,6 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	private ServerGreeting serverGreeting;
 
 	private DefaultDbSessionFuture<Void> closeFuture;
-	private volatile boolean closed = false;
 	
 	public MysqlConnection(ConnectionManager connectionManager, IoSession session, LoginCredentials credentials) {
 		this.connectionManager = connectionManager;
@@ -61,9 +59,13 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 
 	public synchronized DbSessionFuture<Void> close(final boolean immediate) throws DbException {
 		// If the connection is already closed, return existing close future
-		if (!closed) {
-			closed = true;
-	
+		if (isClosed()) {
+			if (closeFuture == null) {
+				closeFuture = new DefaultDbSessionFuture<Void>(this);
+				closeFuture.setDone();
+			}
+			return closeFuture;
+		} else {
 			if (immediate) {
 				logger.debug("Executing immediate close");
 				// If the close is immediate, cancel pending requests and send request to server
@@ -92,7 +94,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 						logger.debug("Close in progress, cannot cancel");
 						return false;
 					}
-					public synchronized void execute(DefaultDbFuture<Void> future) {
+					public synchronized void execute() {
 						if (cancelled) {
 							makeNextRequestActive();
 							return;
@@ -112,17 +114,17 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	private synchronized void unclose() {
 		logger.debug("Unclosing");
 		this.closeFuture = null;
-		closed = false;
 	}
 	
-	public boolean isClosed() {
-		return closed;
+	public synchronized boolean isClosed() {
+		return closeFuture != null || session.isClosing();
 	}
 
 	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
 		checkClosed();
 		return enqueueTransactionalRequest(new Request<ResultSet>() {
-			public void execute(DefaultDbFuture<ResultSet> future) {
+			public void execute() {
+				logger.debug("Sending query '{}'", sql);
 				CommandRequest request = new CommandRequest(Command.QUERY, sql);
 				session.write(request);
 			}
@@ -133,7 +135,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 		checkClosed();
 		logger.debug("Scheduling update '{}'", sql);
 		return enqueueTransactionalRequest(new Request<Result>() {
-			public void execute(DefaultDbFuture<Result> future) {
+			public void execute() {
 				logger.debug("Sending update '{}'", sql);
 				CommandRequest request = new CommandRequest(Command.QUERY, sql);
 				session.write(request);
@@ -160,99 +162,26 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	}
 
 	// ************* Transaction method implementations ******************************************
-	private void sendCommit() {
-		CommandRequest request = new CommandRequest(Command.QUERY, "commit");
-		session.write(request);
-	}
 	
-	private void sendRollback() {
-		CommandRequest request = new CommandRequest(Command.QUERY, "rollback");
-		session.write(request);
+	private static final CommandRequest BEGIN = new CommandRequest(Command.QUERY, "begin");
+	private static final CommandRequest COMMIT = new CommandRequest(Command.QUERY, "commit"); 
+	private static final CommandRequest ROLLBACK = new CommandRequest(Command.QUERY, "rollback"); 
+	
+	@Override
+	protected void sendCommit() {
+		session.write(COMMIT);
 	}
 	
 	@Override
-	protected DbSessionFuture<Void> enqueueStartTransaction(final Transaction transaction) {
-		Request<Void> request = new Request<Void>() {
-			@Override
-			public void execute(DefaultDbFuture<Void> future) {
-				synchronized (MysqlConnection.this) {
-					transaction.setStarted(true);
-					CommandRequest request = new CommandRequest(Command.QUERY, "begin");
-					session.write(request);
-				}
-			}
-		};
-		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
-		transaction.addRequest(request);
-		return future;
+	protected void sendRollback() {
+		session.write(ROLLBACK);
 	}
 	
 	@Override
-	protected DbSessionFuture<Void> enqueueCommit(final Transaction transaction) {
-		Request<Void> request = new Request<Void>() {
-			private boolean executing = false;
-			private boolean cancelled = false;
-			public synchronized void execute(DefaultDbFuture<Void> future) {
-				executing = true;
-				if (cancelled) {
-					if (transaction.isStarted()) {
-						sendRollback();
-					}
-				} else {
-					sendCommit();
-				}
-			}
-			@Override
-			public synchronized boolean cancel(boolean mayInterruptIfRunning) {
-				// If commit has already started, it can't be stopped
-				if (executing) {
-					return false;
-				}
-				if (transaction.isStarted()) {
-					return false;
-				}
-				// If commit is not executing, indicate that commit has been canceled and do rollback
-				cancelled = true;
-				transaction.cancelPendingRequests();
-				return true;
-			}
-		};
-		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
-		transaction.addRequest(request);
-		return future;
+	protected void sendBegin() {
+		session.write(BEGIN);
 	}
-	
-	@Override
-	protected DbSessionFuture<Void> enqueueRollback(Transaction transaction) {
-		Request<Void> request = new Request<Void>() {
-			@Override
-			public void execute(DefaultDbFuture<Void> future) {
-				sendRollback();
-			}
-			@Override
-			public boolean cancel(boolean mayInterruptIfRunning) {
-				return false;
-			}
-		};
-		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
-		transaction.addRequest(request);
-		return future;
-	}
-	
-	@Override
-	protected DbSessionFuture<Void> enqueueChangeIsolationLevel(final Transaction transaction,
-			final TransactionIsolationLevel transactionIsolationLevel) {
-		Request<Void> request = new Request<Void>() {
-			@Override
-			public void execute(DefaultDbFuture<Void> future) {
-				// TODO Set transaction isolation level
-				makeNextRequestActive();
-			}
-		};
-		transaction.addRequest(request);
-		return enqueueRequest(request);
-	}
-	
+
 	// ************* Non-API methods *************************************************************
 	
 	public ServerGreeting getServerGreeting() {
@@ -305,12 +234,8 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 		return EXTENDED_CLIENT_CAPABILITIES;
 	}
 
-	public void setClosed(boolean closed) {
-		this.closed = closed;
-	}
-	
 	protected void checkClosed() {
-		if (closed) {
+		if (isClosed()) {
 			throw new DbException("This connection has been closed");
 		}
 	}
@@ -335,14 +260,6 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	@Override
 	public <E> Request<E> getActiveRequest() {
 		return super.getActiveRequest();
-	}
-	
-	public DefaultDbFuture<?> getActiveFuture() {
-		// TODO Return connect future or close future if we need to
-		if (getActiveRequest() == null) {
-			return null;
-		}
-		return getActiveRequest().getFuture();
 	}
 	
 	/*

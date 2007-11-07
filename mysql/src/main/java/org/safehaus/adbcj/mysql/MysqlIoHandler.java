@@ -52,7 +52,6 @@ public class MysqlIoHandler extends DemuxingIoHandler {
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		connection.setClosed(true);
 		DefaultDbFuture<Void> closeFuture = connection.getCloseFuture();
 		if (closeFuture != null) {
 			closeFuture.setDone();
@@ -63,27 +62,28 @@ public class MysqlIoHandler extends DemuxingIoHandler {
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
 		logger.debug("Caught exception: ", cause);
-		try {
-			MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
-			if (connection == null) {
-				cause.printStackTrace();
-			} else {
-				Request<?> activeRequest = connection.getActiveRequest();
-				if (activeRequest == null || activeRequest.getFuture() == null) {
-					// TODO Pass exception to ConnectionManager when we have exception handling implemented for the ConnectionManager
-					cause.printStackTrace();
-				} else {
-					AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
-					future.setException(DbException.wrap(cause));
-					future.setDone();
-					connection.makeNextRequestActive();
+		if (connection != null) {
+			Request<?> activeRequest = connection.getActiveRequest();
+			if (activeRequest != null) {
+				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
+				if (!future.isDone()) {
+					try {
+						future.setException(DbException.wrap(cause));
+						future.setDone();
+						return;
+					} catch (Throwable e) {
+						// TODO Handle exception in ConnectionManager
+						e.printStackTrace();
+					} finally {
+						connection.makeNextRequestActive();
+					}
 				}
 			}
-		} catch (IllegalStateException e) {
-			cause.printStackTrace();
-			e.printStackTrace();
 		}
+		// TODO Handle exception in ConnectionManager
+		cause.printStackTrace();
 	}
 	
 }

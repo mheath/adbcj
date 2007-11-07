@@ -74,6 +74,7 @@ public class TestRequestEncoder {
 		IoSession ioSession = new DummySession();
 		MysqlConnection connection = new MysqlConnection(null, null, null);
 		connection.setServerGreeting(new ServerGreeting(0, (byte)0, (byte)0, "", 0, null, null, null, null));
+		IoSessionUtil.init(ioSession);
 		IoSessionUtil.setMysqlConnection(ioSession, connection);
 		encoder.encode(ioSession, myRequest, new ProtocolEncoderOutput() {
 			public WriteFuture flush() {
