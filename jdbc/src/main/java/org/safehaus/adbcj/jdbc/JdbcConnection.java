@@ -134,7 +134,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		try {
 			return closed || jdbcConnection.isClosed();
 		} catch (SQLException e) {
-			throw new DbException(e);
+			throw new DbException(this, e);
 		}
 	}
 
@@ -150,11 +150,12 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 					jdbcResultSet = jdbcStatement.executeQuery(sql);
 					ResultSetMetaData metaData = jdbcResultSet.getMetaData();
 					int columnCount = metaData.getColumnCount();
-					DefaultResultSet resultSet = new DefaultResultSet(columnCount);
+					DefaultResultSet resultSet = new DefaultResultSet(JdbcConnection.this, columnCount);
 					
 					// Add fields
 					for (int i = 1; i <= columnCount; i++) {
 						Field field = new DefaultField(
+								resultSet,
 								i - 1,
 								metaData.getCatalogName(i),
 								metaData.getSchemaName(i),
@@ -309,7 +310,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	@Override
 	protected void checkClosed() {
 		if (isClosed()) {
-			throw new DbException("Connection is closed");
+			throw new DbException(this, "Connection is closed");
 		}
 	}
 
@@ -410,7 +411,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				getFuture().setValue(value);
 				return value;
 			} catch (Exception e) {
-				getFuture().setException(DbException.wrap(e));
+				getFuture().setException(DbException.wrap(JdbcConnection.this, e));
 				throw e;
 			} finally {
 				getFuture().setDone();
