@@ -45,6 +45,7 @@ import org.safehaus.adbcj.support.DefaultResultSet;
 import org.safehaus.adbcj.support.DefaultRow;
 import org.safehaus.adbcj.support.DefaultValue;
 import org.safehaus.adbcj.support.Request;
+import org.safehaus.adbcj.support.AbstractTransactionalSession.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -411,6 +412,10 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				getFuture().setValue(value);
 				return value;
 			} catch (Exception e) {
+				Transaction transaction = (Transaction)getTransaction();
+				if (transaction != null) {
+					transaction.cancelPendingRequests();
+				}
 				getFuture().setException(DbException.wrap(JdbcConnection.this, e));
 				throw e;
 			} finally {
