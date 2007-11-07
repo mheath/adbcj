@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
@@ -20,6 +24,7 @@ import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
 import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.DbListener;
 import org.safehaus.adbcj.postgresql.backend.PgBackendMessageDecoder;
 import org.safehaus.adbcj.postgresql.frontend.PgFrontendMessageEncoder;
 import org.safehaus.adbcj.postgresql.frontend.StartupMessage;
@@ -50,11 +55,17 @@ public class PgConnectionManager implements ConnectionManager {
 	private final String password;
 	private final String database;
 	
-	private DbFuture<Void> closeFuture = null;
+	private DefaultDbFuture<Void> closeFuture = null;
 
 	public PgConnectionManager(String host, int port, String username, String password, String database,
 			ExecutorService executorService, Properties properties) {
 		logger.debug("Creating new PostgresqlConnectionManager");
+		
+		if (executorService == null) {
+	        executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                    1L, TimeUnit.SECONDS,
+                    new SynchronousQueue<Runnable>());
+		}
 		
 		int processorCount = Runtime.getRuntime().availableProcessors();
 		socketConnector = new NioSocketConnector(processorCount, executorService);
@@ -93,6 +104,13 @@ public class PgConnectionManager implements ConnectionManager {
 				return false;
 			}
 		};
+		dbConnectFuture.addListener(new DbListener<Connection>() {
+			public void onCompletion(DbFuture<Connection> future) throws Exception {
+				if (!future.isCancelled()) {
+					PgConnection connection = (PgConnection)future.get();
+				}
+			}
+		});
 
 		connectFuture.addListener(new IoFutureListener() {
 			public void operationComplete(IoFuture future) {
@@ -121,11 +139,19 @@ public class PgConnectionManager implements ConnectionManager {
 	}
 
 	public synchronized DbFuture<Void> close(boolean immediate) throws DbException {
+		// TODO Put test in TCK to make sure all ConnectionManager connections get closed
 		if (isClosed()) {
 			return closeFuture;
 		}
-		// TODO Implement PostgresqlConnectionManager.close(boolean)
-		throw new IllegalStateException("Not yet implemented");
+		closeFuture = new DefaultDbFuture<Void>();
+		if (immediate) {
+			socketConnector.close();
+			closeFuture.setDone();
+		} else {
+			// TODO Implement PostgresqlConnectionManager.close(boolean)
+			throw new IllegalStateException("Non immediate close not yet implemented");
+		}
+		return closeFuture;
 	}
 
 	public synchronized boolean isClosed() {

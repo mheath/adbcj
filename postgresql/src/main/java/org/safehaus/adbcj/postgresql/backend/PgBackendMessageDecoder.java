@@ -2,14 +2,28 @@ package org.safehaus.adbcj.postgresql.backend;
 
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+import org.safehaus.adbcj.Type;
+import org.safehaus.adbcj.Value;
 import org.safehaus.adbcj.postgresql.ConfigurationVariable;
+import org.safehaus.adbcj.postgresql.ErrorField;
+import org.safehaus.adbcj.postgresql.FormatCode;
 import org.safehaus.adbcj.postgresql.IoSessionUtil;
 import org.safehaus.adbcj.postgresql.PgConnection;
+import org.safehaus.adbcj.postgresql.PgField;
+import org.safehaus.adbcj.postgresql.PgFieldType;
+import org.safehaus.adbcj.postgresql.PgIoHandler;
+import org.safehaus.adbcj.postgresql.PgResultSet;
+import org.safehaus.adbcj.support.DefaultValue;
+import org.safehaus.adbcj.support.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +70,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			throw new IllegalStateException("Don't recognize message of type " + typeValue);
 		}
 		
-		logger.debug("Decoding message ot type {}", type);
+		logger.debug("Decoding message of type {}", type);
 		
 		// TODO Implement decoder for remaining backend message types
 		switch (type) {
@@ -73,6 +87,15 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		case AUTHENTICATION:
 			decodeAuthentication(session, buffer, out);
 			break;
+		case COMMAND_COMPLETE:
+			decodeCommandComplete(session, buffer, out);
+			break;
+		case DATA_ROW:
+			decodeDataRow(session, buffer, out);
+			break;
+		case ERROR_RESPONSE:
+			decodeError(session, buffer, out);
+			break;
 		case KEY:
 			decodeKey(session, buffer, out);
 			break;
@@ -81,6 +104,9 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			break;
 		case READY_FOR_QUERY:
 			decodeReadyForQuery(session, buffer, out);
+			break;
+		case ROW_DESCRIPTION:
+			decodeRowDescription(session, buffer, out);
 			break;
 		default:
 			throw new IllegalStateException(String.format("Messages of type %s are not implemented", type)); 
@@ -133,6 +159,101 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		out.write(message);
 	}
 
+	private static final Pattern COMMAND_PATTERN = Pattern.compile("(\\w+)\\s*(\\d*)\\s*(\\d*)"); 
+	
+	private void decodeCommandComplete(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
+		PgConnection connection = IoSessionUtil.getConnection(session);
+		CharsetDecoder decoder = connection.getBackendCharset().newDecoder();
+
+		String commandStr = buffer.getString(decoder);
+		Matcher matcher = COMMAND_PATTERN.matcher(commandStr);
+		
+		if (!matcher.matches()) {
+			throw new IllegalStateException(String.format("Unable to parse command completion string '%s'", commandStr));
+		}
+		Command command = Command.valueOf(matcher.group(1));
+		long count = -1;
+		int oid = -1;
+		if (matcher.group(3).length() > 0) {
+			oid = Integer.valueOf(matcher.group(2));
+			count = Long.valueOf(matcher.group(3));
+		} else if (matcher.group(2).length() > 0) {
+			count = Long.valueOf(matcher.group(2));
+		}
+		
+		CommandCompleteMessage message = new CommandCompleteMessage(command, count, oid);
+		out.write(message);
+	}
+
+	private void decodeDataRow(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
+		PgConnection connection = IoSessionUtil.getConnection(session);
+		CharsetDecoder decoder = connection.getBackendCharset().newDecoder();
+		
+		Request<Object> request = connection.getActiveRequest();
+		if (request == null) {
+			throw new IllegalStateException("Received a data row without an active request");
+		}
+		PgResultSet resultSet = (PgResultSet)request.getPayload();
+		if (resultSet == null) {
+			throw new IllegalStateException("Received a data row without an active result set");
+		}
+
+		int fieldCount = buffer.getUnsignedShort();
+		Value[] values = new Value[fieldCount];
+		for (int i = 0; i < fieldCount; i++) {
+			int valueLength = buffer.getInt();
+			PgField field = (PgField)resultSet.getFields().get(i);
+			Value value;
+			if (valueLength < 0) {
+				value = new DefaultValue(field, null);
+			} else {
+				// TODO Convert raw data to value
+				String strVal;
+				switch (field.getColumnType()) {
+				case INTEGER:
+					// TODO Modify to use getString that doesn't terminate on null
+					strVal = buffer.getString(valueLength, decoder);
+					value = new DefaultValue(field, Integer.valueOf(strVal));
+					break;
+				case VARCHAR:
+					// TODO Modify to use getString that doesn't terminate on null
+					strVal = buffer.getString(valueLength, decoder);
+					value = new DefaultValue(field, strVal);
+					break;
+				default:
+					// Advance buffer
+					byte[] data = new byte[valueLength];
+					buffer.get(data);
+					// TODO Handle remaining ADBCJ types
+					throw new IllegalStateException("Unable to decode field type of " + field.getColumnType());
+				}
+			}
+			values[i] = value; 
+		}
+		out.write(new DataRowMessage(values));
+	}
+
+	private void decodeError(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
+		PgConnection connection = IoSessionUtil.getConnection(session);
+		
+		Map<ErrorField, String> fields = new HashMap<ErrorField, String>();
+		for(;;) {
+			byte token = buffer.get();
+			if (token == 0) {
+				break;
+			}
+			ErrorField field = ErrorField.toErrorField(token);
+			String value = buffer.getString(connection.getBackendCharset().newDecoder());
+			if (field == null) {
+				logger.warn("Unrecognized error field of type '{}' with the value 'value'", Character.valueOf((char)token), value);
+			} else {
+				fields.put(field, value);
+			}
+		}
+		ErrorResponseMessage message = new ErrorResponseMessage(fields);
+		out.write(message);
+	}
+
 	private void decodeKey(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) {
 		int pid = buffer.getInt();
 		int key = buffer.getInt();
@@ -171,6 +292,51 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		}
 		ReadyMessage message = new ReadyMessage(status);
 		out.write(message);
+	}
+
+	private void decodeRowDescription(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
+		PgIoHandler ioHandler = (PgIoHandler)session.getHandler();
+		PgConnection connection = IoSessionUtil.getConnection(session);
+		CharsetDecoder decoder = connection.getBackendCharset().newDecoder();
+
+		int fieldCount = buffer.getUnsignedShort();
+		PgField[] fields = new PgField[fieldCount];
+		for (int i = 0; i < fieldCount; i++) {
+			String name = buffer.getString(decoder);
+			int tableOid = buffer.getInt();
+			int columnAttributeNumber = buffer.getUnsignedShort();
+			int typeOid = buffer.getInt();
+			short typeSize = buffer.getShort();
+			int typeModifier = buffer.getInt();
+			FormatCode code = buffer.getEnumShort(FormatCode.class);
+			
+			Type type;
+			switch (typeOid) {
+			case PgFieldType.INT:
+				type = Type.INTEGER;
+				break;
+			case PgFieldType.VARCHAR:
+				type = Type.VARCHAR;
+				break;
+			default:
+				// TODO Convert more typeOids to ADBCJ types
+				throw new IllegalStateException("Unable to handle field type with oid " + typeOid);
+			}
+			
+			fields[i] = new PgField(
+					i,
+					ioHandler.getConnectionManager().getDatabase(),
+					type,
+					name,
+					tableOid,
+					columnAttributeNumber,
+					code
+					);
+		}
+		
+		RowDescriptionMessage rowDescription = new RowDescriptionMessage(fields);
+		out.write(rowDescription);
+		out.flush();
 	}
 
 }
