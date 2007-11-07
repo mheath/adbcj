@@ -62,12 +62,12 @@ public class PgIoHandler extends IoHandlerAdapter {
 				// TODO: Make sure that if we're in a transaction, the transaction is canceled
 				if (request != null) {
 					future = request.getFuture();
-					errorOutFuture(future, cause);
+					errorOutFuture(connection, future, cause);
 					connection.makeNextRequestActive();
 					return;
 				}
 			} else {
-				errorOutFuture(future, cause);
+				errorOutFuture(connection, future, cause);
 				return;
 			}
 		}
@@ -75,9 +75,9 @@ public class PgIoHandler extends IoHandlerAdapter {
 		cause.printStackTrace();
 	}
 	
-	private void errorOutFuture(DefaultDbFuture<?> future, Throwable cause) {
+	private void errorOutFuture(PgConnection connection, DefaultDbFuture<?> future, Throwable cause) {
 		if (!future.isDone()) {
-			future.setException(DbException.wrap(cause));
+			future.setException(DbException.wrap(connection, cause));
 			future.setDone();
 		}
 	}
@@ -199,15 +199,23 @@ public class PgIoHandler extends IoHandlerAdapter {
 		resultSet.addResult(new DefaultRow(resultSet, dataRowMessage.getValues()));
 	}
 
-	private void doError(IoSession session, ErrorResponseMessage backendMessage) {
+	/**
+	 * When an error packet is received, a PgException is created and thrown.  The exception is then handled by
+	 * {@link #exceptionCaught(IoSession, Throwable)}.
+	 * 
+	 * @param session  the session under which the exception occurred
+	 * @param errorResponseMessage  the message containing the exception
+	 */
+	private void doError(IoSession session, ErrorResponseMessage errorResponseMessage) {
 		// When receiving an error packet, throw exception and let exceptionCaught notify future
+		PgConnection connection = IoSessionUtil.getConnection(session);
 		
-		String message = backendMessage.getFields().get(ErrorField.MESSAGE);
+		String message = errorResponseMessage.getFields().get(ErrorField.MESSAGE);
 		DbException exception;
 		if (message == null) {
-			exception = new PgException(backendMessage.getFields());
+			exception = new PgException(connection, errorResponseMessage.getFields());
 		} else {
-			exception = new PgException(message, backendMessage.getFields());
+			exception = new PgException(connection, message, errorResponseMessage.getFields());
 		}
 		throw exception;
 	}
@@ -238,7 +246,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 			connection.makeNextRequestActive();
 			break;
 		case ERROR:
-			throw new DbException("Transaction is in error state");
+			throw new DbException(connection, "Transaction is in error state");
 		default:
 			throw new IllegalStateException("Don't know hot to handle backend status of " + backendMessage.getStatus());
 		}
@@ -251,12 +259,12 @@ public class PgIoHandler extends IoHandlerAdapter {
 		if (request == null) {
 			throw new IllegalStateException("Received a row description without an active request");
 		}
-		PgResultSet resultSet = new PgResultSet(rowDescriptionMessage.getFields().length);
+		PgResultSet resultSet = null;
 		for (int i = 0; i < rowDescriptionMessage.getFields().length; i++) {
 			PgField field = rowDescriptionMessage.getFields()[i];
-			// TODO Figure out how to map Postgresql meta-data properly
-			// TODO Add support for fetching extended Postgresql meta-data so we can have all the same info the MySQL has - do this on a ConnectionManager basis
-			// TODO Add support for meta-data caching to ADBCJ API to facilitate invalidating cache on live systems
+			if (resultSet == null) {
+				resultSet = field.getResultSet(); 
+			}
 			resultSet.addField(field);
 		}
 		request.setPayload(resultSet);

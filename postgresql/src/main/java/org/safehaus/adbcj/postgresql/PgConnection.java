@@ -61,7 +61,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	@Override
 	protected void checkClosed() {
 		if (isClosed()) {
-			throw new DbException("This connection has been closed");
+			throw new DbException(this, "This connection has been closed");
 		}
 	}
 

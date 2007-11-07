@@ -300,6 +300,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		CharsetDecoder decoder = connection.getBackendCharset().newDecoder();
 
 		int fieldCount = buffer.getUnsignedShort();
+		PgResultSet resultSet = new PgResultSet(connection, fieldCount);
 		PgField[] fields = new PgField[fieldCount];
 		for (int i = 0; i < fieldCount; i++) {
 			String name = buffer.getString(decoder);
@@ -324,6 +325,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			}
 			
 			fields[i] = new PgField(
+					resultSet,
 					i,
 					ioHandler.getConnectionManager().getDatabase(),
 					type,
