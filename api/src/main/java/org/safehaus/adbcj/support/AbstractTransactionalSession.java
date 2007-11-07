@@ -80,8 +80,6 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 
 	protected abstract void sendRollback() throws Exception;
 	
-	// Begin transaction enqueueing needs to be synchronized on this and needs to set transaction.setStarted(true)
-	// Request must be queued up in Transaction
 	private DbSessionFuture<Void> enqueueStartTransaction(final Transaction transaction) {
 		Request<Void> request = createBeginRequest(transaction);
 		return enqueueTransactionalRequest(transaction, request);
@@ -91,7 +89,6 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		return new BeginRequest(transaction);
 	}
 	
-	// Canceled commit needs to execute rollback
 	private DbSessionFuture<Void> enqueueCommit(final Transaction transaction) {
 		Request<Void> request = createCommitRequest(transaction);
 		return enqueueTransactionalRequest(transaction, request);
@@ -230,6 +227,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		}
 		
 		public void addRequest(Request<?> request) {
+			request.setTransaction(this);
 			synchronized (AbstractTransactionalSession.this) {
 				requests.add(request);
 			}
