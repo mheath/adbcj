@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 public class SelectTest extends ConnectionManagerDataProvider {
 
 	@Test(dataProvider="connectionManagerDataProvider")
-	public void testSimpleIntSelect(ConnectionManager connectionManager) throws DbException, InterruptedException {
+	public void testSimpleSelect(ConnectionManager connectionManager) throws DbException, InterruptedException {
 		final boolean[] callbacks = {false};
 		final CountDownLatch latch = new CountDownLatch(callbacks.length); 
 		

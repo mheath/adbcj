@@ -65,7 +65,7 @@ public class TransactionTest extends ConnectionManagerDataProvider {
 		}
 	}
 	
-	@Test(dataProvider="connectionManagerDataProvider")
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testRollback(ConnectionManager connectionManager) throws Exception {
 		Connection connection = connectionManager.connect().get();
 		try {
@@ -100,7 +100,7 @@ public class TransactionTest extends ConnectionManagerDataProvider {
 		}
 	}
 
-	@Test(dataProvider="connectionManagerDataProvider")
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testCommit(ConnectionManager connectionManager) throws Exception {
 		Connection connection = connectionManager.connect().get();
 		Connection connection2 = connectionManager.connect().get();

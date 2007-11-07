@@ -14,6 +14,8 @@ import org.safehaus.adbcj.DbFuture;
 import org.safehaus.adbcj.DbListener;
 import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.ResultSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
@@ -23,6 +25,8 @@ import org.testng.annotations.Test;
 // TODO Test immediate close and make sure pending queries get canceled
 
 public class ConnectTest extends ConnectionManagerDataProvider {
+	
+	private final Logger logger = LoggerFactory.getLogger(ConnectTest.class);
 
 	private static final String UNREACHABLE_HOST = "1.0.0.1";
 
@@ -73,8 +77,8 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 		assertTrue(callbacks[0], "Callback on close future was not invoked");
 	}
 
-	@Test(dataProvider="connectionManagerDataProvider")
-	public void testCancelClose(ConnectionManager connectionManager) throws DbException, InterruptedException {
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
+	public void testCancelClose(final ConnectionManager connectionManager) throws DbException, InterruptedException {
 		final boolean[] closeCallback = {false, false};
 		
 		// This connection is used for doing a select for update lock
@@ -92,6 +96,7 @@ public class ConnectTest extends ConnectionManagerDataProvider {
 
 			DbSessionFuture<Void> closeFuture = connectionToClose.close(false).addListener(new DbListener<Void>() {
 				public void onCompletion(DbFuture<Void> future) throws Exception {
+					logger.debug("testCancelClose: In close callback for connectionManager {}", connectionManager);
 					closeCallback[0] = true;
 					closeCallback[1] = future.isCancelled();
 				}
