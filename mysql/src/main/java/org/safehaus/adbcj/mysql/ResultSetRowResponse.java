@@ -16,19 +16,19 @@
  */
 package org.safehaus.adbcj.mysql;
 
-import org.safehaus.adbcj.Row;
+import org.safehaus.adbcj.Value;
 
 public class ResultSetRowResponse extends Response {
 
-	private final Row row;
+	private final Value[] values;
 	
-	public ResultSetRowResponse(int packetLength, byte packetNumber, Row row) {
+	public ResultSetRowResponse(int packetLength, byte packetNumber, Value[] values) {
 		super(packetLength, packetNumber);
-		this.row = row;
+		this.values = values;
 	}
-	
-	public Row getRow() {
-		return row;
+
+	public Value[] getValues() {
+		return values;
 	}
 	
 }

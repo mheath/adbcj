@@ -66,26 +66,41 @@ public class DefaultDbFuture<T> extends AbstractDbFutureListenerSupport<T> {
 		});
 	}
 	
-	private T doGet(AwaitMethod awaitMethod) throws InterruptedException {
-		if (cancelled) {
-			throw new CancellationException();
+	public T getUninterruptably() throws DbException {
+		for(;;) {
+			boolean interrupted = false;
+			try {
+				return get();
+			} catch (InterruptedException e) {
+				interrupted = true;
+			} finally {
+				if (interrupted) {
+					Thread.currentThread().interrupt();
+				}
+			}
 		}
+	}
+	
+	private T doGet(AwaitMethod awaitMethod) throws InterruptedException {
 		if (isDone()) {
 			if (getException() != null) {
 				throw getException();
 			}
 			return value;
 		}
+		if (cancelled) {
+			throw new CancellationException();
+		}
 		getLock().lock();
 		try {
-			if (cancelled) {
-				throw new CancellationException();
-			}
 			if (isDone()) {
 				if (getException() != null) {
 					throw getException();
 				}
 				return value;
+			}
+			if (cancelled) {
+				throw new CancellationException();
 			}
 			awaitMethod.await();
 			if (cancelled) {

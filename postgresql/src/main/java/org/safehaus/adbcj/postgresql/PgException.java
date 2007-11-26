@@ -3,7 +3,6 @@ package org.safehaus.adbcj.postgresql;
 import java.util.Map;
 
 import org.safehaus.adbcj.DbException;
-import org.safehaus.adbcj.DbSession;
 
 public class PgException extends DbException {
 	private static final long serialVersionUID = 1L;

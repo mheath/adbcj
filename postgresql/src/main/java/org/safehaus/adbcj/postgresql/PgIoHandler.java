@@ -5,18 +5,20 @@ import java.util.Collections;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
 import org.safehaus.adbcj.DbException;
+import org.safehaus.adbcj.Field;
+import org.safehaus.adbcj.Value;
 import org.safehaus.adbcj.postgresql.backend.AbstractBackendMessage;
 import org.safehaus.adbcj.postgresql.backend.AuthenticationMessage;
 import org.safehaus.adbcj.postgresql.backend.CommandCompleteMessage;
 import org.safehaus.adbcj.postgresql.backend.DataRowMessage;
 import org.safehaus.adbcj.postgresql.backend.ErrorResponseMessage;
+import org.safehaus.adbcj.postgresql.backend.KeyMessage;
 import org.safehaus.adbcj.postgresql.backend.ReadyMessage;
 import org.safehaus.adbcj.postgresql.backend.RowDescriptionMessage;
 import org.safehaus.adbcj.postgresql.frontend.FrontendMessage;
 import org.safehaus.adbcj.postgresql.frontend.FrontendMessageType;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultResult;
-import org.safehaus.adbcj.support.DefaultRow;
 import org.safehaus.adbcj.support.Request;
 import org.safehaus.adbcj.support.AbstractTransactionalSession.Transaction;
 import org.slf4j.Logger;
@@ -121,8 +123,9 @@ public class PgIoHandler extends IoHandlerAdapter {
 			break;
 		case ERROR_RESPONSE:
 			doError(session, (ErrorResponseMessage)backendMessage);
+			break;
 		case KEY:
-			// TODO Store pid and key in connection
+			doKey(session, (KeyMessage)backendMessage);
 			break;
 		case NO_DATA:
 			logger.trace("No data");
@@ -173,23 +176,17 @@ public class PgIoHandler extends IoHandlerAdapter {
 		}
 
 		switch (commandCompleteMessage.getCommand()) {
+		case SELECT:
+			request.getEventHandler().endResults(request.getAccumulator());
 		case BEGIN:
 		case COMMIT:
 		case ROLLBACK:
 			request.getFuture().setDone();
 			break;
-		case SELECT:
-			PgResultSet resultSet = (PgResultSet)request.getPayload();
-			if (resultSet == null) {
-				throw new IllegalStateException("Received a SELECT command completion without an active result set");
-			}
-			request.getFuture().setValue(resultSet);
-			request.getFuture().setDone();
-			break;
 		case DELETE:
 		case INSERT:
 		case UPDATE:
-			DefaultResult result = new DefaultResult(commandCompleteMessage.getRowCount(), Collections.EMPTY_LIST);
+			DefaultResult result = new DefaultResult(commandCompleteMessage.getRowCount(), Collections.<String>emptyList());
 			request.getFuture().setValue(result);
 			request.getFuture().setDone();
 			break;
@@ -206,11 +203,12 @@ public class PgIoHandler extends IoHandlerAdapter {
 		if (request == null) {
 			throw new IllegalStateException("Received a data row without an active request");
 		}
-		PgResultSet resultSet = (PgResultSet)request.getPayload();
-		if (resultSet == null) {
-			throw new IllegalStateException("Received a data row without an active result set");
+
+		request.getEventHandler().startRow(request.getAccumulator());
+		for (Value value : dataRowMessage.getValues()) {
+			request.getEventHandler().value(value, request.getAccumulator());
 		}
-		resultSet.addResult(new DefaultRow(resultSet, dataRowMessage.getValues()));
+		request.getEventHandler().endRow(request.getAccumulator());
 	}
 
 	/**
@@ -232,6 +230,13 @@ public class PgIoHandler extends IoHandlerAdapter {
 			exception = new PgException(connection, message, errorResponseMessage.getFields());
 		}
 		throw exception;
+	}
+
+	private void doKey(IoSession session, KeyMessage backendMessage) {
+		PgConnection connection = IoSessionUtil.getConnection(session);
+
+		connection.setKey(backendMessage.getKey());
+		connection.setPid(backendMessage.getPid());
 	}
 
 	private void doReadyForQuery(IoSession session, ReadyMessage backendMessage) {
@@ -275,15 +280,13 @@ public class PgIoHandler extends IoHandlerAdapter {
 		if (request == null) {
 			throw new IllegalStateException("Received a row description without an active request");
 		}
-		PgResultSet resultSet = null;
-		for (int i = 0; i < rowDescriptionMessage.getFields().length; i++) {
-			PgField field = rowDescriptionMessage.getFields()[i];
-			if (resultSet == null) {
-				resultSet = field.getResultSet(); 
-			}
-			resultSet.addField(field);
+		
+		request.getEventHandler().startFields(request.getAccumulator());
+		for (Field field : rowDescriptionMessage.getFields()) {
+			request.getEventHandler().field(field, request.getAccumulator());
 		}
-		request.setPayload(resultSet);
+		request.getEventHandler().endFields(request.getAccumulator());
+		request.getEventHandler().startResults(request.getAccumulator());
 	}
 
 	public PgConnectionManager getConnectionManager() {

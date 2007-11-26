@@ -1,15 +1,12 @@
 package org.safehaus.adbcj.postgresql;
 
 import org.safehaus.adbcj.Field;
-import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.Type;
 
 // TODO Add support for fetching extended Postgresql meta-data so we can have all the same info the MySQL has - do this on a ConnectionManager basis
 // TODO Add support for meta-data caching to ADBCJ API to facilitate invalidating cache on live systems
 public class PgField implements Field {
 
-	private final PgResultSet resultSet;
-	
 	private final int index;
 	private final String schemaName;
 	private final Type type;
@@ -18,8 +15,7 @@ public class PgField implements Field {
 	private final int columnAttributeNumber;
 	private final FormatCode formatCode;
 	
-	public PgField(PgResultSet resultSet, int index, String schemaName, Type type, String columnLabel, int tableOid, int columnAttributeNumber, FormatCode formatCode) {
-		this.resultSet = resultSet;
+	public PgField(int index, String schemaName, Type type, String columnLabel, int tableOid, int columnAttributeNumber, FormatCode formatCode) {
 		this.index = index;
 		this.schemaName = schemaName;
 		this.type = type;
@@ -27,10 +23,6 @@ public class PgField implements Field {
 		this.tableOid = tableOid;
 		this.columnAttributeNumber = columnAttributeNumber;
 		this.formatCode = formatCode;
-	}
-	
-	public PgResultSet getResultSet() {
-		return resultSet;
 	}
 	
 	public FormatCode getFormatCode() {

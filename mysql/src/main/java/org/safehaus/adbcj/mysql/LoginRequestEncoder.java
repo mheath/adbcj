@@ -16,9 +16,6 @@
  */
 package org.safehaus.adbcj.mysql;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 
@@ -57,11 +54,4 @@ public class LoginRequestEncoder extends RequestEncoder<LoginRequest> {
 		}
 		buffer.put((byte)0);
 	}
-
-	public Set<Class<? extends LoginRequest>> getMessageTypes() {
-		Set<Class<? extends LoginRequest>> type = new HashSet<Class<? extends LoginRequest>>();
-		type.add(LoginRequest.class);
-		return type;
-	}
-
 } 

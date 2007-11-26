@@ -26,11 +26,11 @@ public class DefaultRow extends AbstractMap<Object, Value> implements Row {
 	@Override
 	public Set<java.util.Map.Entry<Object, Value>> entrySet() {
 		if (entrySet == null) {
-			entrySet = new HashSet<Entry<Object,Value>>();
+			Set<java.util.Map.Entry<Object, Value>> set = new HashSet<Entry<Object,Value>>();
 			for (Value value : values) {
-				entrySet.add(new SimpleEntry<Object, Value>(value.getField(), value));
+				set.add(new AbstractMap.SimpleEntry<Object, Value>(value.getField(), value));
 			}
-			entrySet = Collections.unmodifiableSet(entrySet);
+			entrySet = Collections.unmodifiableSet(set);
 		}
 		return entrySet;
 	}
@@ -63,5 +63,9 @@ public class DefaultRow extends AbstractMap<Object, Value> implements Row {
 	@Override
 	public void clear() {
 		throw new UnsupportedOperationException("Results set rows are read-only");
+	}
+	
+	public Value[] getValues() {
+		return values;
 	}
 }

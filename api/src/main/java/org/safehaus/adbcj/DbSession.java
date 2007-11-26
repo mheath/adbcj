@@ -36,6 +36,8 @@ public interface DbSession {
 	
 	DbSessionFuture<ResultSet> executeQuery(String sql);
 	
+	<T> DbSessionFuture<T> executeQuery(String sql, ResultEventHandler<T> eventHandler, T accumulator);
+	
 	DbSessionFuture<Result> executeUpdate(String sql);
 	
 	DbSessionFuture<PreparedStatement> prepareStatement(String sql);

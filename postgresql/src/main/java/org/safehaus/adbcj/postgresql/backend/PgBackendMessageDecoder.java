@@ -21,7 +21,6 @@ import org.safehaus.adbcj.postgresql.PgConnection;
 import org.safehaus.adbcj.postgresql.PgField;
 import org.safehaus.adbcj.postgresql.PgFieldType;
 import org.safehaus.adbcj.postgresql.PgIoHandler;
-import org.safehaus.adbcj.postgresql.PgResultSet;
 import org.safehaus.adbcj.support.DefaultValue;
 import org.safehaus.adbcj.support.Request;
 import org.slf4j.Logger;
@@ -193,16 +192,16 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		if (request == null) {
 			throw new IllegalStateException("Received a data row without an active request");
 		}
-		PgResultSet resultSet = (PgResultSet)request.getPayload();
-		if (resultSet == null) {
-			throw new IllegalStateException("Received a data row without an active result set");
+		PgField[] fields = (PgField[])request.getPayload();
+		if (fields == null) {
+			throw new IllegalStateException("Received a data row without any field definitions in the request payload");
 		}
 
 		int fieldCount = buffer.getUnsignedShort();
 		Value[] values = new Value[fieldCount];
 		for (int i = 0; i < fieldCount; i++) {
 			int valueLength = buffer.getInt();
-			PgField field = (PgField)resultSet.getFields().get(i);
+			PgField field = fields[i];
 			Value value;
 			if (valueLength < 0) {
 				value = new DefaultValue(field, null);
@@ -297,10 +296,10 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 	private void decodeRowDescription(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
 		PgIoHandler ioHandler = (PgIoHandler)session.getHandler();
 		PgConnection connection = IoSessionUtil.getConnection(session);
+		Request<?> request = connection.getActiveRequest();
 		CharsetDecoder decoder = connection.getBackendCharset().newDecoder();
 
 		int fieldCount = buffer.getUnsignedShort();
-		PgResultSet resultSet = new PgResultSet(connection, fieldCount);
 		PgField[] fields = new PgField[fieldCount];
 		for (int i = 0; i < fieldCount; i++) {
 			String name = buffer.getString(decoder);
@@ -313,8 +312,29 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			
 			Type type;
 			switch (typeOid) {
-			case PgFieldType.INT:
+			case PgFieldType.BOOLEAN:
+				type = Type.BOOLEAN;
+				break;
+			case PgFieldType.BIGINT:
+				type = Type.BIGINT;
+				break;
+			case PgFieldType.CHAR:
+				type = Type.CHAR;
+				break;
+			case PgFieldType.DATE:
+				type = Type.DATE;
+				break;
+			case PgFieldType.DOUBLE:
+				type = Type.DOUBLE;
+				break;
+			case PgFieldType.INTEGER:
 				type = Type.INTEGER;
+				break;
+			case PgFieldType.REAL:
+				type = Type.REAL;
+				break;
+			case PgFieldType.SMALLINT:
+				type = Type.SMALLINT;
 				break;
 			case PgFieldType.VARCHAR:
 				type = Type.VARCHAR;
@@ -325,7 +345,6 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			}
 			
 			fields[i] = new PgField(
-					resultSet,
 					i,
 					ioHandler.getConnectionManager().getDatabase(),
 					type,
@@ -334,6 +353,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 					columnAttributeNumber,
 					code
 					);
+			request.setPayload(fields);
 		}
 		
 		RowDescriptionMessage rowDescription = new RowDescriptionMessage(fields);

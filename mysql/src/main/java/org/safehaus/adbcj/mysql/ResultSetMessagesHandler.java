@@ -18,9 +18,7 @@ package org.safehaus.adbcj.mysql;
 
 import org.apache.mina.common.IoSession;
 import org.apache.mina.handler.demux.MessageHandler;
-import org.safehaus.adbcj.DbException;
-import org.safehaus.adbcj.ResultSet;
-import org.safehaus.adbcj.support.DefaultDbFuture;
+import org.safehaus.adbcj.Value;
 import org.safehaus.adbcj.support.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,41 +28,32 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 	private final Logger logger = LoggerFactory.getLogger(ResultSetMessagesHandler.class); 
 
 	@SuppressWarnings("unchecked")
-	public void messageReceived(IoSession session, Response message) throws Exception {
+	public void messageReceived(IoSession session, T message) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		
-		Request<?> activeRequest = connection.getActiveRequest();
-		MysqlResultSet resultSet = (MysqlResultSet)activeRequest.getPayload();
-		
+		Request<T> activeRequest = connection.getActiveRequest();
 		if (message instanceof ResultSetResponse) {
-			ResultSetResponse resultSetResponse = (ResultSetResponse)message;
-			if (resultSet != null) {
-				throw new DbException(connection, "Already processing a result set");
-			}
-			
 			logger.debug("Creating result set");
-			resultSet = new MysqlResultSet(connection, resultSetResponse.getFieldCount());
-			activeRequest.setPayload(resultSet);
+			activeRequest.getEventHandler().startFields(activeRequest.getAccumulator());
 		} else if (message instanceof ResultSetFieldResponse) {
 			ResultSetFieldResponse fieldResponse = (ResultSetFieldResponse)message;
-			resultSet.addField(fieldResponse.getField());
+			activeRequest.getEventHandler().field(fieldResponse.getField(), activeRequest.getAccumulator());
 		} else if (message instanceof ResultSetRowResponse) {
 			ResultSetRowResponse rowResponse = (ResultSetRowResponse)message;
-			resultSet.addResult(rowResponse.getRow());
+
+			activeRequest.getEventHandler().startRow(activeRequest.getAccumulator());
+			for (Value value : rowResponse.getValues()) {
+				activeRequest.getEventHandler().value(value, activeRequest.getAccumulator());
+			}
+			activeRequest.getEventHandler().endRow(activeRequest.getAccumulator());
 		} else if (message instanceof EofResponse) {
 			EofResponse eof = (EofResponse)message;
 			switch (eof.getType()) {
 			case FIELD:
-				if (resultSet.getFieldCount() != resultSet.getFields().size()) {
-					throw new MysqlException(connection, "Did not read the specified number of fields");
-				}
+				activeRequest.getEventHandler().endFields(activeRequest.getAccumulator());
 				break;
 			case ROW:
-				DefaultDbFuture<ResultSet> currentFuture = (DefaultDbFuture<ResultSet>)activeRequest.getFuture();
-				if (!currentFuture.isCancelled()) {
-					currentFuture.setValue(resultSet);
-					currentFuture.setDone();
-				}
+				activeRequest.getEventHandler().endResults(activeRequest.getAccumulator());
 				connection.makeNextRequestActive();
 				break;
 			default:
@@ -74,6 +63,9 @@ public class ResultSetMessagesHandler<T extends Response> implements MessageHand
 			throw new IllegalStateException("Don't know how to handle message of type " + message.getClass().getName());
 		}
 		
+	}
+
+	public void messageSent(IoSession session, T message) throws Exception {
 	}
 
 }

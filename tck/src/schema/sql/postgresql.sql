@@ -17,3 +17,15 @@ CREATE TABLE updates (id int);
 DROP TABLE IF EXISTS locks;
 CREATE TABLE locks (name varchar(255) primary key not null);
 INSERT INTO locks(name) VALUES ('lock');
+
+DROP TABLE IF EXISTS adbcj_types;
+CREATE TABLE adbcj_types (
+  type_bigint bigint,
+  type_boolean boolean,
+  type_char char(10),
+  type_date date,
+  type_double double precision,
+  type_integer integer,
+  type_real real,
+  type_smallint smallint
+);

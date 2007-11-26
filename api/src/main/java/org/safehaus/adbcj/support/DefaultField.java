@@ -17,13 +17,10 @@
 package org.safehaus.adbcj.support;
 
 import org.safehaus.adbcj.Field;
-import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.Type;
 
 public class DefaultField implements Field {
 
-	private final ResultSet resultSet;
-	
 	private final int index;
 	private final String catalogName;
 	private final String schemaName;
@@ -46,7 +43,6 @@ public class DefaultField implements Field {
 	private final String fieldClassName;
 	
 	public DefaultField(
-			ResultSet resultSet,
 			int index,
 			String catalogName,
 			String schemaName,
@@ -68,7 +64,6 @@ public class DefaultField implements Field {
 			boolean writable,
 			String fieldClassName
 			) {
-		this.resultSet = resultSet;
 		this.index = index;
 		this.catalogName = catalogName;
 		this.schemaName = schemaName;
@@ -89,10 +84,6 @@ public class DefaultField implements Field {
 		this.signed = signed;
 		this.writable = writable;
 		this.fieldClassName = fieldClassName;
-	}
-	
-	public ResultSet getResultSet() {
-		return resultSet;
 	}
 	
 	public int getIndex() {

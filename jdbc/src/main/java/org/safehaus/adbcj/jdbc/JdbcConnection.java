@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -30,22 +31,18 @@ import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
 import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.ResultEventHandler;
 import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.Field;
 import org.safehaus.adbcj.PreparedStatement;
 import org.safehaus.adbcj.Result;
-import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.Type;
-import org.safehaus.adbcj.Value;
 import org.safehaus.adbcj.support.AbstractTransactionalSession;
 import org.safehaus.adbcj.support.DbSessionFutureConcurrentProxy;
 import org.safehaus.adbcj.support.DefaultField;
 import org.safehaus.adbcj.support.DefaultResult;
-import org.safehaus.adbcj.support.DefaultResultSet;
-import org.safehaus.adbcj.support.DefaultRow;
 import org.safehaus.adbcj.support.DefaultValue;
 import org.safehaus.adbcj.support.Request;
-import org.safehaus.adbcj.support.AbstractTransactionalSession.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,24 +136,27 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		}
 	}
 
-	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
+	public <T> DbSessionFuture<T> executeQuery(final String sql, final ResultEventHandler<T> eventHandler, final T accumulator) {
 		checkClosed();
-		logger.trace("Scheduling query {}", sql);
-		return enqueueTransactionalRequest(new CallableRequest<ResultSet>() {
-			public ResultSet doCall() throws Exception {
+		logger.trace("Scheduling query '{}'", sql);
+		return enqueueTransactionalRequest(new CallableRequest<T>() {
+			@Override
+			protected T doCall() throws Exception {
 				logger.debug("Executing query '{}'", sql);
 				Statement jdbcStatement = jdbcConnection.createStatement();
 				java.sql.ResultSet jdbcResultSet = null;
 				try {
+					// Execute query
 					jdbcResultSet = jdbcStatement.executeQuery(sql);
+					
+					// Fetch meta data
 					ResultSetMetaData metaData = jdbcResultSet.getMetaData();
 					int columnCount = metaData.getColumnCount();
-					DefaultResultSet resultSet = new DefaultResultSet(JdbcConnection.this, columnCount);
+					List<Field> fields = new ArrayList<Field>(columnCount);
+					eventHandler.startFields(accumulator);
 					
-					// Add fields
 					for (int i = 1; i <= columnCount; i++) {
 						Field field = new DefaultField(
-								resultSet,
 								i - 1,
 								metaData.getCatalogName(i),
 								metaData.getSchemaName(i),
@@ -178,25 +178,27 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 								metaData.isWritable(i),
 								metaData.getColumnClassName(i)
 								);
-						resultSet.addField(field);
+						fields.add(field);
+						eventHandler.field(field, accumulator);
 					}
 					
-					// Add rows
+					eventHandler.endFields(accumulator);
+					
+					eventHandler.startResults(accumulator);
 					while (jdbcResultSet.next()) {
-						int fieldCount = resultSet.getFields().size();
-						Value[] values = new Value[fieldCount];
-						for (int i = 0; i < fieldCount; i++) {
-							Field field = resultSet.getFields().get(i);
+						eventHandler.startRow(accumulator);
+						for (int i = 1; i <= columnCount; i++) {
+							Field field = fields.get(i - 1);
 							Object value = null;
 							switch (field.getColumnType()) {
 							case BIGINT:
-								value = jdbcResultSet.getLong(i + 1);
+								value = jdbcResultSet.getLong(i);
 								break;
 							case INTEGER:
-								value = jdbcResultSet.getInt(i + 1);
+								value = jdbcResultSet.getInt(i);
 								break;
 							case VARCHAR:
-								value = jdbcResultSet.getString(i + 1);
+								value = jdbcResultSet.getString(i);
 								break;
 							default:
 								throw new IllegalStateException("Don't know how to handle field to type " + field.getColumnType());
@@ -204,12 +206,13 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 							if (jdbcResultSet.wasNull()) {
 								value = null;
 							}
-							values[i] = new DefaultValue(field, value);
+							eventHandler.value(new DefaultValue(field, value), accumulator);
 						}
-						resultSet.addResult(new DefaultRow(resultSet, values));
+						eventHandler.endRow(accumulator);
 					}
+					eventHandler.endResults(accumulator);
 					
-					return resultSet;
+					return null;
 				} finally {
 					if (jdbcResultSet != null) {
 						jdbcResultSet.close();
@@ -219,10 +222,9 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 					}
 				}
 			}
-
 		});
 	}
-
+	
 	public DbSessionFuture<Result> executeUpdate(final String sql) {
 		checkClosed();
 		return enqueueTransactionalRequest(new CallableRequest<Result>() {
@@ -412,6 +414,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				getFuture().setValue(value);
 				return value;
 			} catch (Exception e) {
+				getFuture().setException(DbException.wrap(JdbcConnection.this, e));
 				Transaction transaction = (Transaction)getTransaction();
 				if (transaction != null) {
 					transaction.cancelPendingRequests();

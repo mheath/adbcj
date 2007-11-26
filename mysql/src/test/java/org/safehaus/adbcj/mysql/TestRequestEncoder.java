@@ -17,20 +17,13 @@
 package org.safehaus.adbcj.mysql;
 
 import java.nio.charset.CharacterCodingException;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.DummySession;
+import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.common.WriteFuture;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
-import org.safehaus.adbcj.mysql.IoSessionUtil;
-import org.safehaus.adbcj.mysql.MysqlCharacterSet;
-import org.safehaus.adbcj.mysql.MysqlConnection;
-import org.safehaus.adbcj.mysql.MysqlRequest;
-import org.safehaus.adbcj.mysql.RequestEncoder;
-import org.safehaus.adbcj.mysql.ServerGreeting;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -64,9 +57,6 @@ public class TestRequestEncoder {
 				Assert.assertEquals(length + REQUEST_HEADER_SIZE, buffer.capacity());
 				
 				Assert.assertNotNull(buffer);
-			}
-			public Set<Class<? extends MysqlRequest>> getMessageTypes() {
-				return null;
 			}
 		};
 

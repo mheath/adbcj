@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbSession;
 import org.safehaus.adbcj.Field;
 import org.safehaus.adbcj.ResultSet;
@@ -34,17 +33,15 @@ public class DefaultResultSet extends AbstractList<Row> implements ResultSet {
 
 	private final DbSession session;
 	
-	private final int fieldCount;
 	private final List<Field> fields;
 	
 	private final List<Row> results = new ArrayList<Row>();
 	
 	private final Map<Object, Field> fieldMapping = new HashMap<Object, Field>();
 	
-	public DefaultResultSet(DbSession session, int fieldCount) {
+	public DefaultResultSet(DbSession session) {
 		this.session = session;
-		this.fieldCount = fieldCount;
-		fields = new ArrayList<Field>(fieldCount);
+		fields = new ArrayList<Field>();
 	}
 	
 	@Override
@@ -62,14 +59,7 @@ public class DefaultResultSet extends AbstractList<Row> implements ResultSet {
 	}
 
 	public void addField(Field field) {
-		if (fields.size() >= fieldCount) {
-			throw new DbException(session, "Field count exceeded");
-		}
 		fields.add(field);
-	}
-	
-	public int getFieldCount() {
-		return fieldCount;
 	}
 	
 	public boolean addResult(Row result) {

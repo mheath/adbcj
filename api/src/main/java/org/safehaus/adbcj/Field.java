@@ -16,10 +16,13 @@
  */
 package org.safehaus.adbcj;
 
+/**
+ * Used to get the type and property information of database columns.
+ * 
+ * @author Mike Heath
+ */
 public interface Field {
 
-	ResultSet getResultSet();
-	
 	int getIndex();
 	
 	String getCatalogName();

@@ -2,6 +2,7 @@ package org.safehaus.adbcj.tck;
 
 import java.util.concurrent.Executors;
 
+import org.safehaus.adbcj.ConnectionManager;
 import org.safehaus.adbcj.ConnectionManagerProvider;
 import org.testng.annotations.DataProvider;
 
@@ -29,29 +30,25 @@ public class ConnectionManagerDataProvider {
 		{"adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 		{"adbcj:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 	};
-
-	private static Object[][] CONNECTION_MANAGERS;
 	
 	@DataProvider(name="urlDataProvider")
 	public static Object[][] urlDataProvider() {
-		return TEST_CONNECTION_DATA.clone();
+		return TEST_CONNECTION_DATA;
 	}
 	
 	@DataProvider(name="connectionManagerDataProvider")
 	public static synchronized Object[][] connectionManagerProvider() {
-		if (CONNECTION_MANAGERS == null) {
-			CONNECTION_MANAGERS = new Object[TEST_CONNECTION_DATA.length][1];
-			for (int i = 0 ; i < TEST_CONNECTION_DATA.length; i++) {
-				Object[] connectParams = TEST_CONNECTION_DATA[i];
-				CONNECTION_MANAGERS[i] = new Object[] {ConnectionManagerProvider.createConnectionManager(
-						connectParams[0].toString(),
-						connectParams[1].toString(),
-						connectParams[2].toString(),
-						Executors.newCachedThreadPool())
-				};
-			}
+		ConnectionManager[][] connectionManager = new ConnectionManager[TEST_CONNECTION_DATA.length][1];
+		for (int i = 0 ; i < TEST_CONNECTION_DATA.length; i++) {
+			Object[] connectParams = TEST_CONNECTION_DATA[i];
+			connectionManager[i] = new ConnectionManager[] {ConnectionManagerProvider.createConnectionManager(
+					connectParams[0].toString(),
+					connectParams[1].toString(),
+					connectParams[2].toString(),
+					Executors.newCachedThreadPool())
+			};
 		}
-		return CONNECTION_MANAGERS;
+		return connectionManager;
 	}
-	
+
 }

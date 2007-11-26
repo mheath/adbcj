@@ -13,7 +13,8 @@ import org.safehaus.adbcj.DbFuture;
 import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.PreparedStatement;
 import org.safehaus.adbcj.Result;
-import org.safehaus.adbcj.ResultSet;
+import org.safehaus.adbcj.ResultEventHandler;
+import org.safehaus.adbcj.postgresql.frontend.AbstractFrontendMessage;
 import org.safehaus.adbcj.postgresql.frontend.BindMessage;
 import org.safehaus.adbcj.postgresql.frontend.DescribeMessage;
 import org.safehaus.adbcj.postgresql.frontend.ExecuteMessage;
@@ -32,12 +33,18 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 
 	private final PgConnectionManager connectionManager;
 	private final IoSession session;
-	private final Charset frontendCharset = Charset.forName("UTF-8"); // TODO Make charset configurable
-	private final Charset backendCharset = Charset.forName("US-ASCII");
+	// TODO Determine if we really need to distinguish frontend and backend charsets
+	// TODO Make charset configurable
+	private final Charset frontendCharset = Charset.forName("UTF-8");
+	// TODO Update backendCharset based on what backend returns
+	private Charset backendCharset = Charset.forName("US-ASCII");
 
 	private DefaultDbFuture<Connection> connectFuture;
 	private DefaultDbSessionFuture<Void> closeFuture;
 
+	private int pid;
+	private int key;
+	
 	// Constant Messages
 	private static final ExecuteMessage DEFAULT_EXECUTE = new ExecuteMessage();
 	private static final BindMessage DEFAULT_BIND = new BindMessage();
@@ -54,7 +61,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	}
 
 	public DbFuture<Void> ping() {
-		// TODO Implement ping
+		// TODO Implement Postgresql ping
 		throw new IllegalStateException();
 	}
 
@@ -71,8 +78,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 		// If the connection is already closed, return existing close future
 		if (isClosed()) {
 			if (closeFuture == null) {
-				closeFuture = new DefaultDbSessionFuture<Void>(this);
-				closeFuture.setDone();
+				return DefaultDbSessionFuture.createCompletedFuture(this, null);
 			}
 		} else {
 			if (immediate) {
@@ -111,7 +117,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 						logger.debug("Executing deferred close");
 						requestClosed = true;
 						// Do a close immediate to close the connection
-						close(true);
+						session.write(FrontendMessage.TERMINATE);
 					}
 				});
 			}
@@ -127,28 +133,29 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	public boolean isClosed() throws DbException {
 		return closeFuture != null || session.isClosing();
 	}
-
-	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
+	
+	public <T> DbSessionFuture<T> executeQuery(final String sql, ResultEventHandler<T> eventHandler, T accumulator) {
 		checkClosed();
-		return enqueueTransactionalRequest(new Request<ResultSet>() {
+		Request<T> request = new Request<T>(eventHandler, accumulator) {
 			@Override
 			public void execute() throws Exception {
 				logger.debug("Issuing query: {}", sql);
 				
 				ParseMessage parse = new ParseMessage(sql);
-				// TODO We need to come up with a way to batch writes so that we're not sending lots of small packets
-				session.write(parse);
-				session.write(DEFAULT_BIND);
-				session.write(DEFAULT_DESCRIBE);
-				session.write(DEFAULT_EXECUTE);
-				session.write(FrontendMessage.SYNC);
+				session.write(new AbstractFrontendMessage[] {
+					parse,
+					DEFAULT_BIND,
+					DEFAULT_DESCRIBE,
+					DEFAULT_EXECUTE,
+					FrontendMessage.SYNC,
+				});
 			}
-			
 			@Override
 			public String toString() {
-				return "Postgresql execute query request: " + sql; 
+				return "Select request: " + sql;
 			}
-		});
+		};
+		return enqueueTransactionalRequest(request);
 	}
 
 	public DbSessionFuture<Result> executeUpdate(final String sql) {
@@ -159,17 +166,18 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 				logger.debug("Issuing update query: {}", sql);
 				
 				ParseMessage parse = new ParseMessage(sql);
-				// TODO We need to come up with a way to batch writes so that we're not sending lots of small packets
-				session.write(parse);
-				session.write(DEFAULT_BIND);
-				session.write(DEFAULT_DESCRIBE);
-				session.write(DEFAULT_EXECUTE);
-				session.write(FrontendMessage.SYNC);
+				session.write(new AbstractFrontendMessage[] {
+					parse,
+					DEFAULT_BIND,
+					DEFAULT_DESCRIBE,
+					DEFAULT_EXECUTE,
+					FrontendMessage.SYNC
+				});
 			}
 			
 			@Override
 			public String toString() {
-				return "Postgresql execute update request: " + sql; 
+				return "Update request: " + sql; 
 			}
 		});
 	}
@@ -215,10 +223,11 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 
 			statementCache.put(statement, statementId);
 		}
-		BindMessage bind = new BindMessage(statementId);
-		session.write(bind);
-		session.write(DEFAULT_EXECUTE);
-		session.write(FrontendMessage.SYNC);
+		session.write(new AbstractFrontendMessage[] {
+				new BindMessage(statementId),
+				DEFAULT_EXECUTE,
+				FrontendMessage.SYNC
+		});
 	}
 	
 	// ================================================================================================================
@@ -265,6 +274,22 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 		}
 		Request<E> activeRequest = super.makeNextRequestActive();
 		return activeRequest;
+	}
+
+	public int getPid() {
+		return pid;
+	}
+
+	public void setPid(int pid) {
+		this.pid = pid;
+	}
+
+	public int getKey() {
+		return key;
+	}
+
+	public void setKey(int key) {
+		this.key = key;
 	}
 	
 }

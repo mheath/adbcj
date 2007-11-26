@@ -24,10 +24,10 @@ import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
 import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.ResultEventHandler;
 import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.PreparedStatement;
 import org.safehaus.adbcj.Result;
-import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.support.AbstractTransactionalSession;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultDbSessionFuture;
@@ -120,10 +120,11 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 		return closeFuture != null || session.isClosing();
 	}
 
-	public DbSessionFuture<ResultSet> executeQuery(final String sql) {
+	public <T> DbSessionFuture<T> executeQuery(final String sql, ResultEventHandler<T> eventHandler, T accumulator) {
 		checkClosed();
-		return enqueueTransactionalRequest(new Request<ResultSet>() {
-			public void execute() {
+		return enqueueTransactionalRequest(new Request<T>(eventHandler, accumulator) {
+			@Override
+			public void execute() throws Exception {
 				logger.debug("Sending query '{}'", sql);
 				CommandRequest request = new CommandRequest(Command.QUERY, sql);
 				session.write(request);

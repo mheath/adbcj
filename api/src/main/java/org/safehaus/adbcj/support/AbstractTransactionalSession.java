@@ -4,9 +4,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.safehaus.adbcj.DbException;
+import org.safehaus.adbcj.DbFuture;
+import org.safehaus.adbcj.DbListener;
+import org.safehaus.adbcj.ResultEventHandler;
 import org.safehaus.adbcj.DbSessionFuture;
+import org.safehaus.adbcj.Field;
+import org.safehaus.adbcj.ResultSet;
+import org.safehaus.adbcj.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTransactionalSession extends AbstractSessionRequestQueue {
+	
+	private final Logger logger = LoggerFactory.getLogger(AbstractTransactionalSession.class);
 	
 	private volatile Transaction transaction;
 	
@@ -119,6 +129,63 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	 * Throws DbException if session is closed
 	 */
 	protected abstract void checkClosed() throws DbException;
+	
+	public DbSessionFuture<ResultSet> executeQuery(String sql) {
+		final DefaultDbSessionFuture<ResultSet> future = new DefaultDbSessionFuture<ResultSet>(this);
+		final ResultEventHandler<DefaultResultSet> resultEventHandler = new ResultEventHandler<DefaultResultSet>() {
+			public void startFields(DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: startFields");
+			}
+			public void field(Field field, DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: field");
+				accumulator.addField(field);
+			}
+			public void endFields(DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: endFields");
+			}
+			public void startResults(DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: startResults");
+			}
+			public void startRow(DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: startRow");
+
+				int columnCount = accumulator.getFields().size();
+				Value[] values = new Value[columnCount];
+				DefaultRow row = new DefaultRow(accumulator, values);
+				accumulator.addResult(row);
+			}
+			public void value(Value value, DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: value");
+				
+				DefaultRow lastRow = (DefaultRow)accumulator.get(accumulator.size() - 1);
+				lastRow.getValues()[value.getField().getIndex()] = value;
+			}
+			public void endRow(DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: endRow");
+			}
+			public void endResults(DefaultResultSet accumulator) {
+				logger.trace("ResultSetEventHandler: endResults");
+
+				future.setValue(accumulator);
+				future.setDone();
+			}
+			public void exception(Throwable t, DefaultResultSet accumulator) {
+				future.setException(DbException.wrap(AbstractTransactionalSession.this, t));
+				future.setDone();
+			}
+		};
+		final DefaultResultSet resultSet = new DefaultResultSet(this);
+		executeQuery(sql, resultEventHandler, resultSet).addListener(new DbListener<DefaultResultSet>() {
+			public void onCompletion(DbFuture<DefaultResultSet> future) throws Exception {
+				try {
+					future.get();
+				} catch (Exception e) {
+					resultEventHandler.exception(e, resultSet);
+				}
+			}
+		});
+		return future;
+	}
 	
 	protected class BeginRequest extends Request<Void> {
 		private final Transaction transaction;

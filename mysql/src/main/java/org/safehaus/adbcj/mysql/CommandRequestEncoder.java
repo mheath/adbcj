@@ -16,9 +16,6 @@
  */
 package org.safehaus.adbcj.mysql;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 
@@ -32,11 +29,5 @@ public class CommandRequestEncoder extends RequestEncoder<CommandRequest> {
 		if (request.getPayload() != null && request.getPayload().length() > 0) {
 			buffer.putString(request.getPayload(), connection.getCharacterSet().getCharset().newEncoder());
 		}
-	}
-
-	public Set<Class<? extends CommandRequest>> getMessageTypes() {
-		Set<Class<? extends CommandRequest>> type = new HashSet<Class<? extends CommandRequest>>();
-		type.add(CommandRequest.class);
-		return type;
 	}
 }

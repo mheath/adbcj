@@ -26,7 +26,7 @@ import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbFuture;
 import org.safehaus.adbcj.DbListener;
 
-
+// TODO Copy future logic from Mina's DefaultIoFuture
 public abstract class AbstractDbFutureListenerSupport<T> implements DbFuture<T> {
 
 	private final List<DbListener<T>> listeners = new LinkedList<DbListener<T>>();

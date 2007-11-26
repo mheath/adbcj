@@ -27,9 +27,7 @@ import org.apache.mina.filter.codec.demux.MessageDecoderAdapter;
 import org.apache.mina.filter.codec.demux.MessageDecoderResult;
 import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.Value;
-import org.safehaus.adbcj.support.DefaultRow;
 import org.safehaus.adbcj.support.DefaultValue;
-import org.safehaus.adbcj.support.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +52,8 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 	private State state = State.CONNECTING;
 	private int fieldPacketCount = 0;
 	private int fieldIndex = 0;
-
+	private MysqlField[] fields;
+	
 	public MessageDecoderResult decodable(IoSession session, IoBuffer in) {
 		in.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -107,7 +106,9 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 				// Get the number of fields. The largest this can be is a 24-bit
 				// integer so cast to int is ok
 				fieldPacketCount = (int)getBinaryLengthEncoding(connection, in);
-
+				fields = new MysqlField[fieldPacketCount];
+				logger.trace("Field count {}", fieldPacketCount);
+				
 				Long extra = null;
 				if (in.position() - startPosition - packetLength != 0) {
 					extra = getBinaryLengthEncoding(connection, in);
@@ -128,6 +129,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			out.write(resultSetFieldResponse);
 
 			fieldPacketCount--;
+			logger.trace("fieldPacketCount: {}", fieldPacketCount);
 			if (fieldPacketCount == 0) {
 				state = State.FIELD_EOF;
 			}
@@ -141,7 +143,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			fieldIndex = 0;
 			break;
 		case ROW:
-			fieldCount = in.get();
+			fieldCount = in.get(); // This is only for checking for EOF
 			in.position(in.position() - 1);
 			if (fieldCount == RESPONSE_EOF) {
 				EofResponse rowEof = decodeEofResponse(connection, in, packetLength, packetNumber, EofResponse.Type.ROW);
@@ -152,12 +154,8 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 				break;
 			}
 
-			MysqlResultSet currentResultSet = (MysqlResultSet)connection.getActiveRequest().getPayload();
-			fieldCount = currentResultSet.getFieldCount();
-			Value[] values = new Value[fieldCount];
-
-			for (int i = 0; i < fieldCount; i++) {
-				MysqlField field = currentResultSet.getFields().get(i);
+			Value[] values = new Value[fields.length];
+			for (MysqlField field : fields) {
 				Object value = null;
 				if (in.get() != NULL_VALUE) {
 					in.position(in.position() - 1);
@@ -175,9 +173,9 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 								+ field.getColumnType());
 					}
 				}
-				values[i] = new DefaultValue(field, value);
+				values[field.getIndex()] = new DefaultValue(field, value);
 			}
-			out.write(new ResultSetRowResponse(packetLength, packetNumber, new DefaultRow(currentResultSet, values)));
+			out.write(new ResultSetRowResponse(packetLength, packetNumber, values));
 			break;
 		default:
 			throw new MysqlException(connection, "Unkown decoder state " + state);
@@ -247,9 +245,6 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 
 	protected ResultSetFieldResponse decodeFieldResponse(MysqlConnection connection, IoBuffer buffer,
 			int packetLength, byte packetNumber) throws CharacterCodingException {
-		Request<?> activeRequest = connection.getActiveRequest();
-		MysqlResultSet resultSet = (MysqlResultSet)activeRequest.getPayload();
-		
 		String catalogName = decodeLengthCodedString(connection, buffer, connection.getCharacterSet());
 		String schemaName = decodeLengthCodedString(connection, buffer, connection.getCharacterSet());
 		String tableLabel = decodeLengthCodedString(connection, buffer, connection.getCharacterSet());
@@ -266,9 +261,10 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		int decimals = buffer.getUnsigned();
 		buffer.getShort(); // Skip filler
 		long fieldDefault = getBinaryLengthEncoding(connection, buffer);
-		MysqlField field = new MysqlField(resultSet, fieldIndex++, catalogName, schemaName, tableLabel, tableName, fieldType, columnLabel,
+		MysqlField field = new MysqlField(fieldIndex, catalogName, schemaName, tableLabel, tableName, fieldType, columnLabel,
 				columnName, 0, // Figure out precision
 				decimals, charSet, length, flags, fieldDefault);
+		fields[fieldIndex++] = field;
 		return new ResultSetFieldResponse(packetLength, packetNumber, field);
 	}
 

@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -67,8 +66,7 @@ public class PgConnectionManager implements ConnectionManager {
                     new SynchronousQueue<Runnable>());
 		}
 		
-		int processorCount = Runtime.getRuntime().availableProcessors();
-		socketConnector = new NioSocketConnector(processorCount, executorService);
+		socketConnector = new NioSocketConnector();
 
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
@@ -123,7 +121,7 @@ public class PgConnectionManager implements ConnectionManager {
 				logger.trace("dbConnectFuture added to session");
 				
 				// Create Connection and add connection to future
-				DefaultDbFuture<Connection> dbConnectFuture = IoSessionUtil.getDbConnectFuture(session);
+				//DefaultDbFuture<Connection> dbConnectFuture = IoSessionUtil.getDbConnectFuture(session);
 				PgConnection connection = new PgConnection(PgConnectionManager.this, session, dbConnectFuture);
 				IoSessionUtil.setConnection(session, connection);
 				dbConnectFuture.setValue(connection);
@@ -145,7 +143,7 @@ public class PgConnectionManager implements ConnectionManager {
 		}
 		closeFuture = new DefaultDbFuture<Void>();
 		if (immediate) {
-			socketConnector.close();
+			socketConnector.dispose();
 			closeFuture.setDone();
 		} else {
 			// TODO Implement PostgresqlConnectionManager.close(boolean)

@@ -36,4 +36,6 @@ public interface DbFuture<T> extends Future<T> {
 	
 	public T get(long timeout, TimeUnit unit) throws DbException, InterruptedException, TimeoutException;
 	
+	public T getUninterruptably() throws DbException;
+	
 }

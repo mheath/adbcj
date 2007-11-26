@@ -4,8 +4,8 @@ import org.safehaus.adbcj.support.DefaultResultSet;
 
 public class PgResultSet extends DefaultResultSet {
 
-	public PgResultSet(PgConnection connection, int fieldCount) {
-		super(connection, fieldCount);
+	public PgResultSet(PgConnection connection) {
+		super(connection);
 	}
 	
 	@Override

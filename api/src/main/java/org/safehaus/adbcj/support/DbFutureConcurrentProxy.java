@@ -60,6 +60,21 @@ public class DbFutureConcurrentProxy<T> extends AbstractDbFutureListenerSupport<
 		}
 	}
 
+	public T getUninterruptably() throws DbException {
+		for(;;) {
+			boolean interrupted = false;
+			try {
+				return get();
+			} catch (InterruptedException e) {
+				interrupted = true;
+			} finally {
+				if (interrupted) {
+					Thread.currentThread().interrupt();
+				}
+			}
+		}
+	}
+	
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		boolean canceled = future.cancel(mayInterruptIfRunning);
 		if (canceled) {

@@ -27,66 +27,84 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 	}
 
 	public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
+		IoBuffer buffer = null;
+		if (message instanceof AbstractFrontendMessage[]) {
+			AbstractFrontendMessage[] messages = (AbstractFrontendMessage[])message;
+			for (AbstractFrontendMessage msg : messages) {
+				IoBuffer encoding = encodeFrontendMessage(session, msg, out);
+				if (buffer == null) {
+					buffer = encoding;
+					buffer.setAutoExpand(true);
+				} else {
+					encoding.flip();
+					buffer.put(encoding);
+				}
+			}
+		} else {
+			buffer = encodeFrontendMessage(session, (AbstractFrontendMessage)message, out);
+		}
+		buffer.flip();
+		out.write(buffer);
+	}
+	
+	public IoBuffer encodeFrontendMessage(IoSession session, AbstractFrontendMessage message, ProtocolEncoderOutput out) throws Exception {
 		logger.trace("Encoding message");
 		
-		AbstractFrontendMessage frontendMessage = (AbstractFrontendMessage)message;
 		IoBuffer buffer;
-		switch(frontendMessage.getType()) {
+		switch(message.getType()) {
 		case FLUSH:
 		case PASSWORD:
 		case QUERY:
 		case SYNC:
 		case TERMINATE:
-			buffer = encodeDataMessage(session, (FrontendMessage)frontendMessage);
+			buffer = encodeDataMessage(session, (FrontendMessage)message);
 			break;
 		case BIND:
-			buffer = encodeBind(session, (BindMessage)frontendMessage);
+			buffer = encodeBind(session, (BindMessage)message);
 			break;
 		case CANCEL_REQUEST:
-			buffer = encodeCancelRequest(session, (CancelRequestMessage)frontendMessage);
+			buffer = encodeCancelRequest(session, (CancelRequestMessage)message);
 			break;
 		case CLOSE:
-			buffer = encodeCloseMessage(session, (CloseMessage)frontendMessage);
+			buffer = encodeCloseMessage(session, (CloseMessage)message);
 			break;
 		case DESCRIBE:
-			buffer = encodeDescribeMessage(session, (DescribeMessage)frontendMessage);
+			buffer = encodeDescribeMessage(session, (DescribeMessage)message);
 			break;
 		case EXECUTE:
-			buffer = encodeExecuteMessage(session, (ExecuteMessage)frontendMessage);
+			buffer = encodeExecuteMessage(session, (ExecuteMessage)message);
 			break;
 		case PARSE:
-			buffer = encodeParseMessage(session, (ParseMessage)frontendMessage);
+			buffer = encodeParseMessage(session, (ParseMessage)message);
 			break;
 		case STARTUP:
-			buffer = encodeStartupMessage(session, (StartupMessage)frontendMessage);
+			buffer = encodeStartupMessage(session, (StartupMessage)message);
 			break;
 		default:
-			throw new IllegalStateException("Do not know how to encode message of type " + frontendMessage.getType());
+			throw new IllegalStateException("Do not know how to encode message of type " + message.getType());
 		}
 
 		if (buffer.hasRemaining()) {
-			throw new IllegalStateException(String.format("Message buffer for %s is not full", frontendMessage.getType()));
+			throw new IllegalStateException(String.format("Message buffer for %s is not full", message.getType()));
 		}
 		
-		buffer.flip();
-		out.write(buffer);
-		logger.trace("Encoding complete");
+		return buffer;
 	}
 
 	// === DateMessage encoding =======================================================================================
 	
-	private IoBuffer encodeDataMessage(IoSession session, FrontendMessage frontendMessage) {
+	private IoBuffer encodeDataMessage(IoSession session, FrontendMessage message) {
 		logger.trace("Encoding data message");
 		
-		boolean hasData = frontendMessage.getData() != null;
+		boolean hasData = message.getData() != null;
 
 		int length = 4;
 		if (hasData) {
-			length += frontendMessage.getData().length + 1; // Add length of data and null-terminator
+			length += message.getData().length + 1; // Add length of data and null-terminator
 		}
-		IoBuffer buffer = createBuffer(frontendMessage.getType(), length);
+		IoBuffer buffer = createBuffer(message.getType(), length);
 		if (hasData) {
-			buffer.put(frontendMessage.getData()).put(NULL);
+			buffer.put(message.getData()).put(NULL);
 		}
 		
 		return buffer;
@@ -94,22 +112,22 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 
 	// === Bind encoding ==============================================================================================
 	
-	private IoBuffer encodeBind(IoSession session, BindMessage bindMessage) {
+	private IoBuffer encodeBind(IoSession session, BindMessage message) {
 		logger.trace("Encoding bind message");
 		
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		Charset charset = connection.getFrontendCharset();
 		
-		final int paramFormatsLength = bindMessage.getParameterFormats() == null ? 0 : bindMessage.getParameterFormats().length;
-		final int paramValuesLength = bindMessage.getParameterValues() == null ? 0 : bindMessage.getParameterValues().length;
-		final int resultFormatsLength = bindMessage.getResultFormats() == null ? 0 : bindMessage.getResultFormats().length;
+		final int paramFormatsLength = message.getParameterFormats() == null ? 0 : message.getParameterFormats().length;
+		final int paramValuesLength = message.getParameterValues() == null ? 0 : message.getParameterValues().length;
+		final int resultFormatsLength = message.getResultFormats() == null ? 0 : message.getResultFormats().length;
 		
-		byte[] portal = bindMessage.getPortal() == null ? EMPTY_BYTE_ARRAY : bindMessage.getPortal().getBytes(charset);
-		byte[] statement = bindMessage.getStatement() == null ? EMPTY_BYTE_ARRAY : bindMessage.getStatement().getBytes(charset);
+		byte[] portal = message.getPortal() == null ? EMPTY_BYTE_ARRAY : message.getPortal().getBytes(charset);
+		byte[] statement = message.getStatement() == null ? EMPTY_BYTE_ARRAY : message.getStatement().getBytes(charset);
 		byte[] paramValues[] = new byte[paramValuesLength][];
 		int valuesLength = 0;
 		for (int i = 0; i < paramValuesLength; i++) {
-			byte[] value = bindMessage.getParameterValues()[i].getBytes(charset);
+			byte[] value = message.getParameterValues()[i].getBytes(charset);
 			paramValues[i] = value;
 			valuesLength += 4 + value.length;
 		}
@@ -129,7 +147,7 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		buffer.put(portal).put(NULL);
 		buffer.put(statement).put(NULL);
 		buffer.putShort((short)paramFormatsLength);
-		putFormatCodes(bindMessage.getParameterFormats(), buffer);
+		putFormatCodes(message.getParameterFormats(), buffer);
 		buffer.putShort((short)paramValuesLength);
 		for (int i = 0; i < paramValuesLength; i++) {
 			byte[] value = paramValues[i];
@@ -137,7 +155,7 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 			buffer.put(value);
 		}
 		buffer.putShort((short)resultFormatsLength);
-		putFormatCodes(bindMessage.getResultFormats(), buffer);
+		putFormatCodes(message.getResultFormats(), buffer);
 		return buffer;
 	}
 
@@ -199,33 +217,33 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		return buffer;
 	}
 
-	private IoBuffer encodeCloseMessage(IoSession session, CloseMessage closeMessage) {
+	private IoBuffer encodeCloseMessage(IoSession session, CloseMessage message) {
 		logger.trace("Encoding close");
 		
-		return encodeCloseAndDescribe(session, FrontendMessageType.CLOSE, closeMessage.getTarget(), closeMessage.getName());
+		return encodeCloseAndDescribe(session, FrontendMessageType.CLOSE, message.getTarget(), message.getName());
 	}
 
 	// === Describe Message encoding ==================================================================================
 	
-	private IoBuffer encodeDescribeMessage(IoSession session, DescribeMessage describeMessage) {
+	private IoBuffer encodeDescribeMessage(IoSession session, DescribeMessage message) {
 		logger.trace("Encoding describe message");
 		
-		return encodeCloseAndDescribe(session, FrontendMessageType.DESCRIBE, describeMessage.getTarget(), describeMessage.getName());
+		return encodeCloseAndDescribe(session, FrontendMessageType.DESCRIBE, message.getTarget(), message.getName());
 	}
 	
 	// === Execute Message encoding ===================================================================================
 	
-	private IoBuffer encodeExecuteMessage(IoSession session, ExecuteMessage executeMessage) {
+	private IoBuffer encodeExecuteMessage(IoSession session, ExecuteMessage message) {
 		logger.trace("Encoding execute message");
 
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		Charset charset = connection.getFrontendCharset();
 
 		byte[] portal;
-		if (executeMessage.getPortal() == null) {
+		if (message.getPortal() == null) {
 			portal = EMPTY_BYTE_ARRAY;
 		} else {
-			portal = executeMessage.getPortal().getBytes(charset);
+			portal = message.getPortal().getBytes(charset);
 		}
 
 		int length = 4 // length field
@@ -234,22 +252,22 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		
 		IoBuffer buffer = createBuffer(FrontendMessageType.EXECUTE, length);
 		buffer.put(portal).put(NULL);
-		buffer.putInt(executeMessage.getMaxRows());
+		buffer.putInt(message.getMaxRows());
 		
 		return buffer;
 	}
 
 	// === ParseMessage encoding ======================================================================================
 
-	private IoBuffer encodeParseMessage(IoSession session, ParseMessage parseMessage) {
+	private IoBuffer encodeParseMessage(IoSession session, ParseMessage message) {
 		logger.trace("Encoding parse message");
 		
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		
-		byte[] query = parseMessage.getQuery().getBytes(connection.getFrontendCharset());
-		byte[] statement = parseMessage.getStatement() == null ? EMPTY_BYTE_ARRAY : parseMessage.getStatement().getBytes(connection.getFrontendCharset());
+		byte[] query = message.getQuery().getBytes(connection.getFrontendCharset());
+		byte[] statement = message.getStatement() == null ? EMPTY_BYTE_ARRAY : message.getStatement().getBytes(connection.getFrontendCharset());
 		
-		int parameterCount = parseMessage.getParameters() == null ? 0 : parseMessage.getParameters().length;
+		int parameterCount = message.getParameters() == null ? 0 : message.getParameters().length;
 		int length =
 			4 // Length field
 			+ query.length + 1 // Query plus null-terminator
@@ -257,12 +275,12 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 			+ 2 // Parameter count
 			+ (4 * parameterCount); // OID for each parameter
 		
-		IoBuffer buffer = createBuffer(parseMessage.getType(), length);
+		IoBuffer buffer = createBuffer(message.getType(), length);
 		buffer.put(statement).put(NULL);
 		buffer.put(query).put(NULL);
 		buffer.putShort((short)parameterCount);
-		if (parseMessage.getParameters() != null) {
-			for (int oid : parseMessage.getParameters()) {
+		if (message.getParameters() != null) {
+			for (int oid : message.getParameters()) {
 				buffer.putInt(oid);
 			}
 		}
@@ -321,14 +339,14 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 	// === Utility methods ============================================================================================
 	
 	private IoBuffer createBuffer(FrontendMessageType type, int length) {
-		IoBuffer buffer;
+		IoBuffer buffer = IoBuffer.allocate(1024);
+		buffer.setAutoExpand(false);
 		if (type.includedInPacket()) {
-			buffer = IoBuffer.allocate(length + 1);
+			buffer.limit(length + 1);
 			buffer.put(type.getValue());
 		} else {
-			buffer = IoBuffer.allocate(length);
+			buffer.limit(length);
 		}
-		buffer.setAutoExpand(false);
 		buffer.putInt(length);
 		return buffer;
 	}

@@ -16,11 +16,25 @@
  */
 package org.safehaus.adbcj.support;
 
+import org.safehaus.adbcj.ResultEventHandler;
+
 public abstract class Request<T> {
 	
 	private DefaultDbSessionFuture<T> future = null;
 	private Object payload;
+	private final ResultEventHandler<T> eventHandler;
+	private final T accumulator;
 	private Object transaction;
+	
+	public Request() {
+		this.eventHandler = null;
+		this.accumulator = null;
+	}
+	
+	public Request(ResultEventHandler<T> eventHandler, T accumulator) {
+		this.eventHandler = eventHandler;
+		this.accumulator = accumulator;
+	}
 	
 	public abstract void execute() throws Exception;
 	
@@ -51,6 +65,14 @@ public abstract class Request<T> {
 		this.payload = payload;
 	}
 
+	public T getAccumulator() {
+		return accumulator;
+	}
+	
+	public ResultEventHandler<T> getEventHandler() {
+		return eventHandler;
+	}
+	
 	public Object getTransaction() {
 		return transaction;
 	}

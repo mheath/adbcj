@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 // TODO Write test for result set metadata
 public class SelectTest extends ConnectionManagerDataProvider {
 
-	@Test(dataProvider="connectionManagerDataProvider")
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testSimpleSelect(ConnectionManager connectionManager) throws DbException, InterruptedException {
 		final boolean[] callbacks = {false};
 		final CountDownLatch latch = new CountDownLatch(callbacks.length); 

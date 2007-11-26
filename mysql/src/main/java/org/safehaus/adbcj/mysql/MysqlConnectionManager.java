@@ -22,7 +22,6 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
-import org.apache.mina.common.IoFuture;
 import org.apache.mina.common.IoFutureListener;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.demux.DemuxingProtocolCodecFactory;
@@ -55,20 +54,19 @@ public class MysqlConnectionManager implements ConnectionManager {
 	private DbFuture<Void> closeFuture = null;
 	
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, ExecutorService executorService, Properties properties) {
-		int processorCount = Runtime.getRuntime().availableProcessors();
-		socketConnector = new NioSocketConnector(processorCount, executorService);
+		socketConnector = new NioSocketConnector();
 		//socketConnector.setWorkerTimeout(5); // TODO Make MINA worker timeout configurable in MysqlConnectionManager
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
 		
 		DemuxingProtocolCodecFactory codecFactory = new DemuxingProtocolCodecFactory();
-		codecFactory.register(new MessageDecoderFactory() {
+		codecFactory.addMessageDecoder(new MessageDecoderFactory() {
 			public MessageDecoder getDecoder() throws Exception {
 				return new MysqlMessageDecoder();
 			}
 		});
-		codecFactory.register(new LoginRequestEncoder());
-		codecFactory.register(new CommandRequestEncoder());
+		codecFactory.addMessageEncoder(LoginRequest.class, new LoginRequestEncoder());
+		codecFactory.addMessageEncoder(CommandRequest.class, new CommandRequestEncoder());
 
 		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(codecFactory));
 		
@@ -83,9 +81,10 @@ public class MysqlConnectionManager implements ConnectionManager {
 		if (isClosed()) {
 			return closeFuture;
 		}
-		
+		// TODO: Close all open connections
+		// TODO: Keep track of open connections
 		if (immediate) {
-			socketConnector.close();
+			socketConnector.dispose();
 			DefaultDbFuture<Void> future = new DefaultDbFuture<Void>();
 			future.setDone();
 			closeFuture = future;
@@ -121,8 +120,8 @@ public class MysqlConnectionManager implements ConnectionManager {
 			}
 		};
 		
-		connectFuture.addListener(new IoFutureListener() {
-			public void operationComplete(IoFuture future) {
+		connectFuture.addListener(new IoFutureListener<ConnectFuture>() {
+			public void operationComplete(ConnectFuture future) {
 				logger.trace("Completed connection to {}", MysqlConnectionManager.this);
 				
 				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
