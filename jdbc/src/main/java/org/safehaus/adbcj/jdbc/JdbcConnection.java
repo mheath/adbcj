@@ -212,7 +212,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 					}
 					eventHandler.endResults(accumulator);
 					
-					return null;
+					return accumulator;
 				} finally {
 					if (jdbcResultSet != null) {
 						jdbcResultSet.close();

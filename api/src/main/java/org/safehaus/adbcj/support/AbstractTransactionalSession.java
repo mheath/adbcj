@@ -4,11 +4,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.safehaus.adbcj.DbException;
-import org.safehaus.adbcj.DbFuture;
-import org.safehaus.adbcj.DbListener;
-import org.safehaus.adbcj.ResultEventHandler;
 import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.Field;
+import org.safehaus.adbcj.ResultEventHandler;
 import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.Value;
 import org.slf4j.Logger;
@@ -131,8 +129,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	protected abstract void checkClosed() throws DbException;
 	
 	public DbSessionFuture<ResultSet> executeQuery(String sql) {
-		final DefaultDbSessionFuture<ResultSet> future = new DefaultDbSessionFuture<ResultSet>(this);
-		final ResultEventHandler<DefaultResultSet> resultEventHandler = new ResultEventHandler<DefaultResultSet>() {
+		ResultEventHandler<DefaultResultSet> eventHandler = new ResultEventHandler<DefaultResultSet>() {
 			public void startFields(DefaultResultSet accumulator) {
 				logger.trace("ResultSetEventHandler: startFields");
 			}
@@ -165,26 +162,17 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 			}
 			public void endResults(DefaultResultSet accumulator) {
 				logger.trace("ResultSetEventHandler: endResults");
-
-				future.setValue(accumulator);
-				future.setDone();
 			}
 			public void exception(Throwable t, DefaultResultSet accumulator) {
-				future.setException(DbException.wrap(AbstractTransactionalSession.this, t));
-				future.setDone();
 			}
 		};
-		final DefaultResultSet resultSet = new DefaultResultSet(this);
-		executeQuery(sql, resultEventHandler, resultSet).addListener(new DbListener<DefaultResultSet>() {
-			public void onCompletion(DbFuture<DefaultResultSet> future) throws Exception {
-				try {
-					future.get();
-				} catch (Exception e) {
-					resultEventHandler.exception(e, resultSet);
-				}
-			}
-		});
-		return future;
+		DefaultResultSet resultSet = new DefaultResultSet(this);
+		return executeQuery0(sql, eventHandler, resultSet);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T extends ResultSet> DbSessionFuture<ResultSet> executeQuery0(String sql, ResultEventHandler<T> eventHandler, T accumulator) {
+		return (DbSessionFuture<ResultSet>)executeQuery(sql, eventHandler, accumulator);
 	}
 	
 	protected class BeginRequest extends Request<Void> {

@@ -18,6 +18,7 @@ import org.safehaus.adbcj.postgresql.backend.RowDescriptionMessage;
 import org.safehaus.adbcj.postgresql.frontend.FrontendMessage;
 import org.safehaus.adbcj.postgresql.frontend.FrontendMessageType;
 import org.safehaus.adbcj.support.DefaultDbFuture;
+import org.safehaus.adbcj.support.DefaultDbSessionFuture;
 import org.safehaus.adbcj.support.DefaultResult;
 import org.safehaus.adbcj.support.Request;
 import org.safehaus.adbcj.support.AbstractTransactionalSession.Transaction;
@@ -175,20 +176,23 @@ public class PgIoHandler extends IoHandlerAdapter {
 			throw new IllegalStateException("Received a data row without an active request");
 		}
 
+		Object accumulator = request.getAccumulator();
+		DefaultDbSessionFuture<Object> future = request.getFuture();
 		switch (commandCompleteMessage.getCommand()) {
 		case SELECT:
-			request.getEventHandler().endResults(request.getAccumulator());
+			request.getEventHandler().endResults(accumulator);
+			future.setValue(accumulator);
 		case BEGIN:
 		case COMMIT:
 		case ROLLBACK:
-			request.getFuture().setDone();
+			future.setDone();
 			break;
 		case DELETE:
 		case INSERT:
 		case UPDATE:
 			DefaultResult result = new DefaultResult(commandCompleteMessage.getRowCount(), Collections.<String>emptyList());
-			request.getFuture().setValue(result);
-			request.getFuture().setDone();
+			future.setValue(result);
+			future.setDone();
 			break;
 		// TODO Implement other command complete message types (i.e. INSERT, DELETE, MOVE, UPDATE etc.)
 		default:

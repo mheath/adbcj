@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
-import org.apache.mina.common.IoFuture;
 import org.apache.mina.common.IoFutureListener;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
@@ -23,7 +22,6 @@ import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
 import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.DbFuture;
-import org.safehaus.adbcj.DbListener;
 import org.safehaus.adbcj.postgresql.backend.PgBackendMessageDecoder;
 import org.safehaus.adbcj.postgresql.frontend.PgFrontendMessageEncoder;
 import org.safehaus.adbcj.postgresql.frontend.StartupMessage;
@@ -102,16 +100,9 @@ public class PgConnectionManager implements ConnectionManager {
 				return false;
 			}
 		};
-		dbConnectFuture.addListener(new DbListener<Connection>() {
-			public void onCompletion(DbFuture<Connection> future) throws Exception {
-				if (!future.isCancelled()) {
-					PgConnection connection = (PgConnection)future.get();
-				}
-			}
-		});
 
-		connectFuture.addListener(new IoFutureListener() {
-			public void operationComplete(IoFuture future) {
+		connectFuture.addListener(new IoFutureListener<ConnectFuture>() {
+			public void operationComplete(ConnectFuture future) {
 				logger.trace("connect future");
 
 				IoSession session = future.getSession();

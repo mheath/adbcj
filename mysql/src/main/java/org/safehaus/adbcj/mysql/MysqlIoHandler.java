@@ -27,6 +27,7 @@ import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.Value;
 import org.safehaus.adbcj.support.AbstractDbFutureListenerSupport;
 import org.safehaus.adbcj.support.DefaultDbFuture;
+import org.safehaus.adbcj.support.DefaultDbSessionFuture;
 import org.safehaus.adbcj.support.DefaultResult;
 import org.safehaus.adbcj.support.Request;
 import org.safehaus.adbcj.support.AbstractTransactionalSession.Transaction;
@@ -184,6 +185,9 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 			break;
 		case ROW:
 			activeRequest.getEventHandler().endResults(activeRequest.getAccumulator());
+			DefaultDbSessionFuture<ResultSet> future = activeRequest.getFuture();
+			future.setValue(activeRequest.getAccumulator());
+			future.setDone();
 			connection.makeNextRequestActive();
 			break;
 		default:
