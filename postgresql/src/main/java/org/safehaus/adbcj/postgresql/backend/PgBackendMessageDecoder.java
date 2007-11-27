@@ -33,7 +33,6 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 	@Override
 	protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 		logger.trace("Decoding message");
-		// TODO Make MySQL decoder more like postgresql decoder
 		
 		// Check to see if we have enough data to read the message type and message length
 		if (in.remaining() < 5) {
