@@ -14,8 +14,10 @@ public class PgField implements Field {
 	private final int tableOid;
 	private final int columnAttributeNumber;
 	private final FormatCode formatCode;
+	private final int typeSize;
+	private final int typeModifier;
 	
-	public PgField(int index, String schemaName, Type type, String columnLabel, int tableOid, int columnAttributeNumber, FormatCode formatCode) {
+	public PgField(int index, String schemaName, Type type, String columnLabel, int tableOid, int columnAttributeNumber, FormatCode formatCode, int typeSize, int typeModifier) {
 		this.index = index;
 		this.schemaName = schemaName;
 		this.type = type;
@@ -23,6 +25,8 @@ public class PgField implements Field {
 		this.tableOid = tableOid;
 		this.columnAttributeNumber = columnAttributeNumber;
 		this.formatCode = formatCode;
+		this.typeSize = typeSize;
+		this.typeModifier = typeModifier;
 	}
 	
 	public FormatCode getFormatCode() {

@@ -22,16 +22,15 @@ import java.util.Set;
 
 import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
+import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
-import org.apache.mina.filter.codec.demux.MessageDecoderAdapter;
-import org.apache.mina.filter.codec.demux.MessageDecoderResult;
 import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.Value;
 import org.safehaus.adbcj.support.DefaultValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MysqlMessageDecoder extends MessageDecoderAdapter {
+public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 	private static final Logger logger = LoggerFactory.getLogger(MysqlMessageDecoder.class);
 
 	private static final byte NULL_VALUE = (byte)0xfb;
@@ -54,46 +53,48 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 	private int fieldIndex = 0;
 	private MysqlField[] fields;
 	
-	public MessageDecoderResult decodable(IoSession session, IoBuffer in) {
+	@Override
+	protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 		in.order(ByteOrder.LITTLE_ENDIAN);
 
+		// Check to see if there's enough data in the buffer to read the packet length
 		if (in.remaining() < 3) {
-			return NEED_DATA;
+			return false;
 		}
-
-		int length = in.getUnsignedMediumInt();
-		if (in.remaining() < length + 1) { // TODO Fix + 1 length for binary length encoding
-			return NEED_DATA;
+		
+		// Read the packet length and determine if the buffer is big enough
+		in.mark();
+		final int length = in.getUnsignedMediumInt();
+		// Make sure we have enough data for the packet length and the packet number
+		if (in.remaining() < length + 1) {
+			in.reset();
+			return false;
 		}
-
-		return OK;
-	}
-
-	public MessageDecoderResult decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-
-		in.order(ByteOrder.LITTLE_ENDIAN);
-
-		final int packetLength = in.getUnsignedMediumInt();
 		final byte packetNumber = in.get();
-		final int startPosition = in.position();
+		
+		// Create a new buffer to process the current message
+		IoBuffer buffer = in.duplicate();
+		buffer.limit(buffer.position() + length);
+		in.skip(length);
+		
+		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
 		logger.debug("Decoding in state {}", state);
 		switch (state) {
 		case CONNECTING:
-			ServerGreeting serverGreeting = decodeServerGreeting(packetLength, packetNumber, in);
+			ServerGreeting serverGreeting = decodeServerGreeting(length, packetNumber, buffer);
 			out.write(serverGreeting);
 			state = State.RESPONSE;
 			break;
 		case RESPONSE:
-			int fieldCount = in.get();
+			int fieldCount = buffer.get();
 			if (fieldCount == RESPONSE_OK) {
 				// Create Ok response
-				OkResponse okResponse = decodeOkResponse(connection, in, packetLength, packetNumber, startPosition);
+				OkResponse okResponse = decodeOkResponse(connection, buffer, length, packetNumber);
 				out.write(okResponse);
 			} else if (fieldCount == RESPONSE_ERROR) {
 				// Create error response
-				ErrorResponse response = decodeErrorResponse(connection, in, packetLength, packetNumber, startPosition);
+				ErrorResponse response = decodeErrorResponse(connection, buffer, length, packetNumber);
 				out.write(response);
 			} else if (fieldCount == RESPONSE_EOF) {
 				throw new IllegalStateException("Did not expect an EOF response from the server");
@@ -101,22 +102,22 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 				// Must be receiving result set header
 
 				// Rewind the buffer to read the binary length encoding
-				in.position(in.position() - 1);
+				buffer.position(buffer.position() - 1);
 
 				// Get the number of fields. The largest this can be is a 24-bit
 				// integer so cast to int is ok
-				fieldPacketCount = (int)getBinaryLengthEncoding(connection, in);
+				fieldPacketCount = (int)getBinaryLengthEncoding(connection, buffer);
 				fields = new MysqlField[fieldPacketCount];
 				logger.trace("Field count {}", fieldPacketCount);
 				
 				Long extra = null;
-				if (in.position() - startPosition - packetLength != 0) {
-					extra = getBinaryLengthEncoding(connection, in);
+				if (buffer.remaining() > 0) {
+					extra = getBinaryLengthEncoding(connection, buffer);
 				}
 
 				// Create result set response
 				logger.debug("Sending result set response up filter chain");
-				ResultSetResponse resultSetResponse = new ResultSetResponse(packetLength, packetNumber,
+				ResultSetResponse resultSetResponse = new ResultSetResponse(length, packetNumber,
 						fieldPacketCount, extra);
 				out.write(resultSetResponse);
 
@@ -124,8 +125,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			}
 			break;
 		case FIELD:
-			ResultSetFieldResponse resultSetFieldResponse = decodeFieldResponse(connection, in, packetLength,
-					packetNumber);
+			ResultSetFieldResponse resultSetFieldResponse = decodeFieldResponse(connection, buffer, length, packetNumber);
 			out.write(resultSetFieldResponse);
 
 			fieldPacketCount--;
@@ -135,7 +135,7 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			}
 			break;
 		case FIELD_EOF:
-			EofResponse fieldEof = decodeEofResponse(connection, in, packetLength, packetNumber, EofResponse.Type.FIELD);
+			EofResponse fieldEof = decodeEofResponse(connection, buffer, length, packetNumber, EofResponse.Type.FIELD);
 			out.write(fieldEof);
 			out.flush();
 
@@ -143,10 +143,10 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			fieldIndex = 0;
 			break;
 		case ROW:
-			fieldCount = in.get(); // This is only for checking for EOF
-			in.position(in.position() - 1);
+			fieldCount = buffer.get(); // This is only for checking for EOF
+			buffer.position(buffer.position() - 1);
 			if (fieldCount == RESPONSE_EOF) {
-				EofResponse rowEof = decodeEofResponse(connection, in, packetLength, packetNumber, EofResponse.Type.ROW);
+				EofResponse rowEof = decodeEofResponse(connection, buffer, length, packetNumber, EofResponse.Type.ROW);
 				out.write(rowEof);
 
 				state = State.RESPONSE;
@@ -157,16 +157,16 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 			Value[] values = new Value[fields.length];
 			for (MysqlField field : fields) {
 				Object value = null;
-				if (in.get() != NULL_VALUE) {
-					in.position(in.position() - 1);
+				if (buffer.get() != NULL_VALUE) {
+					buffer.position(buffer.position() - 1);
 					switch (field.getColumnType()) {
 					case INTEGER:
 					case BIGINT:
-						String strVal = decodeLengthCodedString(connection, in, connection.getCharacterSet());
+						String strVal = decodeLengthCodedString(connection, buffer, connection.getCharacterSet());
 						value = Long.valueOf(strVal);
 						break;
 					case VARCHAR:
-						value = decodeLengthCodedString(connection, in, connection.getCharacterSet());
+						value = decodeLengthCodedString(connection, buffer, connection.getCharacterSet());
 						break;
 					default:
 						throw new IllegalStateException("Don't know how to handle column type of "
@@ -175,32 +175,26 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 				}
 				values[field.getIndex()] = new DefaultValue(field, value);
 			}
-			out.write(new ResultSetRowResponse(packetLength, packetNumber, values));
+			out.write(new ResultSetRowResponse(length, packetNumber, values));
 			break;
 		default:
 			throw new MysqlException(connection, "Unkown decoder state " + state);
 		}
 
-		// Sanity check to make sure we're decoding the correct number of bytes
-		int diff = (in.position() - startPosition) - packetLength;
-		if (diff > 0) {
-			throw new DbException(connection, String.format("Read %d too few bytes decoding stream %s", diff, in.getHexDump()));
-		}
-		if (diff < 0) {
-			throw new DbException(connection, String.format("Read %d too many bytes decoding stream %s", -diff, in.getHexDump()));
+		if (buffer.hasRemaining()) {
+			throw new IllegalStateException(String.format("Buffer has %d remaining bytes after decoding", buffer.hasRemaining()));
 		}
 
-		return OK;
+		return in.hasRemaining();
 	}
-
-	private ErrorResponse decodeErrorResponse(MysqlConnection connection, IoBuffer buffer, final int packetLength,
-			final byte packetNumber, final int startPosition) throws CharacterCodingException {
+	
+	protected ErrorResponse decodeErrorResponse(MysqlConnection connection, IoBuffer buffer, int length,
+			byte packetNumber) throws CharacterCodingException {
 		int errorNumber = buffer.getUnsignedShort();
 		buffer.get(); // Throw away sqlstate marker
 		String sqlState = buffer.getString(SQL_STATE_LENGTH, MysqlCharacterSet.ASCII_BIN.getCharset().newDecoder());
-		String message = buffer.getString(packetLength - (buffer.position() - startPosition), connection
-				.getCharacterSet().getCharset().newDecoder());
-		ErrorResponse response = new ErrorResponse(packetLength, packetNumber, errorNumber, sqlState, message);
+		String message = buffer.getString(buffer.remaining(), connection.getCharacterSet().getCharset().newDecoder());
+		ErrorResponse response = new ErrorResponse(length, packetNumber, errorNumber, sqlState, message);
 		return response;
 	}
 
@@ -226,19 +220,18 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 				serverStatus);
 	}
 
-	protected OkResponse decodeOkResponse(MysqlConnection connection, IoBuffer in, final int packetLength,
-			final byte packetNumber, final int startPosition) throws CharacterCodingException {
-		long affectedRows = getBinaryLengthEncoding(connection, in);
+	protected OkResponse decodeOkResponse(MysqlConnection connection, IoBuffer buffer, int length, byte packetNumber) throws CharacterCodingException {
+		long affectedRows = getBinaryLengthEncoding(connection, buffer);
 		long insertId = 0;
 		if (affectedRows > 0) {
-			insertId = getBinaryLengthEncoding(connection, in);
+			insertId = getBinaryLengthEncoding(connection, buffer);
 		}
-		Set<ServerStatus> serverStatus = in.getEnumSetShort(ServerStatus.class);
-		int warningCount = in.getUnsignedShort();
-		String message = in.getString(packetLength - (in.position() - startPosition), connection.getCharacterSet()
+		Set<ServerStatus> serverStatus = buffer.getEnumSetShort(ServerStatus.class);
+		int warningCount = buffer.getUnsignedShort();
+		String message = buffer.getString(buffer.remaining(), connection.getCharacterSet()
 				.getCharset().newDecoder());
 
-		OkResponse response = new OkResponse(packetLength, packetNumber, affectedRows, insertId, serverStatus,
+		OkResponse response = new OkResponse(length, packetNumber, affectedRows, insertId, serverStatus,
 				warningCount, message);
 		return response;
 	}
@@ -268,19 +261,19 @@ public class MysqlMessageDecoder extends MessageDecoderAdapter {
 		return new ResultSetFieldResponse(packetLength, packetNumber, field);
 	}
 
-	protected EofResponse decodeEofResponse(MysqlConnection connection, IoBuffer in, final int packetLength, final byte packetNumber,
+	protected EofResponse decodeEofResponse(MysqlConnection connection, IoBuffer buffer, int length, byte packetNumber,
 			EofResponse.Type type) {
 		// Create EOF response
-		byte fieldCount = in.get();
+		byte fieldCount = buffer.get();
 
 		if (fieldCount != RESPONSE_EOF) {
 			throw new MysqlException(connection, "Expected an EOF response from the server");
 		}
 
-		int warnings = in.getUnsignedShort();
-		Set<ServerStatus> serverStatus = in.getEnumSetShort(ServerStatus.class);
+		int warnings = buffer.getUnsignedShort();
+		Set<ServerStatus> serverStatus = buffer.getEnumSetShort(ServerStatus.class);
 
-		EofResponse response = new EofResponse(packetLength, packetNumber, warnings, serverStatus, type);
+		EofResponse response = new EofResponse(length, packetNumber, warnings, serverStatus, type);
 		return response;
 	}
 

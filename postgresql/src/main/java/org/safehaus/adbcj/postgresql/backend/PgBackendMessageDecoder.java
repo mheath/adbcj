@@ -71,7 +71,6 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		
 		logger.debug("Decoding message of type {}", type);
 		
-		// TODO Implement decoder for remaining backend message types
 		switch (type) {
 		// Message types that don't have any extra data
 		case BIND_COMPLETE:
@@ -107,6 +106,16 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		case ROW_DESCRIPTION:
 			decodeRowDescription(session, buffer, out);
 			break;
+		case COPY_DATA:
+		case COPY_IN_RESPONSE:
+		case COPY_OUT_RESPONSE:
+		case FUNCTION_CALL_RESPONSE:
+		case NOTICE_RESPONSE:
+		case NOTIFICATION_RESPONSE:
+		case PARAMETER_DESCRIPTION:
+		case PASSWORD:
+			// TODO Implement decoder for these backend message types
+			throw new IllegalStateException("No decoder implemented for message of type " + type);
 		default:
 			throw new IllegalStateException(String.format("Messages of type %s are not implemented", type)); 
 		}
@@ -206,13 +215,20 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			if (valueLength < 0) {
 				value = new DefaultValue(field, null);
 			} else {
-				// TODO Convert raw data to value
 				String strVal;
 				switch (field.getColumnType()) {
 				case INTEGER:
-					// TODO Modify to use getString that doesn't terminate on null
-					strVal = buffer.getString(valueLength, decoder);
-					value = new DefaultValue(field, Integer.valueOf(strVal));
+					switch (field.getFormatCode()) {
+					case BINARY:
+						value = new DefaultValue(field, buffer.getInt());
+						break;
+					case TEXT:
+						strVal = buffer.getString(valueLength, decoder);
+						value = new DefaultValue(field, Integer.valueOf(strVal));
+						break;
+					default:
+						throw new IllegalStateException("Unable to decode format of " + field.getFormatCode());
+					}
 					break;
 				case VARCHAR:
 					// TODO Modify to use getString that doesn't terminate on null
@@ -221,10 +237,9 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 					break;
 				default:
 					// Advance buffer
-					byte[] data = new byte[valueLength];
-					buffer.get(data);
+					buffer.skip(valueLength);
 					// TODO Handle remaining ADBCJ types
-					throw new IllegalStateException("Unable to decode field type of " + field.getColumnType());
+					throw new IllegalStateException("Unable to decode column of type " + field.getColumnType());
 				}
 			}
 			values[i] = value; 
@@ -351,7 +366,9 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 					name,
 					tableOid,
 					columnAttributeNumber,
-					code
+					code,
+					typeSize,
+					typeModifier
 					);
 			request.setPayload(fields);
 		}

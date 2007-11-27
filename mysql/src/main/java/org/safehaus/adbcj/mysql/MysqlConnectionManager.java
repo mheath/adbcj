@@ -23,10 +23,10 @@ import java.util.concurrent.ExecutorService;
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
 import org.apache.mina.common.IoFutureListener;
+import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.codec.demux.DemuxingProtocolCodecFactory;
-import org.apache.mina.filter.codec.demux.MessageDecoder;
-import org.apache.mina.filter.codec.demux.MessageDecoderFactory;
+import org.apache.mina.filter.codec.ProtocolDecoder;
+import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
@@ -53,22 +53,23 @@ public class MysqlConnectionManager implements ConnectionManager {
 	
 	private DbFuture<Void> closeFuture = null;
 	
+	private static final ProtocolEncoder ENCODER = new MysqlMessageEncoder();
+	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
+		public ProtocolDecoder getDecoder() throws Exception {
+			return new MysqlMessageDecoder();
+		}
+		public ProtocolEncoder getEncoder() throws Exception {
+			return ENCODER;
+		}
+	};
+	
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, ExecutorService executorService, Properties properties) {
 		socketConnector = new NioSocketConnector();
 		//socketConnector.setWorkerTimeout(5); // TODO Make MINA worker timeout configurable in MysqlConnectionManager
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
 		
-		DemuxingProtocolCodecFactory codecFactory = new DemuxingProtocolCodecFactory();
-		codecFactory.addMessageDecoder(new MessageDecoderFactory() {
-			public MessageDecoder getDecoder() throws Exception {
-				return new MysqlMessageDecoder();
-			}
-		});
-		codecFactory.addMessageEncoder(LoginRequest.class, new LoginRequestEncoder());
-		codecFactory.addMessageEncoder(CommandRequest.class, new CommandRequestEncoder());
-
-		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(codecFactory));
+		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(CODEC_FACTORY));
 		
 		socketConnector.setHandler(new MysqlIoHandler());
 		
