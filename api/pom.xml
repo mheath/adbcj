@@ -14,4 +14,13 @@
 	<artifactId>adbcj-api</artifactId>
 	<packaging>jar</packaging>
 	<name>Asynchronous Database Connectivity in Java - API</name>
+	
+	<dependencies>
+		<dependency>
+			<artifactId>slf4j-api</artifactId>
+			<groupId>org.slf4j</groupId>
+			<version>1.4.3</version>
+		</dependency>
+	</dependencies>
+	
 </project>

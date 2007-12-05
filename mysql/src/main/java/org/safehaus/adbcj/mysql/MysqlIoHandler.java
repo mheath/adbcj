@@ -38,6 +38,12 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 	
 	private final Logger logger = LoggerFactory.getLogger(MysqlIoHandler.class);
 	
+	private final MysqlConnectionManager connectionManager;
+	
+	public MysqlIoHandler(MysqlConnectionManager connectionManager) {
+		this.connectionManager = connectionManager;
+	}
+	
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
 		logger.debug("IoSession created");
@@ -47,6 +53,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		connectionManager.removeConnection(connection);
 		DefaultDbFuture<Void> closeFuture = connection.getCloseFuture();
 		if (closeFuture != null) {
 			closeFuture.setDone();

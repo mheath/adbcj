@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 public class MysqlConnection extends AbstractTransactionalSession implements Connection {
 	private final Logger logger = LoggerFactory.getLogger(MysqlConnection.class);
 
+	private final int id;
+	
 	private final ConnectionManager connectionManager;
 	
 	private final IoSession session;
@@ -47,10 +49,11 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 
 	private DefaultDbSessionFuture<Void> closeFuture;
 	
-	public MysqlConnection(ConnectionManager connectionManager, IoSession session, LoginCredentials credentials) {
+	public MysqlConnection(ConnectionManager connectionManager, IoSession session, LoginCredentials credentials, int id) {
 		this.connectionManager = connectionManager;
 		this.session = session;
 		this.credentials = credentials;
+		this.id = id;
 	}
 	
 	public ConnectionManager getConnectionManager() {
@@ -269,6 +272,25 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	@Override
 	public <E> Request<E> makeNextRequestActive() {
 		return super.makeNextRequestActive();
+	}
+	
+	@Override
+	public int hashCode() {
+		return id;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof MysqlConnection)) {
+			return false;
+		}
+		return id == ((MysqlConnection)obj).id;
 	}
 
 }

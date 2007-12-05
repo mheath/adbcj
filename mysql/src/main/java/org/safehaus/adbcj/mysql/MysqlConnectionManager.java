@@ -17,8 +17,11 @@
 package org.safehaus.adbcj.mysql;
 
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
@@ -51,6 +54,9 @@ public class MysqlConnectionManager implements ConnectionManager {
 	
 	private final LoginCredentials credentials;
 	
+	private final AtomicInteger id = new AtomicInteger();
+	private final Set<MysqlConnection> connections = new HashSet<MysqlConnection>();
+	
 	private DbFuture<Void> closeFuture = null;
 	
 	private static final ProtocolEncoder ENCODER = new MysqlMessageEncoder();
@@ -71,7 +77,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 		
 		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(CODEC_FACTORY));
 		
-		socketConnector.setHandler(new MysqlIoHandler());
+		socketConnector.setHandler(new MysqlIoHandler(this));
 		
 		address = new InetSocketAddress(host, port);
 		
@@ -83,7 +89,6 @@ public class MysqlConnectionManager implements ConnectionManager {
 			return closeFuture;
 		}
 		// TODO: Close all open connections
-		// TODO: Keep track of open connections
 		if (immediate) {
 			socketConnector.dispose();
 			DefaultDbFuture<Void> future = new DefaultDbFuture<Void>();
@@ -91,7 +96,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 			closeFuture = future;
 			return closeFuture;
 		} else {
-			// TODO In MysqlConnectionManager.close() implemented deferred close
+			// TODO In MysqlConnectionManager.close() implement deferred close
 			throw new IllegalStateException("Deferred close not yet implemented");
 		}
 	}
@@ -113,7 +118,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 				connectFuture.cancel();
 				if (connectFuture.isCanceled()) {
 					logger.trace("Canceled connect");
-					connectFuture.cancel();
+
 					return true;
 				}
 				logger.trace("Did not cancel connect");
@@ -125,7 +130,10 @@ public class MysqlConnectionManager implements ConnectionManager {
 			public void operationComplete(ConnectFuture future) {
 				logger.trace("Completed connection to {}", MysqlConnectionManager.this);
 				
-				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials);
+				final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, future.getSession(), credentials, id.incrementAndGet());
+				synchronized (connections) {
+					connections.add(connection);
+				}
 				connection.enqueueRequest(new Request<Result>() {
 					public void execute() {
 						dbConnectFuture.setValue(connection);
@@ -149,6 +157,12 @@ public class MysqlConnectionManager implements ConnectionManager {
 		});
 		
 		return dbConnectFuture;
+	}
+	
+	public void removeConnection(MysqlConnection connection) {
+		synchronized (connections) {
+			connections.remove(connection);
+		}
 	}
 	
 	@Override

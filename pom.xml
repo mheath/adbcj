@@ -20,6 +20,14 @@
 		<module>tck</module>
 	</modules>
 	
+	<pluginRepositories>
+		<pluginRepository>
+			<id>apache.snapshots</id>
+			<url>http://people.apache.org/repo/m2-snapshot-repository/</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+
 	<build>
 		<plugins>
 			<plugin>
@@ -28,6 +36,11 @@
 					<source>1.5</source>
 					<target>1.5</target>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.4-SNAPSHOT</version>
 			</plugin>
 		</plugins>
 	</build>
@@ -61,7 +74,7 @@
 		<dependency>
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
-			<version>5.1</version>
+			<version>5.7</version>
 			<scope>test</scope>
 			<classifier>jdk15</classifier>
 		</dependency>
@@ -77,20 +90,14 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
+				<artifactId>maven-jxr-plugin</artifactId>
 				<inherited>false</inherited>
 				<configuration>
 					<aggregate>true</aggregate>
-					<breakiterator>true</breakiterator>
-					<charset>UTF-8</charset>
-					<docencoding>UTF-8</docencoding>
-					<windowtitle>Asynchronous Database Connectivity in Java ${project.version} API Documentation</windowtitle>
-					<doctitle>Asynchronous Database Connectivity in Java ${project.version} API Documentation</doctitle>
-					<encoding>UTF-8</encoding>
-					<links>
-						<link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
-					</links>
-					<locale>en_US</locale>
+					<inputEncoding>UTF-8</inputEncoding>
+					<outputEncoding>UTF-8</outputEncoding>
+					<windowTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</windowTitle>
+					<docTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</docTitle>
 				</configuration>
 			</plugin>
 			<plugin>
