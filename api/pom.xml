@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	
 	<parent>
-        <groupId>org.safehaus.adbcj</groupId>
+		<groupId>org.safehaus.adbcj</groupId>
 		<artifactId>adbcj</artifactId>
 		<version>0.1-SNAPSHOT</version>
 	</parent>
