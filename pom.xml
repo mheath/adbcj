@@ -10,7 +10,8 @@
 	<version>0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Asynchronous Database Connectivity in Java</name>
+	<name>ADBCJ</name>
+	<description>Asynchronous Database Connectivity in Java build POM.</description>
 
 	<modules>
 		<module>api</module>
@@ -19,6 +20,10 @@
 		<module>postgresql</module>
 		<module>tck</module>
 	</modules>
+	
+	<scm>
+		<url>svn:http://swamp.homelinux.net/svn/thesis/adbcj</url>
+	</scm>
 	
 	<pluginRepositories>
 		<pluginRepository>
