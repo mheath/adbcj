@@ -22,8 +22,8 @@
 	</modules>
 	
 	<scm>
-		<url>scm:svn:http://swamp.homelinux.net/svn/thesis/adbcj</url>
-		<connection>scm:svn:http://swamp.homelinux.net/svn/thesis/adbcj</connection>
+		<url>scm:svn:http://swamp.homelinux.net/svn/thesis/adbcj/trunk</url>
+		<connection>scm:svn:http://swamp.homelinux.net/svn/thesis/adbcj/trunk</connection>
 	</scm>
 	
 	<pluginRepositories>
