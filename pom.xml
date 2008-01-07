@@ -26,6 +26,13 @@
 		<connection>scm:svn:http://swamp.homelinux.net/svn/thesis/adbcj/trunk</connection>
 	</scm>
 	
+	<repositories>
+		<repository>
+			<id>apache.snapshots</id>
+			<url>http://people.apache.org/repo/m2-snapshot-repository/</url>
+		</repository>
+	</repositories>
+	
 	<pluginRepositories>
 		<pluginRepository>
 			<id>apache.snapshots</id>
