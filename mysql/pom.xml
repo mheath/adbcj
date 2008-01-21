@@ -13,7 +13,7 @@
 
 	<artifactId>adbcj-mysql</artifactId>
 	<packaging>jar</packaging>
-	<name>Asynchronous Database Connectivity in Java - MySQL Driver</name>
+	<name>ADBCJ - MySQL Driver</name>
 	
 	<dependencies>
 		<dependency>
