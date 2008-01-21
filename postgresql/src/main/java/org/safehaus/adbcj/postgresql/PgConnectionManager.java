@@ -34,10 +34,10 @@ public class PgConnectionManager implements ConnectionManager {
 	public static final String CODEC_NAME = PgConnectionManager.class.getName() + ".codec";
 
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
-		public ProtocolDecoder getDecoder() throws Exception {
+		public ProtocolDecoder getDecoder(IoSession session) throws Exception {
 			return new PgBackendMessageDecoder();
 		}
-		public ProtocolEncoder getEncoder() throws Exception {
+		public ProtocolEncoder getEncoder(IoSession session) throws Exception {
 			// TODO Determine if this should be a static instance
 			return new PgFrontendMessageEncoder();
 		}
