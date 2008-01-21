@@ -13,7 +13,7 @@
 
 	<artifactId>adbcj-postgresql</artifactId>
 	<packaging>jar</packaging>
-	<name>Asynchronous Database Connectivity in Java - Postgresql Driver</name>
+	<name>ADBCJ - Postgresql Driver</name>
 	
 	<dependencies>
 		<dependency>	
