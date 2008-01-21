@@ -13,7 +13,7 @@
 
 	<artifactId>adbcj-tck</artifactId>
 	<packaging>jar</packaging>
-	<name>Asynchronous Database Connectivity in Java - Test Compatibility Kit</name>
+	<name>ADBCJ - TCK</name>
 	
 	<dependencies>
 		<dependency>
