@@ -4,13 +4,9 @@ import java.util.concurrent.Executors;
 
 import org.safehaus.adbcj.ConnectionManager;
 import org.safehaus.adbcj.ConnectionManagerProvider;
-import org.testng.ITestContext;
-import org.testng.ITestListener;
-import org.testng.ITestResult;
 import org.testng.annotations.DataProvider;
 
-
-public class ConnectionManagerDataProvider implements ITestListener {
+public class ConnectionManagerDataProvider {
 
 	static {
 		try {
@@ -54,26 +50,4 @@ public class ConnectionManagerDataProvider implements ITestListener {
 		return connectionManager;
 	}
 
-	public void onFinish(ITestContext arg0) {
-	}
-
-	public void onStart(ITestContext context) {
-	}
-
-	public void onTestFailedButWithinSuccessPercentage(ITestResult arg0) {
-	}
-
-	public void onTestFailure(ITestResult arg0) {
-	}
-
-	public void onTestSkipped(ITestResult arg0) {
-	}
-
-	public void onTestStart(ITestResult testResult) {
-		System.out.println("+_+_+_+_+_+_+_+ " + testResult.getName());
-	}
-
-	public void onTestSuccess(ITestResult arg0) {
-	}
-	
 }
