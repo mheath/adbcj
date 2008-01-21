@@ -13,7 +13,7 @@
 
 	<artifactId>adbcj-api</artifactId>
 	<packaging>jar</packaging>
-	<name>Asynchronous Database Connectivity in Java - API</name>
+	<name>ADBCJ - API</name>
 	
 	<dependencies>
 		<dependency>
