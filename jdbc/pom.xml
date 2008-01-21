@@ -13,7 +13,7 @@
 
 	<artifactId>adbcj-jdbc</artifactId>
 	<packaging>jar</packaging>
-	<name>Asynchronous Database Connectivity in Java - JDBC Driver</name>
+	<name>ADBCJ - JDBC Driver</name>
 
 	<dependencies>
 		<dependency>
