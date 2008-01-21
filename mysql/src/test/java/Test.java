@@ -1,7 +1,3 @@
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
 import org.safehaus.adbcj.ConnectionManagerProvider;
@@ -9,9 +5,7 @@ import org.safehaus.adbcj.DbFuture;
 import org.safehaus.adbcj.DbListener;
 import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.ResultSet;
-import org.safehaus.adbcj.mysql.MysqlConnectionManagerFactory;
-
-
+import org.safehaus.adbcj.mysql.Adbcj;
 
 public class Test {
 
@@ -19,46 +13,39 @@ public class Test {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		Class.forName(MysqlConnectionManagerFactory.class.getName());
+		Adbcj.init();
 		
-		ThreadPoolExecutor executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5L, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>());
-		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/test", "mheath", "cockroach", executorService);
-		DbFuture<Connection> connectFuture = connectionManager.connect();
-		connectFuture.addListener(new DbListener<Connection>() {
-			public void onCompletion(DbFuture<Connection> listener) throws Exception {
-				System.out.println("In connect callback 1.");
-			}
-		});
-		Connection connection = connectFuture.get();
-		System.out.println("Got connection");
-		connectFuture.addListener(new DbListener<Connection>() {
-			public void onCompletion(DbFuture<Connection> listener) throws Exception {
-				System.out.println("In connect callback 2.");
-			}
-		});
-		connection.executeQuery("SELECT * FROM test").addListener(new DbListener<ResultSet>() {
-			public void onCompletion(DbFuture<ResultSet> listener) throws Exception {
-				System.out.println("Result set count: " + listener.get().getFields().size());
-			}
-		}).get();
-		System.out.println("Got result set");
-		DbSessionFuture<Void> closeFuture = connection.close(true);
-		closeFuture.get();
+		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/test", "adbcjtck", "adbcjtck");
+//		Connection connection = connectionManager.connect().addListener(new DbListener<Connection>() {
+//			public void onCompletion(DbFuture<Connection> listener) throws Exception {
+//				System.out.println("In connect callback 1.");
+//			}
+//		}).get();
+//		System.out.println("Got connection");
+//		connection.executeQuery("SELECT * FROM test").addListener(new DbListener<ResultSet>() {
+//			public void onCompletion(DbFuture<ResultSet> listener) throws Exception {
+//				System.out.println("Result set count: " + listener.get().getFields().size());
+//			}
+//		}).get();
+//		System.out.println("Got result set");
+//		DbSessionFuture<Void> closeFuture = connection.close(true);
+//		closeFuture.get();
+//		
+//		System.out.println("Closed");
+//		//connectionManager.close(true);
+//		Thread.sleep(500);
+//		
+//		connectionManager.connect().addListener(new DbListener<Connection>() {
+//			public void onCompletion(DbFuture<Connection> listener)
+//					throws Exception {
+//				System.out.println("Made second connection");
+//			}
+//		}).get().close(true).get();
+//
+		System.out.println(connectionManager.connect().cancel(true));
 		
-		System.out.println("Closed");
 		connectionManager.close(true);
-		Thread.sleep(500);
-		
-		connectionManager.connect().addListener(new DbListener<Connection>() {
-			public void onCompletion(DbFuture<Connection> listener)
-					throws Exception {
-				System.out.println("Made second connection");
-			}
-		}).get().close(true).get();
-		
 		System.out.println("Done");
-		executorService.shutdown();
 	}
 
 }

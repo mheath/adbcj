@@ -73,119 +73,129 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 		final byte packetNumber = in.get();
 		
 		// Create a new buffer to process the current message
-		IoBuffer buffer = in.duplicate();
-		buffer.limit(buffer.position() + length);
-		in.skip(length);
+		try {
+			in.setAutoExpand(false);
+		} catch (IllegalStateException e) {
+			System.out.println(in.getClass());
+			throw e;
+		}
 		
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-
-		logger.debug("Decoding in state {}", state);
-		switch (state) {
-		case CONNECTING:
-			ServerGreeting serverGreeting = decodeServerGreeting(length, packetNumber, buffer);
-			out.write(serverGreeting);
-			state = State.RESPONSE;
-			break;
-		case RESPONSE:
-			int fieldCount = buffer.get();
-			if (fieldCount == RESPONSE_OK) {
-				// Create Ok response
-				OkResponse okResponse = decodeOkResponse(connection, buffer, length, packetNumber);
-				out.write(okResponse);
-			} else if (fieldCount == RESPONSE_ERROR) {
-				// Create error response
-				ErrorResponse response = decodeErrorResponse(connection, buffer, length, packetNumber);
-				out.write(response);
-			} else if (fieldCount == RESPONSE_EOF) {
-				throw new IllegalStateException("Did not expect an EOF response from the server");
-			} else {
-				// Must be receiving result set header
-
-				// Rewind the buffer to read the binary length encoding
-				buffer.position(buffer.position() - 1);
-
-				// Get the number of fields. The largest this can be is a 24-bit
-				// integer so cast to int is ok
-				fieldPacketCount = (int)getBinaryLengthEncoding(connection, buffer);
-				fields = new MysqlField[fieldPacketCount];
-				logger.trace("Field count {}", fieldPacketCount);
-				
-				Long extra = null;
-				if (buffer.remaining() > 0) {
-					extra = getBinaryLengthEncoding(connection, buffer);
-				}
-
-				// Create result set response
-				logger.debug("Sending result set response up filter chain");
-				ResultSetResponse resultSetResponse = new ResultSetResponse(length, packetNumber,
-						fieldPacketCount, extra);
-				out.write(resultSetResponse);
-
-				state = State.FIELD;
-			}
-			break;
-		case FIELD:
-			ResultSetFieldResponse resultSetFieldResponse = decodeFieldResponse(connection, buffer, length, packetNumber);
-			out.write(resultSetFieldResponse);
-
-			fieldPacketCount--;
-			logger.trace("fieldPacketCount: {}", fieldPacketCount);
-			if (fieldPacketCount == 0) {
-				state = State.FIELD_EOF;
-			}
-			break;
-		case FIELD_EOF:
-			EofResponse fieldEof = decodeEofResponse(connection, buffer, length, packetNumber, EofResponse.Type.FIELD);
-			out.write(fieldEof);
-			out.flush();
-
-			state = State.ROW;
-			fieldIndex = 0;
-			break;
-		case ROW:
-			fieldCount = buffer.get(); // This is only for checking for EOF
-			buffer.position(buffer.position() - 1);
-			if (fieldCount == RESPONSE_EOF) {
-				EofResponse rowEof = decodeEofResponse(connection, buffer, length, packetNumber, EofResponse.Type.ROW);
-				out.write(rowEof);
-
+		final int originalLimit = in.limit();
+		try {
+			in.limit(in.position() + length);
+			
+			MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+	
+			logger.debug("Decoding in state {}", state);
+			switch (state) {
+			case CONNECTING:
+				ServerGreeting serverGreeting = decodeServerGreeting(length, packetNumber, in);
+				out.write(serverGreeting);
 				state = State.RESPONSE;
-
 				break;
-			}
-
-			Value[] values = new Value[fields.length];
-			for (MysqlField field : fields) {
-				Object value = null;
-				if (buffer.get() != NULL_VALUE) {
-					buffer.position(buffer.position() - 1);
-					switch (field.getColumnType()) {
-					case INTEGER:
-					case BIGINT:
-						String strVal = decodeLengthCodedString(connection, buffer, connection.getCharacterSet());
-						value = Long.valueOf(strVal);
-						break;
-					case VARCHAR:
-						value = decodeLengthCodedString(connection, buffer, connection.getCharacterSet());
-						break;
-					default:
-						throw new IllegalStateException("Don't know how to handle column type of "
-								+ field.getColumnType());
+			case RESPONSE:
+				int fieldCount = in.get();
+				if (fieldCount == RESPONSE_OK) {
+					// Create Ok response
+					OkResponse okResponse = decodeOkResponse(connection, in, length, packetNumber);
+					out.write(okResponse);
+				} else if (fieldCount == RESPONSE_ERROR) {
+					// Create error response
+					ErrorResponse response = decodeErrorResponse(connection, in, length, packetNumber);
+					out.write(response);
+				} else if (fieldCount == RESPONSE_EOF) {
+					throw new IllegalStateException("Did not expect an EOF response from the server");
+				} else {
+					// Must be receiving result set header
+	
+					// Rewind the buffer to read the binary length encoding
+					in.position(in.position() - 1);
+	
+					// Get the number of fields. The largest this can be is a 24-bit
+					// integer so cast to int is ok
+					fieldPacketCount = (int)getBinaryLengthEncoding(connection, in);
+					fields = new MysqlField[fieldPacketCount];
+					logger.trace("Field count {}", fieldPacketCount);
+					
+					Long extra = null;
+					if (in.remaining() > 0) {
+						extra = getBinaryLengthEncoding(connection, in);
 					}
+	
+					// Create result set response
+					logger.debug("Sending result set response up filter chain");
+					ResultSetResponse resultSetResponse = new ResultSetResponse(length, packetNumber,
+							fieldPacketCount, extra);
+					out.write(resultSetResponse);
+	
+					state = State.FIELD;
 				}
-				values[field.getIndex()] = new DefaultValue(field, value);
+				break;
+			case FIELD:
+				ResultSetFieldResponse resultSetFieldResponse = decodeFieldResponse(connection, in, length, packetNumber);
+				out.write(resultSetFieldResponse);
+	
+				fieldPacketCount--;
+				logger.trace("fieldPacketCount: {}", fieldPacketCount);
+				if (fieldPacketCount == 0) {
+					state = State.FIELD_EOF;
+				}
+				break;
+			case FIELD_EOF:
+				EofResponse fieldEof = decodeEofResponse(connection, in, length, packetNumber, EofResponse.Type.FIELD);
+				out.write(fieldEof);
+				out.flush();
+	
+				state = State.ROW;
+				fieldIndex = 0;
+				break;
+			case ROW:
+				fieldCount = in.get(); // This is only for checking for EOF
+				in.position(in.position() - 1);
+				if (fieldCount == RESPONSE_EOF) {
+					EofResponse rowEof = decodeEofResponse(connection, in, length, packetNumber, EofResponse.Type.ROW);
+					out.write(rowEof);
+	
+					state = State.RESPONSE;
+	
+					break;
+				}
+	
+				Value[] values = new Value[fields.length];
+				for (MysqlField field : fields) {
+					Object value = null;
+					if (in.get() != NULL_VALUE) {
+						in.position(in.position() - 1);
+						switch (field.getColumnType()) {
+						case INTEGER:
+						case BIGINT:
+							String strVal = decodeLengthCodedString(connection, in, connection.getCharacterSet());
+							value = Long.valueOf(strVal);
+							break;
+						case VARCHAR:
+							value = decodeLengthCodedString(connection, in, connection.getCharacterSet());
+							break;
+						default:
+							throw new IllegalStateException("Don't know how to handle column type of "
+									+ field.getColumnType());
+						}
+					}
+					values[field.getIndex()] = new DefaultValue(field, value);
+				}
+				out.write(new ResultSetRowResponse(length, packetNumber, values));
+				break;
+			default:
+				throw new MysqlException(connection, "Unkown decoder state " + state);
 			}
-			out.write(new ResultSetRowResponse(length, packetNumber, values));
-			break;
-		default:
-			throw new MysqlException(connection, "Unkown decoder state " + state);
+	
+			if (in.hasRemaining()) {
+				throw new IllegalStateException(String.format("Buffer has %d remaining bytes after decoding", in.remaining()));
+			}
+		} finally {
+			in.limit(originalLimit);
 		}
-
-		if (buffer.hasRemaining()) {
-			throw new IllegalStateException(String.format("Buffer has %d remaining bytes after decoding", buffer.hasRemaining()));
-		}
-
 		return in.hasRemaining();
+		
 	}
 	
 	protected ErrorResponse decodeErrorResponse(MysqlConnection connection, IoBuffer buffer, int length,

@@ -25,6 +25,7 @@ import org.safehaus.adbcj.DbException;
 import org.safehaus.adbcj.Result;
 import org.safehaus.adbcj.ResultSet;
 import org.safehaus.adbcj.Value;
+import org.safehaus.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.safehaus.adbcj.support.AbstractDbFutureListenerSupport;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultDbSessionFuture;
@@ -47,7 +48,6 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
 		logger.debug("IoSession created");
-		IoSessionUtil.init(session);
 	}
 	
 	@Override
@@ -67,13 +67,23 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
 		if (connection != null) {
+			DbException dbException = DbException.wrap(connection, cause);
 			Request<?> activeRequest = connection.getActiveRequest();
-			if (activeRequest != null) {
+			if (activeRequest == null) {
+				MysqlConnectFuture connectFuture = connection.getConnectFuture();
+				if (!connectFuture.isDone()) {
+					connectFuture.setException(dbException);
+					connectFuture.setDone();
+					
+					dbException = null;
+				}
+			} else {
 				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
 				if (!future.isDone()) {
 					try {
-						future.setException(DbException.wrap(connection, cause));
+						future.setException(dbException);
 						future.setDone();
+						dbException = null;
 
 						Transaction transaction = (Transaction)activeRequest.getTransaction();
 						if (transaction != null) {
@@ -82,20 +92,27 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 						return;
 					} catch (Throwable e) {
-						// TODO Handle exception in ConnectionManager
+						// TODO Pass exception to ConnectionManager
 						e.printStackTrace();
 					} finally {
 						connection.makeNextRequestActive();
 					}
 				}
 			}
+			if (dbException != null) {
+				// TODO Pass dbException to connection manager
+			}
+		} else {
+			// TODO Pass exception to ConnectionManager
+			cause.printStackTrace();
 		}
-		// TODO Handle exception in ConnectionManager
-		cause.printStackTrace();
 	}
 
 	@Override
 	public void messageReceived(IoSession session, Object message) throws Exception {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Received message: " + message);
+		}
 		if (message instanceof ServerGreeting) {
 			handleServerGreeting(session, (ServerGreeting)message);
 		} else if (message instanceof OkResponse) {
@@ -110,6 +127,8 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 			handleResultSetRowResponse(session, (ResultSetRowResponse)message);
 		} else if (message instanceof EofResponse) {
 			handleEofResponse(session, (EofResponse)message);
+		} else {
+			throw new IllegalStateException("Unable to handle message of type: " + message.getClass().getName());
 		}
 	}
 
@@ -129,11 +148,6 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		
 		logger.debug("Response '{}' on connection {}", response, connection);
 				
-		Request<Result> activeRequest = connection.getActiveRequest();
-		if (activeRequest == null) {
-			throw new IllegalStateException("Received an OkResponse with no activeRequest " + response);
-		}
-		DefaultDbFuture<Result> future = activeRequest.getFuture();
 		List<String> warnings = null;
 		if (response.getWarningCount() > 0) {
 			warnings = new LinkedList<String>();
@@ -141,6 +155,23 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 				warnings.add(response.getMessage());
 			}
 		}
+
+		logger.debug("Warnings: {}", warnings);
+		
+		Request<Result> activeRequest = connection.getActiveRequest();
+		if (activeRequest == null) {
+			// TODO Do we need to pass the warnings on to the connection?
+			MysqlConnectFuture connectFuture = connection.getConnectFuture();
+			if (!connectFuture.isDone() ) {
+				connectFuture.setValue(connection);
+				connectFuture.setDone();
+				
+				return;
+			} else {
+				throw new IllegalStateException("Received an OkResponse with no activeRequest " + response);
+			}
+		}
+		DefaultDbFuture<Result> future = activeRequest.getFuture();
 		Result result = new DefaultResult(response.getAffectedRows(), warnings);
 		future.setValue(result);
 		future.setDone();

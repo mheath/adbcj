@@ -28,6 +28,7 @@ import org.safehaus.adbcj.ResultEventHandler;
 import org.safehaus.adbcj.DbSessionFuture;
 import org.safehaus.adbcj.PreparedStatement;
 import org.safehaus.adbcj.Result;
+import org.safehaus.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.safehaus.adbcj.support.AbstractTransactionalSession;
 import org.safehaus.adbcj.support.DefaultDbFuture;
 import org.safehaus.adbcj.support.DefaultDbSessionFuture;
@@ -41,6 +42,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	private final int id;
 	
 	private final ConnectionManager connectionManager;
+	private final MysqlConnectFuture connectFuture;
 	
 	private final IoSession session;
 
@@ -49,8 +51,9 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 
 	private DefaultDbSessionFuture<Void> closeFuture;
 	
-	public MysqlConnection(ConnectionManager connectionManager, IoSession session, LoginCredentials credentials, int id) {
+	public MysqlConnection(ConnectionManager connectionManager, MysqlConnectFuture connectFuture, IoSession session, LoginCredentials credentials, int id) {
 		this.connectionManager = connectionManager;
+		this.connectFuture = connectFuture;
 		this.session = session;
 		this.credentials = credentials;
 		this.id = id;
@@ -272,6 +275,10 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	@Override
 	public <E> Request<E> makeNextRequestActive() {
 		return super.makeNextRequestActive();
+	}
+	
+	public MysqlConnectFuture getConnectFuture() {
+		return connectFuture;
 	}
 	
 	@Override
