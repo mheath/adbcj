@@ -36,10 +36,10 @@ public class DefaultDbFuture<T> extends AbstractDbFutureListenerSupport<T> {
 			return false;
 		}
 		getLock().lock();
-		if (cancelled || isDone()) {
-			return false;
-		}
 		try {
+			if (cancelled || isDone()) {
+				return false;
+			}
 			cancelled = doCancel(mayInterruptIfRunning);
 			if (cancelled) {
 				setDone();
@@ -107,7 +107,7 @@ public class DefaultDbFuture<T> extends AbstractDbFutureListenerSupport<T> {
 				throw new CancellationException();
 			}
 			if (getException() != null) {
-				throw getException();
+				throw new DbException(getException());
 			}
 			return value;
 		} finally {
