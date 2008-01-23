@@ -6,9 +6,9 @@ import static org.testng.Assert.fail;
 
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
@@ -131,30 +131,25 @@ public class ConnectTest {
 	
 	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="urlDataProvider", timeOut=5000)
 	public void testConnectBadCredentials(String url, String user, String password) throws InterruptedException {
-		ExecutorService executorService = Executors.newCachedThreadPool();
-		try {
-			final boolean[] callbacks = {false};
-			final CountDownLatch latch = new CountDownLatch(1);
+		final boolean[] callbacks = {false};
+		final CountDownLatch latch = new CountDownLatch(1);
 
-			ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, "__BADPASSWORD__", executorService);
-			DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
-				public void onCompletion(DbFuture<Connection> future) throws Exception {
-					callbacks[0] = true;
-					latch.countDown();
-				}
-			});
-			try {
-				connectFuture.get();
-				fail("Connect should have failed because of bad credentials");
-			} catch (DbException e) {
-				assertTrue(connectFuture.isDone(), "Connect future should be marked done even though it failed");
-				assertTrue(!connectFuture.isCancelled(), "Connect future should not be marked as cancelled");
+		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, "__BADPASSWORD__");
+		DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
+			public void onCompletion(DbFuture<Connection> future) throws Exception {
+				callbacks[0] = true;
+				latch.countDown();
 			}
-			assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
-			assertTrue(callbacks[0], "Connect future callback was not invoked with connect failure");
-		} finally {
-			executorService.shutdown();
+		});
+		try {
+			connectFuture.get();
+			fail("Connect should have failed because of bad credentials");
+		} catch (DbException e) {
+			assertTrue(connectFuture.isDone(), "Connect future should be marked done even though it failed");
+			assertTrue(!connectFuture.isCancelled(), "Connect future should not be marked as cancelled");
 		}
+		assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
+		assertTrue(callbacks[0], "Connect future callback was not invoked with connect failure");
 	}
 	
 	// TODO This test appears to be failing with MINA -- needs further investigation
@@ -173,25 +168,36 @@ public class ConnectTest {
 		urlBuilder.append("//").append(UNREACHABLE_HOST);
 		urlBuilder.append(connectUrl.getPath());
 		
-		ExecutorService executorService = Executors.newCachedThreadPool();
-		try {
-			final boolean[] callbacks = {false};
-			final CountDownLatch latch = new CountDownLatch(1);
-			
-			ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(urlBuilder.toString(), "dummyuser", "dummypassword", executorService);
-			DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
-				public void onCompletion(DbFuture<Connection> future) throws Exception {
-					callbacks[0] = true;
-					latch.countDown();
-				}
-			});
-			assertTrue(connectFuture.cancel(true), "Connection to unreachable host was not canceled");
-			assertTrue(connectFuture.isCancelled());
-			assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
-			assertTrue(callbacks[0], "Connect future callback was not invoked with connect cancellation");
-		} finally {
-			executorService.shutdown();
+		final boolean[] callbacks = {false};
+		final CountDownLatch latch = new CountDownLatch(1);
+
+		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(urlBuilder.toString(), "dummyuser", "dummypassword");
+		DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
+			public void onCompletion(DbFuture<Connection> future) throws Exception {
+				callbacks[0] = true;
+				latch.countDown();
+			}
+		});
+		assertTrue(connectFuture.cancel(true), "Connection to unreachable host was not canceled");
+		assertTrue(connectFuture.isCancelled());
+		assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
+		assertTrue(callbacks[0], "Connect future callback was not invoked with connect cancellation");
+	}
+
+	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
+	public void testNonImmediateClose(final ConnectionManager connectionManager) throws InterruptedException {
+		Connection connection = connectionManager.connect().get();
+
+		List<DbSessionFuture<ResultSet>> futures = new ArrayList<DbSessionFuture<ResultSet>>();
+
+		for (int i = 0; i < 5; i++) {
+			futures.add(connection.executeQuery("SELECT * FROM simple_values"));
+		}
+		connection.close(false).get();
+		assertTrue(connection.isClosed(), "Connection should be closedLOL");
+		for (DbSessionFuture<ResultSet> future : futures) {
+			assertTrue(future.isDone(), "Future did not finish before connection was closed.");
+			assertFalse(future.isCancelled(), "Future was cancelled and should have been");
 		}
 	}
-	
 }
