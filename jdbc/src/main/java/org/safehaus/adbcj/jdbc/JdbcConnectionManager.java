@@ -22,6 +22,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.Executors;
 
 import org.safehaus.adbcj.Connection;
 import org.safehaus.adbcj.ConnectionManager;
@@ -45,13 +46,16 @@ public class JdbcConnectionManager implements ConnectionManager {
 			Properties properties) {
 		this.jdbcUrl = jdbcUrl;
 		this.properties = new Properties(properties);
+		if (executorService == null) {
+			executorService = Executors.newCachedThreadPool();
+		}
 		this.executorService = executorService;
 		
 		this.properties.put(USER, username);
 		this.properties.put(PASSWORD, password);
 	}
 
-	public DbFuture<Connection> connect() {
+	public DbFuture<Connection> connect() throws DbException {
 		final DbFutureConcurrentProxy<Connection> future = new DbFutureConcurrentProxy<Connection>();
 		Future<Connection> executorFuture = executorService.submit(new Callable<Connection>() {
 			public Connection call() throws Exception {
