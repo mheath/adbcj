@@ -107,8 +107,9 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 						}
 						logger.debug("Executing deferred close");
 						requestClosed = true;
-						// Do a close immediate to close the connection
-						close(true);
+
+						logger.debug("Writing QUIT");
+						session.write(new CommandRequest(Command.QUIT));
 					}
 				});
 			}
