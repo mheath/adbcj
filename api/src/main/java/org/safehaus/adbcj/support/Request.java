@@ -18,6 +18,7 @@ package org.safehaus.adbcj.support;
 
 import org.safehaus.adbcj.ResultEventHandler;
 
+// TODO Determine if we can make request extend DefaultDbFuture to minimize object creation and redundancy
 public abstract class Request<T> {
 	
 	private DefaultDbSessionFuture<T> future = null;
