@@ -65,6 +65,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 
 	public synchronized DbSessionFuture<Void> close(final boolean immediate) throws DbException {
 		// If the connection is already closed, return existing close future
+		logger.debug("Closing");
 		if (isClosed()) {
 			if (closeFuture == null) {
 				closeFuture = new DefaultDbSessionFuture<Void>(this);
@@ -114,7 +115,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 				});
 			}
 		}
-		
+		logger.trace("Exiting close()");
 		return closeFuture;
 	}
 	
@@ -263,7 +264,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	}
 	
 	/*
-	 * Make this method public.
+	 * Make this method public
 	 */
 	@Override
 	public <E> Request<E> getActiveRequest() {

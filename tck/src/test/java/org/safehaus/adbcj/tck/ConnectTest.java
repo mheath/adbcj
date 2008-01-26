@@ -22,10 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-
-// TODO Test non-immediate close and make sure any pending queries get called
-// TODO Test immediate close and make sure pending queries get canceled
-
 public class ConnectTest {
 	
 	private final Logger logger = LoggerFactory.getLogger(ConnectTest.class);
@@ -199,5 +195,34 @@ public class ConnectTest {
 			assertTrue(future.isDone(), "Future did not finish before connection was closed.");
 			assertFalse(future.isCancelled(), "Future was cancelled and should have been");
 		}
+	}
+
+	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
+	public void testImmediateClose(final ConnectionManager connectionManager) throws InterruptedException {
+		Connection lockingConnection = connectionManager.connect().get();
+		Connection connection = connectionManager.connect().get();
+
+		lockingConnection.beginTransaction();
+		TestUtils.selectForUpdate(lockingConnection).get();
+
+		List<DbSessionFuture<ResultSet>> futures = new ArrayList<DbSessionFuture<ResultSet>>();
+
+		connection.beginTransaction();
+		TestUtils.selectForUpdate(connection).addListener(new DbListener<ResultSet>() {
+			public void onCompletion(DbFuture<ResultSet> dbFuture) throws Exception {
+				logger.debug("Completion callback");
+			}
+		});
+		for (int i = 0; i < 5; i++) {
+			futures.add(connection.executeQuery("SELECT * FROM simple_values"));
+		}
+
+		connection.close(true).get();
+		assertTrue(connection.isClosed(), "Connection should be closed");
+		for (DbSessionFuture<ResultSet> future : futures) {
+			assertTrue(future.isDone(), "Future did not finish before connection was closed.");
+			assertTrue(future.isCancelled(), "Future should have been cancelled at close");
+		}
+		lockingConnection.close(true).get();
 	}
 }

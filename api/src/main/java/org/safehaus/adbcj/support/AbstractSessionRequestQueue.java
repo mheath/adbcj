@@ -74,8 +74,8 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 	protected synchronized void cancelPendingRequests(boolean mayInterruptIfRunning) {
 		for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
 			Request<?> request = i.next();
-			request.getFuture().cancel(mayInterruptIfRunning);
 			i.remove();
+			request.getFuture().cancel(mayInterruptIfRunning);
 		}
 	}
 	

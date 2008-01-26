@@ -214,6 +214,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 	private void handleEofResponse(IoSession session, EofResponse message) {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		logger.trace("Fetching active request in handleEofResponse()");
 		Request<ResultSet> activeRequest = connection.getActiveRequest();
 
 		EofResponse eof = (EofResponse)message;
@@ -226,6 +227,8 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 			DefaultDbSessionFuture<ResultSet> future = activeRequest.getFuture();
 			future.setValue(activeRequest.getAccumulator());
 			future.setDone();
+
+			logger.debug("Set future done, making next request active");
 			connection.makeNextRequestActive();
 			break;
 		default:
