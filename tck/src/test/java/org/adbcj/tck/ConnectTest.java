@@ -208,13 +208,9 @@ public class ConnectTest {
 		List<DbSessionFuture<ResultSet>> futures = new ArrayList<DbSessionFuture<ResultSet>>();
 
 		connection.beginTransaction();
-		TestUtils.selectForUpdate(connection).addListener(new DbListener<ResultSet>() {
-			public void onCompletion(DbFuture<ResultSet> dbFuture) throws Exception {
-				logger.debug("Completion callback");
-			}
-		});
+
 		for (int i = 0; i < 5; i++) {
-			futures.add(connection.executeQuery("SELECT * FROM simple_values"));
+			futures.add(TestUtils.selectForUpdate(connection));
 		}
 
 		logger.debug("Closing connection");
@@ -227,6 +223,7 @@ public class ConnectTest {
 			assertTrue(future.isCancelled(), "Future should have been cancelled at close");
 		}
 		logger.debug("Closing locking connection");
+		lockingConnection.rollback().get();
 		lockingConnection.close(true).get();
 		logger.debug("Locking connection close");
 	}

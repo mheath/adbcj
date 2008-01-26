@@ -37,9 +37,8 @@ public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 
 	}
 
-	public ConnectionManager createConnectionManager(String url,
-			String username, String password, ExecutorService executorService,
-			Properties properties) throws DbException {
+	public ConnectionManager createConnectionManager(String url, String username, String password,
+	                                                 Properties properties) throws DbException {
 		try {
 			URI uri = new URI(url);
 			// Throw away the 'adbcj' protocol part of the URL
@@ -47,7 +46,7 @@ public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 
 			String jdbcUrl = uri.toString();
 
-			return new JdbcConnectionManager(jdbcUrl, username, password, executorService, properties);
+			return new JdbcConnectionManager(jdbcUrl, username, password, properties);
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}

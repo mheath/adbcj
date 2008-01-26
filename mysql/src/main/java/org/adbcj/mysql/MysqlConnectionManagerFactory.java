@@ -39,7 +39,7 @@ public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 	private MysqlConnectionManagerFactory() {
 	}
 	
-	public ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService, Properties properties) throws DbException {
+	public ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
 		try {
 			/*
 			 * Parse URL

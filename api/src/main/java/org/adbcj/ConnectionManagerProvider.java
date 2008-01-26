@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 
 public class ConnectionManagerProvider {
 
@@ -32,14 +31,10 @@ public class ConnectionManagerProvider {
 	private ConnectionManagerProvider () {}
 	
 	public static ConnectionManager createConnectionManager(String url, String username, String password) throws DbException {
-		return createConnectionManager(url, username, password, null, null);
+		return createConnectionManager(url, username, password, null);
 	}
 
-	public static ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService) throws DbException {
-		return createConnectionManager(url, username, password, executorService, null);
-	}
-	
-	public static ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService, Properties properties) throws DbException {
+	public static ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
 		if (url == null) {
 			throw new IllegalArgumentException("Connection url can not be null");
 		}
@@ -54,7 +49,7 @@ public class ConnectionManagerProvider {
 			String protocol = driverUri.getScheme();
 			
 			ConnectionManagerFactory factory = getConnectionManagerFactory(protocol, properties);
-			return factory.createConnectionManager(url, username, password, executorService, properties);
+			return factory.createConnectionManager(url, username, password, properties);
 		} catch (URISyntaxException e) {
 			throw new DbException("Invalid connection URL: " + url);
 		}

@@ -35,6 +35,7 @@ public class PgConnectionManager implements ConnectionManager {
 
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
 		public ProtocolDecoder getDecoder(IoSession session) throws Exception {
+			// TODO Determine if this should be a static instance
 			return new PgBackendMessageDecoder();
 		}
 		public ProtocolEncoder getEncoder(IoSession session) throws Exception {
@@ -55,14 +56,8 @@ public class PgConnectionManager implements ConnectionManager {
 	private DefaultDbFuture<Void> closeFuture = null;
 
 	public PgConnectionManager(String host, int port, String username, String password, String database,
-			ExecutorService executorService, Properties properties) {
+			Properties properties) {
 		logger.debug("Creating new PostgresqlConnectionManager");
-		
-		if (executorService == null) {
-	        executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                    1L, TimeUnit.SECONDS,
-                    new SynchronousQueue<Runnable>());
-		}
 		
 		socketConnector = new NioSocketConnector();
 

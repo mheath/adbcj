@@ -24,7 +24,7 @@ public class PgConnectionManagerFactory implements ConnectionManagerFactory {
 		// Empty private constructor
 	}
 
-	public ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService, Properties properties) throws DbException {
+	public ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
 		try {
 			/*
 			 * Parse URL
@@ -40,7 +40,7 @@ public class PgConnectionManagerFactory implements ConnectionManagerFactory {
 			}
 			String schema = uri.getPath().substring(1);
 
-			return new PgConnectionManager(host, port, username, password, schema, executorService, properties);
+			return new PgConnectionManager(host, port, username, password, schema, properties);
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}

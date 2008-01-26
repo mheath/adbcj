@@ -43,8 +43,7 @@ public class ConnectionManagerDataProvider {
 			connectionManager[i] = new ConnectionManager[] {ConnectionManagerProvider.createConnectionManager(
 					connectParams[0].toString(),
 					connectParams[1].toString(),
-					connectParams[2].toString(),
-					Executors.newCachedThreadPool())
+					connectParams[2].toString())
 			};
 		}
 		return connectionManager;
