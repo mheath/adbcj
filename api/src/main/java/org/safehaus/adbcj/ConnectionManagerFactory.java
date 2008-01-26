@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 
 public interface ConnectionManagerFactory {
 
+	// TODO Remove ExecutorService as param
 	ConnectionManager createConnectionManager(String url, String username, String password, ExecutorService executorService, Properties properties) throws DbException;
 
 }

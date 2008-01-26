@@ -55,7 +55,7 @@ public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 			}
 			String schema = uri.getPath().substring(1);
 
-			return new MysqlConnectionManager(host, port, username, password, schema, executorService, properties);
+			return new MysqlConnectionManager(host, port, username, password, schema, properties);
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}

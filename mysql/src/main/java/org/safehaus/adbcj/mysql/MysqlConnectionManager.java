@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.mina.common.ConnectFuture;
@@ -59,14 +58,14 @@ public class MysqlConnectionManager implements ConnectionManager {
 	private static final ProtocolEncoder ENCODER = new MysqlMessageEncoder();
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
 		public ProtocolDecoder getDecoder(IoSession session) throws Exception {
-			return new MysqlMessageDecoder(); // TODO pass in session and pre fetch Connection and other objects that are commonly pulled from IoSession
+			return new MysqlMessageDecoder(session);
 		}
 		public ProtocolEncoder getEncoder(IoSession session) throws Exception {
 			return ENCODER;
 		}
 	};
 	
-	public MysqlConnectionManager(String host, int port, String username, String password, String schema, ExecutorService executorService, Properties properties) {
+	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties) {
 		socketConnector = new NioSocketConnector();
 		//socketConnector.setWorkerTimeout(5); // TODO Make MINA worker timeout configurable in MysqlConnectionManager
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
