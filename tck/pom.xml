@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	
 	<parent>
-		<groupId>org.safehaus.adbcj</groupId>
+		<groupId>org.adbcj</groupId>
 		<artifactId>adbcj</artifactId>
 		<version>0.1-SNAPSHOT</version>
 	</parent>
@@ -18,22 +18,22 @@
 	<dependencies>
 		<dependency>
 			<artifactId>adbcj-api</artifactId>
-			<groupId>org.safehaus.adbcj</groupId>
+			<groupId>${project.groupId}</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<artifactId>adbcj-jdbc</artifactId>
-			<groupId>org.safehaus.adbcj</groupId>
+			<groupId>${project.groupId}</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<artifactId>adbcj-mysql</artifactId>
-			<groupId>org.safehaus.adbcj</groupId>
+			<groupId>${project.groupId}</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<artifactId>adbcj-postgresql</artifactId>
-			<groupId>org.safehaus.adbcj</groupId>
+			<groupId>${project.groupId}</groupId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

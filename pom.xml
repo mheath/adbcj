@@ -5,7 +5,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.safehaus.adbcj</groupId>
+	<groupId>org.adbcj</groupId>
 	<artifactId>adbcj</artifactId>
 	<version>0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
@@ -22,8 +22,8 @@
 	</modules>
 	
 	<scm>
-		<url>scm:svn:http://swamp.homelinux.net/svn/thesis/adbcj/trunk</url>
-		<connection>scm:svn:http://swamp.homelinux.net/svn/thesis/adbcj/trunk</connection>
+		<url>scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk</url>
+		<connection>scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk</connection>
 	</scm>
 	
 	<repositories>

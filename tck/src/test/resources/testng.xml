@@ -3,7 +3,7 @@
 <suite name="ADBCJ-TCK" verbose="1" >
   <test name="tck"   >
     <packages>
-      <package name="org.safehaus.adbcj.tck" />
+      <package name="org.adbcj.tck" />
    </packages>
  </test>
 </suite>

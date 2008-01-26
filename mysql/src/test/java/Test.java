@@ -1,11 +1,11 @@
-import org.safehaus.adbcj.Connection;
-import org.safehaus.adbcj.ConnectionManager;
-import org.safehaus.adbcj.ConnectionManagerProvider;
-import org.safehaus.adbcj.DbFuture;
-import org.safehaus.adbcj.DbListener;
-import org.safehaus.adbcj.DbSessionFuture;
-import org.safehaus.adbcj.ResultSet;
-import org.safehaus.adbcj.mysql.Adbcj;
+import org.adbcj.Connection;
+import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbFuture;
+import org.adbcj.DbListener;
+import org.adbcj.DbSessionFuture;
+import org.adbcj.ResultSet;
+import org.adbcj.mysql.Adbcj;
 
 public class Test {
 

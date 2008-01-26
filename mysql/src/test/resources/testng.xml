@@ -3,7 +3,7 @@
 <suite name="ADBCJ-TCK" verbose="1" >
   <test name="tck"   >
     <packages>
-      <package name="org.safehaus.adbcj.mysql" />
+      <package name="org.adbcj.mysql" />
    </packages>
  </test>
 </suite>

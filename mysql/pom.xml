@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	
 	<parent>
-        <groupId>org.safehaus.adbcj</groupId>
+        <groupId>org.adbcj</groupId>
 		<artifactId>adbcj</artifactId>
 		<version>0.1-SNAPSHOT</version>
 	</parent>
@@ -18,7 +18,7 @@
 	<dependencies>
 		<dependency>
 			<artifactId>adbcj-api</artifactId>
-			<groupId>org.safehaus.adbcj</groupId>
+			<groupId>${project.groupId}</groupId>
 		</dependency>
 		<dependency>
 			<artifactId>mina-core</artifactId>

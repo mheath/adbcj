@@ -1,8 +1,8 @@
-import org.safehaus.adbcj.Connection;
-import org.safehaus.adbcj.ConnectionManager;
-import org.safehaus.adbcj.ConnectionManagerProvider;
-import org.safehaus.adbcj.DbException;
-import org.safehaus.adbcj.postgresql.Adbcj;
+import org.adbcj.Connection;
+import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbException;
+import org.adbcj.postgresql.Adbcj;
 
 
 public class PgTest {
