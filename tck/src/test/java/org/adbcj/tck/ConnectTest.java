@@ -217,12 +217,17 @@ public class ConnectTest {
 			futures.add(connection.executeQuery("SELECT * FROM simple_values"));
 		}
 
+		logger.debug("Closing connection");
 		connection.close(true).get();
+		logger.debug("Closed");
+
 		assertTrue(connection.isClosed(), "Connection should be closed");
 		for (DbSessionFuture<ResultSet> future : futures) {
 			assertTrue(future.isDone(), "Future did not finish before connection was closed.");
 			assertTrue(future.isCancelled(), "Future should have been cancelled at close");
 		}
+		logger.debug("Closing locking connection");
 		lockingConnection.close(true).get();
+		logger.debug("Locking connection close");
 	}
 }
