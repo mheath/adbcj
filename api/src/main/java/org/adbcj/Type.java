@@ -16,35 +16,116 @@
  */
 package org.adbcj;
 
+import java.sql.Types;
+
 public enum Type {
-	ARRAY,
-	BIGINT,
-	BINARY,
-	BIT,
-	BLOB,
-	BOOLEAN,
-	CHAR,
-	CLOB,
-	DATALINK,
-	DATE,
-	DECIMAL,
-	DISTINCT,
-	DOUBLE,
-	FLOAT,
-	INTEGER,
-	JAVA_OBJECT,
-	LONGVARBINARY,
-	LONGVARCHAR,
-	NULL,
-	NUMERIC,
-	OTHER,
-	REAL,
-	REF,
-	SMALLINT,
-	STRUCT,
-	TIME,
-	TIMESTAMP,
-	TINYINT,
-	VARBINARY,
-	VARCHAR
+	ARRAY(Types.ARRAY),
+	BIGINT(Types.BIGINT),
+	BINARY(Types.BINARY),
+	BIT(Types.BIT),
+	BLOB(Types.BLOB),
+	BOOLEAN(Types.BOOLEAN),
+	CHAR(Types.CHAR),
+	CLOB(Types.CLOB),
+	DATALINK(Types.DATALINK),
+	DATE(Types.DATE),
+	DECIMAL(Types.DECIMAL),
+	DISTINCT(Types.DISTINCT),
+	DOUBLE(Types.DOUBLE),
+	FLOAT(Types.FLOAT),
+	INTEGER(Types.INTEGER),
+	JAVA_OBJECT(Types.JAVA_OBJECT),
+	LONGVARBINARY(Types.LONGVARBINARY),
+	LONGVARCHAR(Types.LONGVARCHAR),
+	NULL(Types.NULL),
+	NUMERIC(Types.NUMERIC),
+	OTHER(Types.OTHER),
+	REAL(Types.REAL),
+	REF(Types.REF),
+	SMALLINT(Types.SMALLINT),
+	STRUCT(Types.STRUCT),
+	TIME(Types.TIME),
+	TIMESTAMP(Types.TIMESTAMP),
+	TINYINT(Types.TINYINT),
+	VARBINARY(Types.VARBINARY),
+	VARCHAR(Types.VARCHAR);
+
+	private final int jdbcType;
+
+	private Type(int jdbcType) {
+		this.jdbcType = jdbcType;
+	}
+
+	public int getJdbcType() {
+		return jdbcType;
+	}
+
+	public static Type fromJdbcType(int jdbcType) {
+		switch (jdbcType) {
+		case Types.ARRAY:
+			return Type.ARRAY;
+		case Types.BIGINT:
+			return Type.BIGINT;
+		case Types.BINARY:
+			return Type.BINARY;
+		case Types.BIT:
+			return Type.BIT;
+		case Types.BLOB:
+			return Type.BLOB;
+		case Types.BOOLEAN:
+			return Type.BOOLEAN;
+		case Types.CHAR:
+			return Type.CHAR;
+		case Types.CLOB:
+			return Type.CLOB;
+		case Types.DATALINK:
+			return Type.DATALINK;
+		case Types.DATE:
+			return Type.DATE;
+		case Types.DECIMAL:
+			return Type.DECIMAL;
+		case Types.DISTINCT:
+			return Type.DISTINCT;
+		case Types.DOUBLE:
+			return Type.DOUBLE;
+		case Types.FLOAT:
+			return Type.FLOAT;
+		case Types.INTEGER:
+			return Type.INTEGER;
+		case Types.JAVA_OBJECT:
+			return Type.JAVA_OBJECT;
+		case Types.LONGNVARCHAR:
+			return Type.LONGVARCHAR;
+		case Types.LONGVARBINARY:
+			return Type.LONGVARBINARY;
+		case Types.LONGVARCHAR:
+			return Type.LONGVARCHAR;
+		case Types.NULL:
+			return Type.NULL;
+		case Types.NUMERIC:
+			return Type.NUMERIC;
+		case Types.OTHER:
+			return Type.OTHER;
+		case Types.REAL:
+			return Type.REAL;
+		case Types.REF:
+			return Type.REF;
+		case Types.SMALLINT:
+			return Type.SMALLINT;
+		case Types.STRUCT:
+			return Type.STRUCT;
+		case Types.TIME:
+			return Type.TIME;
+		case Types.TIMESTAMP:
+			return Type.TIMESTAMP;
+		case Types.TINYINT:
+			return Type.TINYINT;
+		case Types.VARBINARY:
+			return Type.VARBINARY;
+		case Types.VARCHAR:
+			return Type.VARCHAR;
+		default:
+			throw new IllegalStateException("Don't know how to handle column type" + jdbcType);
+		}
+	}
 }

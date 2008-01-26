@@ -162,7 +162,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 								metaData.getSchemaName(i),
 								metaData.getTableName(i),
 								metaData.getTableName(i),
-								convertJdbcToAdbcjType(metaData.getColumnType(i)),
+								Type.fromJdbcType(metaData.getColumnType(i)),
 								metaData.getColumnLabel(i),
 								metaData.getCatalogName(i),
 								metaData.getPrecision(i),
@@ -317,76 +317,6 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		}
 	}
 
-	// TODO Move this into Type enum
-	private Type convertJdbcToAdbcjType(int columnType) {
-		switch (columnType) {
-		case Types.ARRAY:
-			return Type.ARRAY;
-		case Types.BIGINT:
-			return Type.BIGINT;
-		case Types.BINARY:
-			return Type.BINARY;
-		case Types.BIT:
-			return Type.BIT;
-		case Types.BLOB:
-			return Type.BLOB;
-		case Types.BOOLEAN:
-			return Type.BOOLEAN;
-		case Types.CHAR:
-			return Type.CHAR;
-		case Types.CLOB:
-			return Type.CLOB;
-		case Types.DATALINK:
-			return Type.DATALINK;
-		case Types.DATE:
-			return Type.DATE;
-		case Types.DECIMAL:
-			return Type.DECIMAL;
-		case Types.DISTINCT:
-			return Type.DISTINCT;
-		case Types.DOUBLE:
-			return Type.DOUBLE;
-		case Types.FLOAT:
-			return Type.FLOAT;
-		case Types.INTEGER:
-			return Type.INTEGER;
-		case Types.JAVA_OBJECT:
-			return Type.JAVA_OBJECT;
-		case Types.LONGNVARCHAR:
-			return Type.LONGVARCHAR;
-		case Types.LONGVARBINARY:
-			return Type.LONGVARBINARY;
-		case Types.LONGVARCHAR:
-			return Type.LONGVARCHAR;
-		case Types.NULL:
-			return Type.NULL;
-		case Types.NUMERIC:
-			return Type.NUMERIC;
-		case Types.OTHER:
-			return Type.OTHER;
-		case Types.REAL:
-			return Type.REAL;
-		case Types.REF:
-			return Type.REF;
-		case Types.SMALLINT:
-			return Type.SMALLINT;
-		case Types.STRUCT:
-			return Type.STRUCT;
-		case Types.TIME:
-			return Type.TIME;
-		case Types.TIMESTAMP:
-			return Type.TIMESTAMP;
-		case Types.TINYINT:
-			return Type.TINYINT;
-		case Types.VARBINARY:
-			return Type.VARBINARY;
-		case Types.VARCHAR:
-			return Type.VARCHAR;
-		default:
-			throw new IllegalStateException("Don't know how to handle column type" + columnType);	
-		}
-	}
-	
 	private abstract class CallableRequest<E> extends Request<E> implements Callable<E> {
 		private Future<E> future = null;
 		private boolean canceled = false;
