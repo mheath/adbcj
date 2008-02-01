@@ -4,28 +4,24 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
+import org.adbcj.Connection;
+import org.adbcj.ConnectionManager;
+import org.adbcj.DbException;
+import org.adbcj.DbFuture;
+import org.adbcj.postgresql.backend.PgBackendMessageDecoder;
+import org.adbcj.postgresql.frontend.PgFrontendMessageEncoder;
+import org.adbcj.postgresql.frontend.StartupMessage;
+import org.adbcj.support.DefaultDbFuture;
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
-import org.apache.mina.common.IoFutureListener;
 import org.apache.mina.common.IoSession;
+import org.apache.mina.common.IoSessionInitializer;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.ProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
-import org.adbcj.Connection;
-import org.adbcj.ConnectionManager;
-import org.adbcj.DbException;
-import org.adbcj.DbFuture;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.postgresql.backend.PgBackendMessageDecoder;
-import org.adbcj.postgresql.frontend.PgFrontendMessageEncoder;
-import org.adbcj.postgresql.frontend.StartupMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +44,6 @@ public class PgConnectionManager implements ConnectionManager {
 	
 	private final NioSocketConnector socketConnector;
 
-	private final InetSocketAddress address;
 	private final String username;
 	private final String password;
 	private final String database;
@@ -68,7 +63,8 @@ public class PgConnectionManager implements ConnectionManager {
 		
 		socketConnector.setHandler(new PgIoHandler(this));
 
-		address = new InetSocketAddress(host, port);
+		InetSocketAddress address = new InetSocketAddress(host, port);
+		socketConnector.setDefaultRemoteAddress(address);
 		
 		this.username = username;
 		this.password = password;
@@ -79,47 +75,43 @@ public class PgConnectionManager implements ConnectionManager {
 		if (isClosed()) {
 			throw new DbException("Connection manager closed");
 		}
-		final ConnectFuture connectFuture = socketConnector.connect(address);
+		logger.debug("Starting connection");
+		PgConnectFuture future = new PgConnectFuture();
+		socketConnector.connect(future);
+		
+		logger.debug("Started connection");
+		
+		return future;
+	}
+	
+	class PgConnectFuture extends DefaultDbFuture<Connection> implements IoSessionInitializer<ConnectFuture> {
 
-		final DefaultDbFuture<Connection> dbConnectFuture = new DefaultDbFuture<Connection>() {
-			@Override
-			protected boolean doCancel(boolean mayInterruptIfRunning) {
-				logger.trace("Cancelling connect");
-				connectFuture.cancel();
-				if (connectFuture.isCanceled()) {
-					logger.trace("Canceled connect");
-					connectFuture.cancel();
-					return true;
-				}
-				logger.trace("Did not cancel connect");
+		private boolean cancelled = false;
+		private boolean started = false;
+		
+		@Override
+		public synchronized void initializeSession(IoSession session, ConnectFuture future) {
+			if (cancelled) {
+				session.close();
+				return;
+			}
+			logger.debug("Creating PgConnection");
+
+			PgConnection connection = new PgConnection(PgConnectionManager.this, this, session);
+			IoSessionUtil.setConnection(session, connection);
+		}
+
+		@Override
+		protected synchronized boolean doCancel(boolean mayInterruptIfRunning) {
+			if (started) {
+				logger.debug("Can't cancel, connection already started");
 				return false;
 			}
-		};
-
-		connectFuture.addListener(new IoFutureListener<ConnectFuture>() {
-			public void operationComplete(ConnectFuture future) {
-				logger.trace("connect future");
-
-				IoSession session = future.getSession();
-				
-				// Put DbFuture<Connection> in session
-				IoSessionUtil.setDbConnectFuture(session, dbConnectFuture);
-				logger.trace("dbConnectFuture added to session");
-				
-				// Create Connection and add connection to future
-				//DefaultDbFuture<Connection> dbConnectFuture = IoSessionUtil.getDbConnectFuture(session);
-				PgConnection connection = new PgConnection(PgConnectionManager.this, session, dbConnectFuture);
-				IoSessionUtil.setConnection(session, connection);
-				dbConnectFuture.setResult(connection);
-
-				// Send start message to backend
-				Map<ConfigurationVariable, String> parameters = new HashMap<ConfigurationVariable, String>();
-				parameters.put(ConfigurationVariable.CLIENT_ENCODING, "UNICODE");
-				parameters.put(ConfigurationVariable.DATE_STYLE, "ISO");
-				session.write(new StartupMessage(username, database, parameters));
-			}
-		});
-		return dbConnectFuture;
+			logger.debug("Cancelled connect");
+			cancelled = true;
+			return true;
+		}
+		
 	}
 
 	public synchronized DbFuture<Void> close(boolean immediate) throws DbException {

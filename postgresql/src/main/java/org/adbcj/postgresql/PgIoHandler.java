@@ -1,6 +1,8 @@
 package org.adbcj.postgresql;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
@@ -12,6 +14,7 @@ import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.Request;
 import org.adbcj.support.AbstractTransactionalSession.Transaction;
+import org.adbcj.postgresql.PgConnectionManager.PgConnectFuture;
 import org.adbcj.postgresql.backend.AbstractBackendMessage;
 import org.adbcj.postgresql.backend.AuthenticationMessage;
 import org.adbcj.postgresql.backend.CommandCompleteMessage;
@@ -22,6 +25,7 @@ import org.adbcj.postgresql.backend.ReadyMessage;
 import org.adbcj.postgresql.backend.RowDescriptionMessage;
 import org.adbcj.postgresql.frontend.FrontendMessage;
 import org.adbcj.postgresql.frontend.FrontendMessageType;
+import org.adbcj.postgresql.frontend.StartupMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +47,15 @@ public class PgIoHandler extends IoHandlerAdapter {
 	@Override
 	public void sessionOpened(IoSession session) throws Exception {
 		logger.debug("sessionOpened");
+		
+		
+		// Send start message to backend
+		logger.trace("Sending start message");
+		Map<ConfigurationVariable, String> parameters = new HashMap<ConfigurationVariable, String>();
+		parameters.put(ConfigurationVariable.CLIENT_ENCODING, "UNICODE");
+		parameters.put(ConfigurationVariable.DATE_STYLE, "ISO");
+		session.write(new StartupMessage(connectionManager.getUsername(), connectionManager.getDatabase(), parameters));
+
 	}
 	
 	@Override
@@ -246,10 +259,10 @@ public class PgIoHandler extends IoHandlerAdapter {
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		
 		// Check if we're doing connection
-		DefaultDbFuture<?> future = connection.getConnectFuture();
-		if (future != null) {
-			connection.clearConnectFuture();
-			future.setResult(null);
+		PgConnectFuture future = connection.getConnectFuture();
+		if (!future.isDone()) {
+			logger.debug("Completed connection");
+			future.setResult(connection);
 			return;
 		}
 		
@@ -259,7 +272,6 @@ public class PgIoHandler extends IoHandlerAdapter {
 		if (request == null) {
 			throw new IllegalStateException("Received a READY with no current request");
 		}
-		future = request.getFuture();
 		switch (backendMessage.getStatus()) {
 		case TRANSACTION:
 			if (request.getTransaction() == null) {

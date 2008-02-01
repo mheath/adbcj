@@ -6,18 +6,10 @@ import org.adbcj.support.DefaultDbFuture;
 
 public class IoSessionUtil {
 
-	private static final String CONNECT_FUTURE_KEY = IoSessionUtil.class.getName() + ".connectFuture";
 	private static final String CONNECTION_KEY = IoSessionUtil.class.getName() + ".connection";
 
-	private IoSessionUtil() {}
-
-	@SuppressWarnings("unchecked")
-	public static DefaultDbFuture<Connection> getDbConnectFuture(IoSession session) {
-		return (DefaultDbFuture<Connection>)session.getAttribute(CONNECT_FUTURE_KEY);
-	}
-	
-	public static void setDbConnectFuture(IoSession session, DefaultDbFuture<Connection> connectFuture) {
-		session.setAttribute(CONNECT_FUTURE_KEY, connectFuture);
+	private IoSessionUtil() {
+		// Make this class uninstantiable with a private constructor.
 	}
 
 	public static PgConnection getConnection(IoSession session) {

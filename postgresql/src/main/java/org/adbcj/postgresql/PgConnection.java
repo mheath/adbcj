@@ -18,6 +18,7 @@ import org.adbcj.support.AbstractTransactionalSession;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.support.Request;
+import org.adbcj.postgresql.PgConnectionManager.PgConnectFuture;
 import org.adbcj.postgresql.frontend.AbstractFrontendMessage;
 import org.adbcj.postgresql.frontend.BindMessage;
 import org.adbcj.postgresql.frontend.DescribeMessage;
@@ -32,6 +33,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	private final Logger logger = LoggerFactory.getLogger(PgConnection.class);
 
 	private final PgConnectionManager connectionManager;
+	private final PgConnectFuture connectFuture;
 	private final IoSession session;
 	// TODO Determine if we really need to distinguish frontend and backend charsets
 	// TODO Make charset configurable
@@ -39,7 +41,6 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	// TODO Update backendCharset based on what backend returns
 	private Charset backendCharset = Charset.forName("US-ASCII");
 
-	private DefaultDbFuture<Connection> connectFuture;
 	private DefaultDbSessionFuture<Void> closeFuture;
 
 	private int pid;
@@ -50,10 +51,10 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	private static final BindMessage DEFAULT_BIND = new BindMessage();
 	private static final DescribeMessage DEFAULT_DESCRIBE = DescribeMessage.createDescribePortalMessage(null);
 	
-	public PgConnection(PgConnectionManager connectionManager, IoSession session, DefaultDbFuture<Connection> connectFuture) {
+	public PgConnection(PgConnectionManager connectionManager, PgConnectFuture connectFuture, IoSession session) {
 		this.connectionManager = connectionManager;
-		this.session = session;
 		this.connectFuture = connectFuture;
+		this.session = session;
 	}
 	
 	public ConnectionManager getConnectionManager() {
@@ -248,12 +249,8 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 		return closeFuture;
 	}
 	
-	public DefaultDbFuture<Connection> getConnectFuture() {
+	public PgConnectFuture getConnectFuture() {
 		return connectFuture;
-	}
-	
-	public void clearConnectFuture() {
-		this.connectFuture = null;
 	}
 	
 	@Override
