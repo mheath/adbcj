@@ -1,0 +1,3 @@
+Asynchronous Database Connectivity in Java (ADBCJ)
+Copyright 2008 Mike Heath
+

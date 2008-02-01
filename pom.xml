@@ -11,7 +11,10 @@
 	<packaging>pom</packaging>
 
 	<name>ADBCJ</name>
-	<description>Asynchronous Database Connectivity in Java build POM.</description>
+	<description>Asynchronous Database Connectivity in Java is a framework for asynchronous database interaction.</description>
+
+	<url>http://adbcj.org/</url>
+	<inceptionYear>2007</inceptionYear>
 
 	<modules>
 		<module>api</module>
@@ -22,10 +25,39 @@
 	</modules>
 	
 	<scm>
-		<url>scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk</url>
+		<url>http://adbcj.googlecode.com/svn/adbcj/trunk</url>
 		<connection>scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk</connection>
+		<developerConnection>scm:svn:https://adbcj.googlecode.com/svn/adbcj/trunk</developerConnection>
 	</scm>
 	
+	<issueManagement>
+		<system>google</system>
+		<url>http://code.google.com/p/adbcj/issues/list</url>
+	</issueManagement>
+
+	<licenses>
+		<license>
+			<name>Apache 2.0 License</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>mheath</id>
+			<name>Mike Heath</name>
+			<url>http://swamp.homelinux.net/blog</url>
+		</developer>
+	</developers>
+
+	<mailingLists>
+		<mailingList>
+			<name>ADBCJ Google Group</name>
+			<archive>http://groups.google.com/group/adbcj</archive>
+		</mailingList>
+	</mailingLists>
+
 	<repositories>
 		<repository>
 			<id>apache.snapshots</id>
@@ -47,6 +79,8 @@
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
+					<debug>true</debug>
+
 				</configuration>
 			</plugin>
 			<plugin>
@@ -54,8 +88,67 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.4-SNAPSHOT</version>
 			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptors>
+						<descriptor>release.xml</descriptor>
+					</descriptors>
+					<finalName>adbcj-${pom.version}</finalName>
+					<appendAssemblyId>false</appendAssemblyId>
+					<tarLongFileMode>gnu</tarLongFileMode>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-source</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
+
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<inherited>false</inherited>
+				<configuration>
+					<aggregate>true</aggregate>
+					<breakiterator>true</breakiterator>
+					<charset>UTF-8</charset>
+					<docencoding>UTF-8</docencoding>
+					<windowtitle>ADBCJ ${project.version} API Documentation</windowtitle>
+					<doctitle>ADBCJ ${project.version} API Documentation</doctitle>
+					<encoding>UTF-8</encoding>
+					<links>
+						<link>http://java.sun.com/javase/6/docs/api/</link>
+						<link>http://www.slf4j.org/api/</link>
+					</links>
+					<locale>en_US</locale>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<inherited>false</inherited>
+				<configuration>
+					<aggregate>true</aggregate>
+					<inputEncoding>UTF-8</inputEncoding>
+					<outputEncoding>UTF-8</outputEncoding>
+					<windowTitle>ADBCJ ${project.version} Cross Reference</windowTitle>
+					<docTitle>ADBCJ ${project.version} Cross Reference</docTitle>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
 
 	<dependencyManagement>
 		<dependencies>
@@ -97,35 +190,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jxr-plugin</artifactId>
-				<inherited>false</inherited>
-				<configuration>
-					<aggregate>true</aggregate>
-					<inputEncoding>UTF-8</inputEncoding>
-					<outputEncoding>UTF-8</outputEncoding>
-					<windowTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</windowTitle>
-					<docTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</docTitle>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jxr-plugin</artifactId>
-				<inherited>false</inherited>
-				<configuration>
-					<aggregate>true</aggregate>
-					<inputEncoding>UTF-8</inputEncoding>
-					<outputEncoding>UTF-8</outputEncoding>
-					<windowTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</windowTitle>
-					<docTitle>Asynchronous Database Connectivity in Java ${project.version} Cross Reference</docTitle>
-				</configuration>
-			</plugin>
-		</plugins>
-	</reporting>
 
 </project>
 
