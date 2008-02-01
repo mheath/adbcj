@@ -341,7 +341,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 			}
 			try {
 				E value = doCall();
-				getFuture().setValue(value);
+				getFuture().setResult(value);
 				return value;
 			} catch (Exception e) {
 				getFuture().setException(DbException.wrap(JdbcConnection.this, e));
@@ -352,7 +352,6 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				getFuture().setException(DbException.wrap(JdbcConnection.this, e));
 				throw e;
 			} finally {
-				getFuture().setDone();
 				makeNextRequestActive();
 			}
 		}

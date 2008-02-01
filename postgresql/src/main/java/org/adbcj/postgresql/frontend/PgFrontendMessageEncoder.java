@@ -27,6 +27,7 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 	}
 
 	public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
+		// TODO Refactor to minimize buffer creation -- There's not reason we can't allocate one buffer for all encoding
 		IoBuffer buffer = null;
 		if (message instanceof AbstractFrontendMessage[]) {
 			AbstractFrontendMessage[] messages = (AbstractFrontendMessage[])message;
@@ -45,6 +46,9 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		}
 		buffer.flip();
 		out.write(buffer);
+		
+		logger.trace("Flushing");
+		out.flush();
 	}
 	
 	public IoBuffer encodeFrontendMessage(IoSession session, AbstractFrontendMessage message, ProtocolEncoderOutput out) throws Exception {

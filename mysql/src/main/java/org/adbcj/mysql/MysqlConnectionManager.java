@@ -87,7 +87,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 		if (immediate) {
 			socketConnector.dispose();
 			DefaultDbFuture<Void> future = new DefaultDbFuture<Void>();
-			future.setDone();
+			future.setResult(null);
 			closeFuture = future;
 			return closeFuture;
 		} else {

@@ -1,5 +1,7 @@
 package org.adbcj.tck;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.adbcj.Connection;
@@ -23,6 +25,8 @@ public class SelectForUpdateTest extends ConnectionManagerDataProvider {
 		final boolean[] invoked = {false, false};
 		final AtomicBoolean locked = new AtomicBoolean(false);
 		final AtomicBoolean error = new AtomicBoolean(false);
+		final CountDownLatch latch1 = new CountDownLatch(1);
+		final CountDownLatch latch2 = new CountDownLatch(1);
 		
 		Connection conn1 = connectionManager.connect().get();
 		Connection conn2 = connectionManager.connect().get();
@@ -35,6 +39,7 @@ public class SelectForUpdateTest extends ConnectionManagerDataProvider {
 				logger.debug("In first callback");
 				locked.set(true);
 				invoked[0] = true;
+				latch1.countDown();
 			}
 		}).get();
 		logger.debug("Obtained lock on locks table");
@@ -48,10 +53,12 @@ public class SelectForUpdateTest extends ConnectionManagerDataProvider {
 				if (!locked.get()) {
 					error.set(true);
 				}
+				latch2.countDown();
 			}
 		});
 		logger.debug("Select for update called with second connection, should be blocking");
 		
+		assertTrue(latch1.await(1, TimeUnit.SECONDS));
 		assertTrue(invoked[0], "First SELECT FOR UPDATE callback should have been invoked");
 		assertTrue(locked.get(), "locked should be set");
 		assertFalse(invoked[1], "Second SELCT FOR UPDATE callback should not have been invoked yet");
@@ -63,6 +70,7 @@ public class SelectForUpdateTest extends ConnectionManagerDataProvider {
 		future.get();
 		logger.debug("Second SELECT FOR UPDATE completed");
 		
+		assertTrue(latch2.await(1, TimeUnit.SECONDS));
 		assertTrue(invoked[1]);
 		assertFalse(error.get(), "An error occurred during SELECT FOR UPDATE");
 		conn2.rollback().get();

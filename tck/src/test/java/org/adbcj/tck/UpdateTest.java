@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 
 public class UpdateTest extends ConnectionManagerDataProvider {
 
-	@Test(dataProvider="connectionManagerDataProvider")
+	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testSimpleUpdates(ConnectionManager connectionManager) throws InterruptedException {
 		Connection connection = connectionManager.connect().get();
 		assertNotNull(connection);

@@ -47,12 +47,13 @@ public class PgIoHandler extends IoHandlerAdapter {
 	
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
+		logger.debug("IoSession closed");
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		DefaultDbFuture<Void> closeFuture = connection.getCloseFuture();
 		if (closeFuture != null) {
-			closeFuture.setDone();
+			logger.debug("Triggering close future");
+			closeFuture.setResult(null);
 		}
-		logger.debug("IoSession closed");
 	}
 	
 	@Override
@@ -95,7 +96,6 @@ public class PgIoHandler extends IoHandlerAdapter {
 	private void errorOutFuture(PgConnection connection, DefaultDbFuture<?> future, Throwable cause) {
 		if (!future.isDone()) {
 			future.setException(DbException.wrap(connection, cause));
-			future.setDone();
 		}
 	}
 
@@ -181,20 +181,19 @@ public class PgIoHandler extends IoHandlerAdapter {
 		switch (commandCompleteMessage.getCommand()) {
 		case SELECT:
 			request.getEventHandler().endResults(accumulator);
-			future.setValue(accumulator);
+			future.setResult(accumulator);
 		case BEGIN:
 		case COMMIT:
 		case ROLLBACK:
-			future.setDone();
+			future.setResult(null);
 			break;
 		case DELETE:
 		case INSERT:
 		case UPDATE:
 			DefaultResult result = new DefaultResult(commandCompleteMessage.getRowCount(), Collections.<String>emptyList());
-			future.setValue(result);
-			future.setDone();
+			future.setResult(result);
 			break;
-		// TODO Implement other command complete message types (i.e. INSERT, DELETE, MOVE, UPDATE etc.)
+		// TODO Implement MOVE command completion
 		default:
 			throw new IllegalStateException(String.format("Command completions of type %s are not implemented", commandCompleteMessage.getCommand()));
 		}
@@ -250,7 +249,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 		DefaultDbFuture<?> future = connection.getConnectFuture();
 		if (future != null) {
 			connection.clearConnectFuture();
-			future.setDone();
+			future.setResult(null);
 			return;
 		}
 		
@@ -267,7 +266,6 @@ public class PgIoHandler extends IoHandlerAdapter {
 				throw new PgException(connection, "A transactional request returned outside of a transaction");
 			}
 		case IDLE:
-			future.setDone();
 			connection.makeNextRequestActive();
 			break;
 		case ERROR:

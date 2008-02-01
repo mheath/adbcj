@@ -19,7 +19,6 @@ package org.adbcj.mysql;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerFactory;

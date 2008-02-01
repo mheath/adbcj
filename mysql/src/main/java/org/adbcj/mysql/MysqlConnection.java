@@ -69,7 +69,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 		if (isClosed()) {
 			if (closeFuture == null) {
 				closeFuture = new DefaultDbSessionFuture<Void>(this);
-				closeFuture.setDone();
+				closeFuture.setResult(null);
 			}
 			return closeFuture;
 		} else {

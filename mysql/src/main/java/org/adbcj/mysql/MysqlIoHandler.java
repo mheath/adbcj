@@ -19,19 +19,18 @@ package org.adbcj.mysql;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.mina.common.IoHandlerAdapter;
-import org.apache.mina.common.IoSession;
 import org.adbcj.DbException;
 import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Value;
-import org.adbcj.support.AbstractDbFutureListenerSupport;
+import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.Request;
 import org.adbcj.support.AbstractTransactionalSession.Transaction;
-import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
+import org.apache.mina.common.IoHandlerAdapter;
+import org.apache.mina.common.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		connectionManager.removeConnection(connection);
 		DefaultDbFuture<Void> closeFuture = connection.getCloseFuture();
 		if (closeFuture != null) {
-			closeFuture.setDone();
+			closeFuture.setResult(null);
 		}
 		logger.debug("IoSession closed");
 	}
@@ -68,21 +67,20 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 		if (connection != null) {
 			DbException dbException = DbException.wrap(connection, cause);
+			
 			Request<?> activeRequest = connection.getActiveRequest();
 			if (activeRequest == null) {
 				MysqlConnectFuture connectFuture = connection.getConnectFuture();
 				if (!connectFuture.isDone()) {
 					connectFuture.setException(dbException);
-					connectFuture.setDone();
 					
 					dbException = null;
 				}
 			} else {
-				AbstractDbFutureListenerSupport<?> future = activeRequest.getFuture();
+				DefaultDbSessionFuture<?> future = activeRequest.getFuture();
 				if (!future.isDone()) {
 					try {
 						future.setException(dbException);
-						future.setDone();
 						dbException = null;
 
 						Transaction transaction = (Transaction)activeRequest.getTransaction();
@@ -163,8 +161,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 			// TODO Do we need to pass the warnings on to the connection?
 			MysqlConnectFuture connectFuture = connection.getConnectFuture();
 			if (!connectFuture.isDone() ) {
-				connectFuture.setValue(connection);
-				connectFuture.setDone();
+				connectFuture.setResult(connection);
 				
 				return;
 			} else {
@@ -173,8 +170,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		}
 		DefaultDbFuture<Result> future = activeRequest.getFuture();
 		Result result = new DefaultResult(response.getAffectedRows(), warnings);
-		future.setValue(result);
-		future.setDone();
+		future.setResult(result);
 		connection.makeNextRequestActive();
 	}
 
@@ -225,8 +221,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		case ROW:
 			activeRequest.getEventHandler().endResults(activeRequest.getAccumulator());
 			DefaultDbSessionFuture<ResultSet> future = activeRequest.getFuture();
-			future.setValue(activeRequest.getAccumulator());
-			future.setDone();
+			future.setResult(activeRequest.getAccumulator());
 
 			logger.debug("Set future done, making next request active");
 			connection.makeNextRequestActive();

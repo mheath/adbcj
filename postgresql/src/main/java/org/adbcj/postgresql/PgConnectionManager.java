@@ -110,7 +110,7 @@ public class PgConnectionManager implements ConnectionManager {
 				//DefaultDbFuture<Connection> dbConnectFuture = IoSessionUtil.getDbConnectFuture(session);
 				PgConnection connection = new PgConnection(PgConnectionManager.this, session, dbConnectFuture);
 				IoSessionUtil.setConnection(session, connection);
-				dbConnectFuture.setValue(connection);
+				dbConnectFuture.setResult(connection);
 
 				// Send start message to backend
 				Map<ConfigurationVariable, String> parameters = new HashMap<ConfigurationVariable, String>();
@@ -130,7 +130,7 @@ public class PgConnectionManager implements ConnectionManager {
 		closeFuture = new DefaultDbFuture<Void>();
 		if (immediate) {
 			socketConnector.dispose();
-			closeFuture.setDone();
+			closeFuture.setResult(null);
 		} else {
 			// TODO Implement PostgresqlConnectionManager.close(boolean)
 			throw new IllegalStateException("Non immediate close not yet implemented");

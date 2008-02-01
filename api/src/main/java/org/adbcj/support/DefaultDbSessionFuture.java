@@ -27,15 +27,13 @@ public class DefaultDbSessionFuture<T> extends DefaultDbFuture<T> implements DbS
 	
 	public static <T> DefaultDbSessionFuture<T> createCompletedFuture(DbSession session, T value) {
 		DefaultDbSessionFuture<T> future = new DefaultDbSessionFuture<T>(session);
-		future.setValue(value);
-		future.setDone();
+		future.setResult(value);
 		return future;
 	}
 	
 	public static <T> DefaultDbSessionFuture<T> createCompletedErrorFuture(DbSession session, DbException exception) {
 		DefaultDbSessionFuture<T> future = new DefaultDbSessionFuture<T>(session);
 		future.setException(exception);
-		future.setDone();
 		return future;
 	}
 	

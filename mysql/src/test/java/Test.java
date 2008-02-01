@@ -1,10 +1,5 @@
-import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerProvider;
-import org.adbcj.DbFuture;
-import org.adbcj.DbListener;
-import org.adbcj.DbSessionFuture;
-import org.adbcj.ResultSet;
 import org.adbcj.mysql.Adbcj;
 
 public class Test {

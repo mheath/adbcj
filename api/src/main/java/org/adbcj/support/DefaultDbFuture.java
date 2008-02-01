@@ -16,123 +16,272 @@
  */
 package org.adbcj.support;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.adbcj.DbException;
+import org.adbcj.DbFuture;
+import org.adbcj.DbListener;
 
-public class DefaultDbFuture<T> extends AbstractDbFutureListenerSupport<T> {
+public class DefaultDbFuture<T> implements DbFuture<T> {
 
-	private interface AwaitMethod {
-		void await() throws InterruptedException;
+    private final Object lock;
+	
+    private DbListener<T> firstListener;
+    private List<DbListener<T>> otherListeners;
+    
+    /**
+     * The result of this future.
+     */
+    private volatile T result;
+    
+    /**
+     * The exception thrown if there was an error.
+     */
+    private volatile Throwable exception;
+    
+    /**
+     * Indicates if the future was cancelled.
+     */
+    private volatile boolean cancelled;
+    
+    /**
+     * Indicates if the future has completed or not.
+     */
+    private volatile boolean done;
+    
+    /**
+     * The number of threads waiting on the future.  Access must by synchronized on {@link #lock}.
+     */
+    private int waiters;
+
+    public DefaultDbFuture() {
+		this.lock = this;
+	}
+	
+	public DbFuture<T> addListener(DbListener<T> listener) {
+		if (listener == null) {
+			throw new IllegalArgumentException("listener can NOT be null");
+		}
+		
+        boolean notifyNow = true;
+        if (!done) {
+	        synchronized (lock) {
+	            if (!done) {
+	                notifyNow = false;
+	                if (firstListener == null) {
+	                    firstListener = listener;
+	                } else {
+	                    if (otherListeners == null) {
+	                        otherListeners = new ArrayList<DbListener<T>>(1);
+	                    }
+	                    otherListeners.add(listener);
+	                }
+	            }
+	        }
+        }
+
+        if (notifyNow) {
+            notifyListener(listener);
+        }
+        return this;
 	}
 
-	private volatile boolean cancelled = false;
-	private volatile T value;
+	public boolean removeListener(DbListener<T> listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener can NOT be null");
+        }
 
-	public boolean cancel(boolean mayInterruptIfRunning) {
-		if (cancelled || isDone()) {
+        boolean removed = false;
+        synchronized (lock) {
+            if (!done) {
+                if (listener == firstListener) {
+                	removed = true;
+                    if (otherListeners != null && !otherListeners.isEmpty()) {
+                        firstListener = otherListeners.remove(0);
+                    } else {
+                        firstListener = null;
+                    }
+                } else if (otherListeners != null) {
+                    removed = otherListeners.remove(listener);
+                }
+            }
+        }
+
+        return removed;
+	}
+
+    public final boolean cancel(boolean mayInterruptIfRunning) {
+		if (done) {
 			return false;
 		}
-		getLock().lock();
-		try {
-			if (cancelled || isDone()) {
+		synchronized (lock) {
+			if (done) {
 				return false;
 			}
 			cancelled = doCancel(mayInterruptIfRunning);
 			if (cancelled) {
-				setDone();
+				done = true;
+	            if (waiters > 0) {
+	                lock.notifyAll();
+	            }
 			}
-		} finally {
-			getLock().unlock();
+		}
+		if (cancelled) {
+			notifyListeners();
 		}
 		return cancelled;
 	}
 
-	public T get() throws DbException, InterruptedException {
-		return doGet(new AwaitMethod() {
-			public void await() throws InterruptedException {
-				getCondition().await();
-			}
-		});
+	protected boolean doCancel(boolean mayInterruptIfRunning) {
+		return false;
 	}
 
-	public T get(final long timeout, final TimeUnit unit) throws DbException, InterruptedException, TimeoutException {
-		return doGet(new AwaitMethod() {
-			public void await() throws InterruptedException {
-				getCondition().await(timeout, unit);
-			}
-		});
-	}
-	
-	public T getUninterruptably() throws DbException {
-		for(;;) {
-			boolean interrupted = false;
-			try {
-				return get();
-			} catch (InterruptedException e) {
-				interrupted = true;
-			} finally {
-				if (interrupted) {
-					Thread.currentThread().interrupt();
-				}
-			}
+	public T get() throws InterruptedException, DbException {
+		if (done) {
+			return getResult();
 		}
+        synchronized (lock) {
+    		if (done) {
+    			return getResult();
+    		}
+            waiters++;
+            try {
+                lock.wait();
+            } finally {
+                waiters--;
+            }
+        }
+        return getResult();
 	}
-	
-	private T doGet(AwaitMethod awaitMethod) throws InterruptedException {
-		if (isDone()) {
-			if (getException() != null) {
-				throw getException();
-			}
-			return value;
+
+	public T get(long timeout, TimeUnit unit) throws InterruptedException, DbException, TimeoutException {
+		long timeoutMillis = unit.toMillis(timeout);
+
+		if (done) {
+			return getResult();
+		}
+        synchronized (lock) {
+    		if (done) {
+    			return getResult();
+    		}
+            waiters++;
+            try {
+                lock.wait(timeoutMillis);
+            } finally {
+                waiters--;
+            }
+        }
+        return getResult();
+	}
+
+	public T getUninterruptably() throws DbException {
+		if (done) {
+			return getResult();
+		}
+        synchronized (lock) {
+    		if (done) {
+    			return getResult();
+    		}
+    		boolean interrupted = false;
+            waiters++;
+            try {
+	    		while (!done) {
+	                try {
+						lock.wait();
+					} catch (InterruptedException e) {
+						interrupted = true;
+					}
+	    		}
+            } finally {
+                waiters--;
+                if (interrupted) {
+                	Thread.currentThread().interrupt();
+                }
+            }
+        }
+        return getResult();
+	}
+
+	private T getResult() throws DbException {
+		if (!done) {
+			throw new IllegalStateException("Should not be calling this method when future is not done");
+		}
+		if (exception != null) {
+			throw new DbException(exception);
 		}
 		if (cancelled) {
 			throw new CancellationException();
 		}
-		getLock().lock();
-		try {
-			if (isDone()) {
-				if (getException() != null) {
-					throw getException();
-				}
-				return value;
-			}
-			if (cancelled) {
-				throw new CancellationException();
-			}
-			awaitMethod.await();
-			if (cancelled) {
-				throw new CancellationException();
-			}
-			if (getException() != null) {
-				throw new DbException(getException());
-			}
-			return value;
-		} finally {
-			getLock().unlock();
-		}
+		return result;
 	}
+
+	public void setResult(T result) {
+        synchronized (lock) {
+            // Allow only once.
+            if (done) {
+                return;
+            }
+
+            this.result = result;
+            done = true;
+            if (waiters > 0) {
+                lock.notifyAll();
+            }
+        }
+
+        notifyListeners();
+	}
+	
+    private void notifyListener(DbListener<T> listener) {
+        try {
+            listener.onCompletion(this);
+        } catch (Throwable t) {
+        	// TODO Do something with exception
+        	t.printStackTrace();
+        }
+    }
+
+    private void notifyListeners() {
+        // There won't be any visibility problem or concurrent modification
+        // because 'ready' flag will be checked against both addListener and
+        // removeListener calls.
+        if (firstListener != null) {
+            notifyListener(firstListener);
+            firstListener = null;
+
+            if (otherListeners != null) {
+                for (DbListener<T> l : otherListeners) {
+                    notifyListener(l);
+                }
+                otherListeners = null;
+            }
+        }
+    }
 
 	public boolean isCancelled() {
 		return cancelled;
 	}
 
-	public void setValue(T value) throws IllegalStateException {
-		getLock().lock();
-		try {
-			if (isDone()) {
-				throw new IllegalStateException("Cannot set value when future object is done");
-			}
-			this.value = value;
-		} finally {
-			getLock().unlock();
-		}
+	public boolean isDone() {
+		return done;
 	}
 	
-	protected boolean doCancel(boolean mayInterruptIfRunning) {
-		return false;
+	public void setException(Throwable exception) {
+		synchronized (lock) {
+			if (done) {
+				throw new IllegalStateException("Can't set exception on completed future");
+			}
+			this.exception = exception;
+			done = true;
+            if (waiters > 0) {
+                lock.notifyAll();
+            }
+		}
+		notifyListeners();
 	}
 	
 }

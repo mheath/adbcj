@@ -180,7 +180,7 @@ public class ConnectTest {
 		assertTrue(callbacks[0], "Connect future callback was not invoked with connect cancellation");
 	}
 
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
+	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider")
 	public void testNonImmediateClose(final ConnectionManager connectionManager) throws InterruptedException {
 		Connection connection = connectionManager.connect().get();
 
@@ -190,7 +190,7 @@ public class ConnectTest {
 			futures.add(connection.executeQuery("SELECT * FROM simple_values"));
 		}
 		connection.close(false).get();
-		assertTrue(connection.isClosed(), "Connection should be closedLOL");
+		assertTrue(connection.isClosed(), "Connection should be closed");
 		for (DbSessionFuture<ResultSet> future : futures) {
 			assertTrue(future.isDone(), "Future did not finish before connection was closed.");
 			assertFalse(future.isCancelled(), "Future was cancelled and should have been");
