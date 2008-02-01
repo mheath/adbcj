@@ -22,8 +22,8 @@ public class ConnectionManagerDataProvider {
 	}
 	
 	public static final Object[][] TEST_CONNECTION_DATA = {
-		//{"adbcj:jdbc:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
-		//{"adbcj:jdbc:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
+		{"adbcj:jdbc:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
+		{"adbcj:jdbc:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 		{"adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 		{"adbcj:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck"},
 	};
