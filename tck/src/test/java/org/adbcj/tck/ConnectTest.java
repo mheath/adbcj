@@ -148,8 +148,7 @@ public class ConnectTest {
 		assertTrue(callbacks[0], "Connect future callback was not invoked with connect failure");
 	}
 	
-	// TODO This test appears to be failing with MINA -- needs further investigation
-	//@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="urlDataProvider", timeOut=60000)
+	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="urlDataProvider", timeOut=60000)
 	public void testConnectCancel(String url, String user, String password) throws Exception {
 		StringBuilder urlBuilder = new StringBuilder();
 		

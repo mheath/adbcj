@@ -20,9 +20,13 @@ import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.adbcj.Connection;
+import org.adbcj.ConnectionManager;
+import org.adbcj.DbException;
+import org.adbcj.DbFuture;
+import org.adbcj.support.DefaultDbFuture;
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.DefaultIoFilterChainBuilder;
 import org.apache.mina.common.IoSession;
@@ -32,11 +36,6 @@ import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.ProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
-import org.adbcj.Connection;
-import org.adbcj.ConnectionManager;
-import org.adbcj.DbException;
-import org.adbcj.DbFuture;
-import org.adbcj.support.DefaultDbFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,37 +111,35 @@ public class MysqlConnectionManager implements ConnectionManager {
 	}
 
 	class MysqlConnectFuture extends DefaultDbFuture<Connection> implements IoSessionInitializer<ConnectFuture> {
-		private volatile ConnectFuture future;
-		private final CountDownLatch latch = new CountDownLatch(1);
-		public void initializeSession(IoSession session, ConnectFuture future) {
+		private boolean done = false;
+		private boolean cancelled = false;
+		public synchronized void initializeSession(IoSession session, ConnectFuture future) {
 			logger.trace("Initializing IoSession");
+
+			// If cancelled, close session and return
+			if (cancelled) {
+				session.close();
+				return;
+			}
 			
-			this.future = future;
-			latch.countDown();
-			
-			logger.trace("Initializing session");
-			
+			// Create MyConnection object and place in IoSession
 			final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, this, session, credentials, id.incrementAndGet());
 			IoSessionUtil.setMysqlConnection(session, connection);
+			
+			// Add this connection to list of connections managed by ConnectionManager
 			synchronized (connections) {
 				connections.add(connection);
 			}
 		}
 		@Override
-		protected boolean doCancel(boolean mayInterruptIfRunning) {
-			logger.trace("Cancelling connect");
-
-			try {
-				latch.await();
-			} catch (InterruptedException e) {
+		protected synchronized boolean doCancel(boolean mayInterruptIfRunning) {
+			if (done) {
 				return false;
 			}
-			logger.trace("Acquired IoFuture");
-			
-			future.cancel();
-			boolean canceled = future.isCanceled();
-			logger.trace("Cancle result: {}", canceled);
-			return canceled;
+			logger.trace("Cancelling connect");
+
+			cancelled = true; 
+			return true;
 		}
 	}
 	
