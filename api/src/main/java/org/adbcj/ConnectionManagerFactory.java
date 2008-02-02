@@ -17,7 +17,6 @@
 package org.adbcj;
 
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 
 public interface ConnectionManagerFactory {
 

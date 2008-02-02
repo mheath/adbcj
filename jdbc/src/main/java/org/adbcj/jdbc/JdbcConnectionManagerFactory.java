@@ -19,12 +19,11 @@ package org.adbcj.jdbc;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 
-import org.adbcj.ConnectionManagerFactory;
 import org.adbcj.ConnectionManager;
-import org.adbcj.DbException;
+import org.adbcj.ConnectionManagerFactory;
 import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbException;
 
 
 public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
