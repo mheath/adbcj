@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+	<id>all</id>
+	<formats>
+		<format>tar.gz</format>
+		<format>tar.bz2</format>
+		<format>zip</format>
+	</formats>
+	<fileSets>
+		<!-- Source Code -->
+		<fileSet>
+			<includes>
+				<include>**/README*</include>
+				<include>**/LICENSE*</include>
+				<include>**/NOTICE*</include>
+			</includes>
+			<excludes>
+				<exclude>**/target/**</exclude>
+				<exclude>**/.*/**</exclude>
+			</excludes>
+		</fileSet>
+
+		<!-- Reports -->
+		<fileSet>
+			<directory>target/site</directory>
+			<outputDirectory>docs</outputDirectory>
+			<includes>
+				<include>apidocs*/**</include>
+				<include>xref*/**</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+
+	<!-- Modules -->
+	<moduleSets>
+		<moduleSet>
+			<includes>
+				<include>org.adbcj:adbcj-api</include>
+				<include>org.adbcj:adbcj-jdbc</include>
+				<include>org.adbcj:adbcj-mysql</include>
+				<include>org.adbcj:adbcj-postgresql</include>
+			</includes>
+			<binaries>
+				<outputDirectory>lib</outputDirectory>
+				<unpack>false</unpack>
+			</binaries>
+		</moduleSet>
+	</moduleSets>
+</assembly>
+
