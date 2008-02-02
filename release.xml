@@ -34,12 +34,7 @@
 	<!-- Modules -->
 	<moduleSets>
 		<moduleSet>
-			<includes>
-				<include>org.adbcj:adbcj-api</include>
-				<include>org.adbcj:adbcj-jdbc</include>
-				<include>org.adbcj:adbcj-mysql</include>
-				<include>org.adbcj:adbcj-postgresql</include>
-			</includes>
+			<includeSubModules>true</includeSubModules>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>
 				<unpack>false</unpack>
