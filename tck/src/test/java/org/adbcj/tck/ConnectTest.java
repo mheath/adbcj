@@ -195,7 +195,7 @@ public class ConnectTest {
 		assertTrue(callbacks[0], "Connect future callback was not invoked with connect cancellation");
 	}
 
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider")
+	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
 	public void testNonImmediateClose(final ConnectionManager connectionManager) throws InterruptedException {
 		Connection connection = connectionManager.connect().get();
 
