@@ -24,8 +24,6 @@ import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Value;
 import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.AbstractSessionRequestQueue.Request;
 import org.adbcj.support.AbstractTransactionalSession.Transaction;
@@ -53,9 +51,9 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 		connectionManager.removeConnection(connection);
-		DefaultDbFuture<Void> closeFuture = connection.getCloseFuture();
-		if (closeFuture != null) {
-			closeFuture.setResult(null);
+		Request<Void> closeRequest = connection.getCloseRequest();
+		if (closeRequest != null) {
+			closeRequest.complete(null);
 		}
 		logger.debug("IoSession closed");
 	}
@@ -65,45 +63,35 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		logger.debug("Caught exception: ", cause);
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
+		DbException dbException = DbException.wrap(connection, cause);
 		if (connection != null) {
-			DbException dbException = DbException.wrap(connection, cause);
-			
+			MysqlConnectFuture connectFuture = connection.getConnectFuture();
+			if (!connectFuture.isDone()) {
+				connectFuture.setException(dbException);
+				return;
+			}
 			Request<?> activeRequest = connection.getActiveRequest();
-			if (activeRequest == null) {
-				MysqlConnectFuture connectFuture = connection.getConnectFuture();
-				if (!connectFuture.isDone()) {
-					connectFuture.setException(dbException);
-					
-					dbException = null;
-				}
-			} else {
-				DefaultDbSessionFuture<?> future = activeRequest.getFuture();
-				if (!future.isDone()) {
+			if (activeRequest != null) {
+				if (!activeRequest.isDone()) {
 					try {
-						future.setException(dbException);
-						dbException = null;
-
+						// TODO Make cancelling the transaction the default behavior of the request -- merge AbstractSessionRequestQueue and Abstract TransactionSession
 						Transaction transaction = (Transaction)activeRequest.getTransaction();
 						if (transaction != null) {
 							transaction.cancelPendingRequests();
 						}
 
+						activeRequest.error(dbException);
+
 						return;
 					} catch (Throwable e) {
 						// TODO Pass exception to ConnectionManager
 						e.printStackTrace();
-					} finally {
-						connection.makeNextRequestActive();
 					}
 				}
 			}
-			if (dbException != null) {
-				// TODO Pass dbException to connection manager
-			}
-		} else {
-			// TODO Pass exception to ConnectionManager
-			cause.printStackTrace();
 		}
+		// TODO Pass exception to ConnectionManager
+		dbException.printStackTrace();
 	}
 
 	@Override
@@ -168,10 +156,8 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 				throw new IllegalStateException("Received an OkResponse with no activeRequest " + response);
 			}
 		}
-		DefaultDbFuture<Result> future = activeRequest.getFuture();
 		Result result = new DefaultResult(response.getAffectedRows(), warnings);
-		future.setResult(result);
-		connection.makeNextRequestActive();
+		activeRequest.complete(result);
 	}
 
 	private void handleErrorResponse(IoSession session, ErrorResponse message) {
@@ -220,11 +206,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 			break;
 		case ROW:
 			activeRequest.getEventHandler().endResults(activeRequest.getAccumulator());
-			DefaultDbSessionFuture<ResultSet> future = activeRequest.getFuture();
-			future.setResult(activeRequest.getAccumulator());
-
-			logger.debug("Set future done, making next request active");
-			connection.makeNextRequestActive();
+			activeRequest.complete(activeRequest.getAccumulator());
 			break;
 		default:
 			throw new MysqlException(connection, "Unkown eof response type");

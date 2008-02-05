@@ -19,19 +19,17 @@ package org.adbcj.mysql;
 import java.util.EnumSet;
 import java.util.Set;
 
-import org.apache.mina.common.IoSession;
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
-import org.adbcj.ResultEventHandler;
 import org.adbcj.DbSessionFuture;
 import org.adbcj.PreparedStatement;
 import org.adbcj.Result;
-import org.adbcj.support.AbstractTransactionalSession;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.support.DefaultDbSessionFuture;
+import org.adbcj.ResultEventHandler;
 import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
+import org.adbcj.support.AbstractTransactionalSession;
+import org.apache.mina.common.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +46,7 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	private final LoginCredentials credentials;
 	private ServerGreeting serverGreeting;
 
-	private DefaultDbSessionFuture<Void> closeFuture;
+	private Request<Void> closeRequest;
 	
 	public MysqlConnection(ConnectionManager connectionManager, MysqlConnectFuture connectFuture, IoSession session, LoginCredentials credentials, int id) {
 		this.connectionManager = connectionManager;
@@ -66,31 +64,40 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 		// If the connection is already closed, return existing close future
 		logger.debug("Closing");
 		if (isClosed()) {
-			if (closeFuture == null) {
-				closeFuture = new DefaultDbSessionFuture<Void>(this);
-				closeFuture.setResult(null);
+			if (closeRequest == null) {
+				closeRequest = new Request<Void>() {
+					@Override
+					public void execute() throws Exception {
+						// Do nothing, close already occurred
+					}
+				};
+				closeRequest.setResult(null);
 			}
-			return closeFuture;
+			return closeRequest;
 		} else {
 			if (immediate) {
 				logger.debug("Executing immediate close");
 				// If the close is immediate, cancel pending requests and send request to server
 				cancelPendingRequests(true);
 				session.write(new CommandRequest(Command.QUIT));
-				closeFuture = new DefaultDbSessionFuture<Void>(this) {
+				closeRequest = new Request<Void>() {
 					@Override
-					protected boolean doCancel(boolean mayInterruptIfRunning) {
+					protected boolean cancelRequest(boolean mayInterruptIfRunning) {
 						// Canceling is not possible when an immediate close
 						return false;
+					}
+					@Override
+					public void execute() throws Exception {
+						// Do nothing, close was already sent
 					}
 				};
 			} else {
 				// If the close is NOT immediate, schedule the close
-				closeFuture = enqueueRequest(new Request<Void>() {
+				closeRequest = new Request<Void>() {
 					private boolean requestClosed = false;
 					private boolean cancelled = false;
 					@Override
-					public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+					public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
 						if (!requestClosed) {
 							logger.debug("Cancelling close");
 							cancelled = true;
@@ -111,20 +118,21 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 						logger.debug("Writing QUIT");
 						session.write(new CommandRequest(Command.QUIT));
 					}
-				});
+				};
+				enqueueRequest(closeRequest);
 			}
 		}
 		logger.trace("Exiting close()");
-		return closeFuture;
+		return closeRequest;
 	}
 	
 	private synchronized void unclose() {
 		logger.debug("Unclosing");
-		this.closeFuture = null;
+		this.closeRequest = null;
 	}
 	
 	public synchronized boolean isClosed() {
-		return closeFuture != null || session.isClosing();
+		return closeRequest != null || session.isClosing();
 	}
 
 	public <T> DbSessionFuture<T> executeQuery(final String sql, ResultEventHandler<T> eventHandler, T accumulator) {
@@ -200,8 +208,8 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 		this.serverGreeting = serverGreeting;
 	}
 
-	public synchronized DefaultDbFuture<Void> getCloseFuture() {
-		return closeFuture;
+	public synchronized Request<Void> getCloseRequest() {
+		return closeRequest;
 	}
 	
 	public LoginCredentials getCredentials() {
@@ -258,8 +266,8 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	 * Make this method public.
 	 */
 	@Override
-	public <E> DefaultDbSessionFuture<E> enqueueRequest(Request<E> request) {
-		return super.enqueueRequest(request);
+	public <E> void enqueueRequest(Request<E> request) {
+		super.enqueueRequest(request);
 	}
 	
 	/*
@@ -268,14 +276,6 @@ public class MysqlConnection extends AbstractTransactionalSession implements Con
 	@Override
 	public <E> Request<E> getActiveRequest() {
 		return super.getActiveRequest();
-	}
-	
-	/*
-	 * Make this method public.
-	 */
-	@Override
-	public <E> Request<E> makeNextRequestActive() {
-		return super.makeNextRequestActive();
 	}
 	
 	public MysqlConnectFuture getConnectFuture() {
