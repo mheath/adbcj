@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.mina.common.IoSession;
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
@@ -30,9 +29,6 @@ import org.adbcj.DbSessionFuture;
 import org.adbcj.PreparedStatement;
 import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
-import org.adbcj.support.AbstractTransactionalSession;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.postgresql.PgConnectionManager.PgConnectFuture;
 import org.adbcj.postgresql.frontend.AbstractFrontendMessage;
 import org.adbcj.postgresql.frontend.BindMessage;
@@ -40,6 +36,8 @@ import org.adbcj.postgresql.frontend.DescribeMessage;
 import org.adbcj.postgresql.frontend.ExecuteMessage;
 import org.adbcj.postgresql.frontend.FrontendMessage;
 import org.adbcj.postgresql.frontend.ParseMessage;
+import org.adbcj.support.AbstractTransactionalSession;
+import org.apache.mina.common.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +54,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	// TODO Update backendCharset based on what backend returns
 	private Charset backendCharset = Charset.forName("US-ASCII");
 
-	private DefaultDbSessionFuture<Void> closeFuture;
+	private Request<Void> closeRequest;
 
 	private int pid;
 	private int key;
@@ -93,8 +91,14 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 		
 		// If the connection is already closed, return existing close future
 		if (isClosed()) {
-			if (closeFuture == null) {
-				return DefaultDbSessionFuture.createCompletedFuture(this, null);
+			if (closeRequest == null) {
+				closeRequest = new Request<Void>() {
+					@Override
+					public void execute() throws Exception {
+						// Do nothing since close has already occurred
+					}
+				};
+				return closeRequest;
 			}
 		} else {
 			if (immediate) {
@@ -102,20 +106,23 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 				// If the close is immediate, cancel pending requests and send request to server
 				cancelPendingRequests(true);
 				session.write(FrontendMessage.TERMINATE);
-				closeFuture = new DefaultDbSessionFuture<Void>(this) {
+				closeRequest = new Request<Void>() {
 					@Override
-					protected boolean doCancel(boolean mayInterruptIfRunning) {
-						// Canceling is not possible when an immediate close
+					protected boolean cancelRequest(boolean mayInterruptIfRunning) {
 						return false;
+					}
+					@Override
+					public void execute() throws Exception {
+						// Do nothing, close message has already been sent
 					}
 				};
 			} else {
 				// If the close is NOT immediate, schedule the close
-				closeFuture = enqueueRequest(new Request<Void>() {
+				closeRequest = new Request<Void>() {
 					private boolean requestClosed = false;
 					private boolean cancelled = false;
 					@Override
-					public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+					public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
 						if (!requestClosed) {
 							logger.debug("Cancelling close");
 							cancelled = true;
@@ -135,19 +142,20 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 						// Do a close immediate to close the connection
 						session.write(FrontendMessage.TERMINATE);
 					}
-				});
+				};
+				enqueueRequest(closeRequest);
 			}
 		}
-		return closeFuture;
+		return closeRequest;
 	}
 
 	private synchronized void unclose() {
 		logger.debug("Unclosing");
-		this.closeFuture = null;
+		this.closeRequest = null;
 	}
 	
 	public boolean isClosed() throws DbException {
-		return closeFuture != null || session.isClosing();
+		return closeRequest != null || session.isClosing();
 	}
 	
 	public <T> DbSessionFuture<T> executeQuery(final String sql, ResultEventHandler<T> eventHandler, T accumulator) {
@@ -260,8 +268,8 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 		return backendCharset;
 	}
 
-	public DefaultDbFuture<Void> getCloseFuture() {
-		return closeFuture;
+	public Request<Void> getCloseRequest() {
+		return closeRequest;
 	}
 	
 	public PgConnectFuture getConnectFuture() {
@@ -269,8 +277,8 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	}
 	
 	@Override
-	protected synchronized <E> DefaultDbSessionFuture<E> enqueueRequest(Request<E> request) {
-		return super.enqueueRequest(request);
+	protected <E> void enqueueRequest(Request<E> request) {
+		super.enqueueRequest(request);
 	}
 	
 	@Override
@@ -278,16 +286,6 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 		return super.getActiveRequest();
 	}
 	
-	@Override
-	protected synchronized <E> Request<E> makeNextRequestActive() {
-		Request<Object> request = getActiveRequest();
-		if (request != null && !request.getFuture().isDone()) {
-			throw new RuntimeException("Going to next request when current request isn't complete");
-		}
-		Request<E> activeRequest = super.makeNextRequestActive();
-		return activeRequest;
-	}
-
 	public int getPid() {
 		return pid;
 	}

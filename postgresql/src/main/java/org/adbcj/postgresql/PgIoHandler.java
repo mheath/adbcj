@@ -36,7 +36,6 @@ import org.adbcj.postgresql.frontend.FrontendMessage;
 import org.adbcj.postgresql.frontend.FrontendMessageType;
 import org.adbcj.postgresql.frontend.StartupMessage;
 import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.AbstractSessionRequestQueue.Request;
 import org.adbcj.support.AbstractTransactionalSession.Transaction;
@@ -78,10 +77,10 @@ public class PgIoHandler extends IoHandlerAdapter {
 	public void sessionClosed(IoSession session) throws Exception {
 		logger.debug("IoSession closed");
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		DefaultDbFuture<Void> closeFuture = connection.getCloseFuture();
-		if (closeFuture != null) {
-			logger.debug("Triggering close future");
-			closeFuture.setResult(null);
+		Request<Void> closeRequest = connection.getCloseRequest();
+		if (closeRequest != null) {
+			logger.debug("Completing close request");
+			closeRequest.complete(null);
 		}
 	}
 	
@@ -99,20 +98,18 @@ public class PgIoHandler extends IoHandlerAdapter {
 				if (request != null) {
 					if (!future.isDone()) {
 						try {
-							future = request.getFuture();
-							errorOutFuture(connection, future, cause);
-	
+							// TODO Make cancelling transaction part of Request.error()
 							Transaction transaction = (Transaction)request.getTransaction();
 							if (transaction != null) {
 								transaction.cancelPendingRequests();
 							}
 	
+							errorOutFuture(connection, future, cause);
+							
 							return;
 						} catch (Exception e) {
 							// Hand exception over to connection manager
 							e.printStackTrace();
-						} finally {
-							connection.makeNextRequestActive();
 						}
 					}
 				}
@@ -206,21 +203,20 @@ public class PgIoHandler extends IoHandlerAdapter {
 		}
 
 		Object accumulator = request.getAccumulator();
-		DefaultDbSessionFuture<Object> future = request.getFuture();
 		switch (commandCompleteMessage.getCommand()) {
 		case SELECT:
 			request.getEventHandler().endResults(accumulator);
-			future.setResult(accumulator);
+			request.complete(accumulator);
 		case BEGIN:
 		case COMMIT:
 		case ROLLBACK:
-			future.setResult(null);
+			request.complete(null);
 			break;
 		case DELETE:
 		case INSERT:
 		case UPDATE:
 			DefaultResult result = new DefaultResult(commandCompleteMessage.getRowCount(), Collections.<String>emptyList());
-			future.setResult(result);
+			request.complete(result);
 			break;
 		// TODO Implement MOVE command completion
 		default:
@@ -282,19 +278,11 @@ public class PgIoHandler extends IoHandlerAdapter {
 			return;
 		}
 		
-		// If not, handle request future
-		
-		Request<Object> request = connection.getActiveRequest();
-		if (request == null) {
-			throw new IllegalStateException("Received a READY with no current request");
-		}
+		// TODO Determine if we even need to do anything with a ReadyMessage
 		switch (backendMessage.getStatus()) {
 		case TRANSACTION:
-			if (request.getTransaction() == null) {
-				throw new PgException(connection, "A transactional request returned outside of a transaction");
-			}
+			break;
 		case IDLE:
-			connection.makeNextRequestActive();
 			break;
 		case ERROR:
 			throw new DbException(connection, "Transaction is in error state");
