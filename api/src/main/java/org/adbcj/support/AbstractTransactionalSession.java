@@ -95,7 +95,8 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 			}
 			transaction.addRequest(request);
 		}
-		return enqueueRequest(request);
+		enqueueRequest(request);
+		return request;
 	}
 
 	protected abstract void sendBegin() throws Exception;
@@ -104,18 +105,20 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 
 	protected abstract void sendRollback() throws Exception;
 	
-	private DbSessionFuture<Void> enqueueStartTransaction(final Transaction transaction) {
+	private Request<Void> enqueueStartTransaction(final Transaction transaction) {
 		Request<Void> request = createBeginRequest(transaction);
-		return enqueueTransactionalRequest(transaction, request);
+		enqueueTransactionalRequest(transaction, request);
+		return request;
 	}
 
 	protected Request<Void> createBeginRequest(final Transaction transaction) {
 		return new BeginRequest(transaction);
 	}
 	
-	private DbSessionFuture<Void> enqueueCommit(final Transaction transaction) {
+	private Request<Void> enqueueCommit(final Transaction transaction) {
 		Request<Void> request = createCommitRequest(transaction);
-		return enqueueTransactionalRequest(transaction, request);
+		enqueueTransactionalRequest(transaction, request);
+		return request;
 		
 	}
 
@@ -124,19 +127,19 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 	}
 	
 	// Rollback cannot be canceled or removed
-	private DbSessionFuture<Void> enqueueRollback(Transaction transaction) {
+	private Request<Void> enqueueRollback(Transaction transaction) {
 		Request<Void> request = createRollbackRequest();
-		return enqueueTransactionalRequest(transaction, request);
+		enqueueTransactionalRequest(transaction, request);
+		return request;
 	}
 
 	protected Request<Void> createRollbackRequest() {
 		return new RollbackRequest();
 	}
 
-	private DbSessionFuture<Void> enqueueTransactionalRequest(final Transaction transaction, Request<Void> request) {
-		DefaultDbSessionFuture<Void> future = enqueueRequest(request);
+	private void enqueueTransactionalRequest(final Transaction transaction, Request<Void> request) {
+		enqueueRequest(request);
 		transaction.addRequest(request);
-		return future;
 	}
 
 	/**
@@ -228,7 +231,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 		}
 
 		@Override
-		public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+		public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
 			// If commit has already started, it can't be stopped
 			if (executing) {
 				return false;
@@ -256,7 +259,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 
 		@Override
 		// Return false because a rollback cannot be canceled
-		public boolean cancel(boolean mayInterruptIfRunning) {
+		public boolean cancelRequest(boolean mayInterruptIfRunning) {
 			return false;
 		}
 
@@ -312,7 +315,7 @@ public abstract class AbstractTransactionalSession extends AbstractSessionReques
 			canceled = true;
 			synchronized (AbstractTransactionalSession.this) {
 				for (Request<?> request : requests) {
-					request.getFuture().cancel(false);
+					request.cancel(false);
 				}
 			}
 		}

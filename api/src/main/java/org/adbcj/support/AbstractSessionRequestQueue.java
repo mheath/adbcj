@@ -25,111 +25,100 @@ import org.adbcj.DbSession;
 import org.adbcj.ResultEventHandler;
 
 public abstract class AbstractSessionRequestQueue implements DbSession {
-	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
 	
-	// Access must by synchronized on this
-	private Request<?> activeRequest;
+	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>(); // Access must by synchronized on lock
 	
-	protected synchronized <E> DefaultDbSessionFuture<E> enqueueRequest(final Request<E> request) {
-		DefaultDbSessionFuture<E> future = new DefaultDbSessionFuture<E>(this) {
-			@Override
-			protected boolean doCancel(boolean mayInterruptIfRunning) {
-				boolean canceled = request.cancel(mayInterruptIfRunning);
-				boolean removed = false;
-				synchronized (AbstractSessionRequestQueue.this) {
-					if (canceled) {
-						if (request.canRemove()) {
-							removed = requestQueue.remove(request);
-						}
-					}
-					// If we canceled the current request, make the next request active
-					if (removed && request == activeRequest) {
-						makeNextRequestActive();
-					}
-				}
-				return canceled;
-			}
-		};
-		
-		request.setFuture(future);
-		boolean isEmpty = requestQueue.peek() == null && activeRequest == null;
-		requestQueue.add(request);
-		if (isEmpty) {
-			makeNextRequestActive();
-		}
-		return future;
-	}
+	private final Object lock = this;
 	
-	@SuppressWarnings("unchecked")
-	protected synchronized <E> Request<E> makeNextRequestActive() {
-		Request<E> request = (Request<E>)requestQueue.poll();
-		setActiveRequest(request);
-		return request;
-	}
+	private Request<?> activeRequest; // Access must by synchronized on lock
 	
-	@SuppressWarnings("unchecked")
-	protected synchronized <E> Request<E> getActiveRequest() {
-		return (Request<E>)activeRequest;
-	}
-	
-	protected synchronized void cancelPendingRequests(boolean mayInterruptIfRunning) {
-		for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
-			Request<?> request = i.next();
-			i.remove();
-			request.getFuture().cancel(mayInterruptIfRunning);
-		}
-	}
-	
-	private synchronized <T> void setActiveRequest(Request<T> request) {
-		activeRequest = request;
-		if (request != null) {
-			try {
-				request.execute();
-			} catch (Throwable e) {
-				DefaultDbSessionFuture<T> future = request.getFuture();
-				future.setException(DbException.wrap(this, e));
+	protected <E> void enqueueRequest(final Request<E> request) {
+		synchronized (lock) {
+			boolean isEmpty = requestQueue.peek() == null && activeRequest == null;
+			requestQueue.add(request);
+			if (isEmpty) {
 				makeNextRequestActive();
 			}
 		}
 	}
 	
-	public abstract class Request<T> {
+	@SuppressWarnings("unchecked")
+	protected final <E> Request<E> makeNextRequestActive() {
+		Request<E> request;
+		synchronized (lock) {
+			if (activeRequest != null && !activeRequest.isDone()) {
+				throw new DbException("Active request is not done: " + activeRequest);
+			}
+			request = (Request<E>)requestQueue.poll();
+			activeRequest = request;
+		}
+		if (request != null) {
+			try {
+				request.execute();
+			} catch (Throwable e) {
+				request.error(DbException.wrap(this, e));
+			}
+		}
+		return request;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected <E> Request<E> getActiveRequest() {
+		synchronized (lock) {
+			return (Request<E>)activeRequest;
+		}
+	}
+	
+	protected void cancelPendingRequests(boolean mayInterruptIfRunning) {
+		synchronized (lock) {
+			for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
+				Request<?> request = i.next();
+				i.remove();
+				request.cancel(mayInterruptIfRunning);
+			}
+		}
+	}
+	
+	public abstract class Request<T> extends DefaultDbSessionFuture<T> {
 		
-		private DefaultDbSessionFuture<T> future = null;
 		private Object payload;
 		private final ResultEventHandler<T> eventHandler;
 		private final T accumulator;
 		private Object transaction;
 		
 		public Request() {
-			this.eventHandler = null;
-			this.accumulator = null;
+			this(null, null);
 		}
 		
 		public Request(ResultEventHandler<T> eventHandler, T accumulator) {
+			super(AbstractSessionRequestQueue.this);
 			this.eventHandler = eventHandler;
 			this.accumulator = accumulator;
 		}
 		
 		public abstract void execute() throws Exception;
 		
-		public boolean cancel(boolean mayInterruptIfRunning) {
+		protected boolean cancelRequest(boolean mayInterruptIfRunning) {
 			return true;
 		}
 		
-		public DefaultDbSessionFuture<T> getFuture() {
-			return future;
+		public final boolean doCancel(boolean mayInterruptIfRunning) {
+			boolean cancelled = cancelRequest(mayInterruptIfRunning);
+			
+			// The the request was cancelled and it can be removed
+			if (cancelled && canRemove()) {
+				synchronized (lock) {
+					// Remove the quest and if the removal was successful and this request is active, go to the next request
+					if (requestQueue.remove(this) && this == activeRequest) {
+						makeNextRequestActive();
+					}
+				}
+			}
+			return cancelled;
 		}
 		
 		public boolean canRemove() {
 			return true;
-		}
-
-		public void setFuture(DefaultDbSessionFuture<T> future) {
-			if (this.future != null) {
-				throw new IllegalStateException("future can only be set once");
-			}
-			this.future = future;
 		}
 
 		public Object getPayload() {
@@ -156,6 +145,25 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 			this.transaction = transaction;
 		}
 		
+		@Override
+		public final void setResult(T result) {
+			throw new IllegalStateException("You must call complete(T result) instead");
+		}
+		
+		@Override
+		public final void setException(Throwable exception) {
+			throw new IllegalStateException("You must call error(DbException exception) instead");
+		}
+		
+		public void complete(T result) {
+			super.setResult(result);
+			makeNextRequestActive();
+		}
+		
+		public void error(DbException exception) {
+			super.setException(exception);
+			makeNextRequestActive();
+		}
 	}
 
 }
