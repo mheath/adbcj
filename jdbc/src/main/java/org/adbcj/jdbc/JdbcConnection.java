@@ -95,7 +95,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				localFuture.setFuture(future);
 				closeFuture = localFuture;
 			} else {
-				closeFuture = enqueueRequest(new CallableRequest<Void>() {
+				CallableRequest<Void> closeRequest = new CallableRequest<Void>() {
 					private boolean started = false;
 					private boolean cancelled = false;
 					public synchronized Void doCall() throws Exception {
@@ -107,7 +107,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 						return null;
 					}
 					@Override
-					public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+					public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
 						if (started) {
 							return false;
 						}
@@ -115,7 +115,9 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 						unclose();
 						return true;
 					}
-				});
+				};
+				enqueueRequest(closeRequest);
+				closeFuture = closeRequest;
 			}
 		}
 		return closeFuture;
@@ -320,7 +322,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		private boolean canceled = false;
 		
 		@Override
-		public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+		public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
 			if (future == null) {
 				canceled = true;
 				return true;
@@ -339,18 +341,16 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 			}
 			try {
 				E value = doCall();
-				getFuture().setResult(value);
+				complete(value);
 				return value;
 			} catch (Exception e) {
-				getFuture().setException(DbException.wrap(JdbcConnection.this, e));
+				// TODO Make transaction cancelling to Request.error
 				Transaction transaction = (Transaction)getTransaction();
 				if (transaction != null) {
 					transaction.cancelPendingRequests();
 				}
-				getFuture().setException(DbException.wrap(JdbcConnection.this, e));
+				error(DbException.wrap(JdbcConnection.this, e));
 				throw e;
-			} finally {
-				makeNextRequestActive();
 			}
 		}
 
@@ -367,7 +367,7 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		}
 		
 		@Override
-		public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+		public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
 			if (super.cancel(mayInterruptIfRunning)) {
 				return request.cancel(mayInterruptIfRunning);
 			}
