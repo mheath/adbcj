@@ -33,7 +33,6 @@ import org.adbcj.ResultEventHandler;
 import org.adbcj.support.AbstractTransactionalSession;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultDbSessionFuture;
-import org.adbcj.support.Request;
 import org.adbcj.postgresql.PgConnectionManager.PgConnectFuture;
 import org.adbcj.postgresql.frontend.AbstractFrontendMessage;
 import org.adbcj.postgresql.frontend.BindMessage;

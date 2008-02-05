@@ -22,6 +22,7 @@ import java.util.Queue;
 
 import org.adbcj.DbException;
 import org.adbcj.DbSession;
+import org.adbcj.ResultEventHandler;
 
 public abstract class AbstractSessionRequestQueue implements DbSession {
 	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>();
@@ -92,4 +93,69 @@ public abstract class AbstractSessionRequestQueue implements DbSession {
 		}
 	}
 	
+	public abstract class Request<T> {
+		
+		private DefaultDbSessionFuture<T> future = null;
+		private Object payload;
+		private final ResultEventHandler<T> eventHandler;
+		private final T accumulator;
+		private Object transaction;
+		
+		public Request() {
+			this.eventHandler = null;
+			this.accumulator = null;
+		}
+		
+		public Request(ResultEventHandler<T> eventHandler, T accumulator) {
+			this.eventHandler = eventHandler;
+			this.accumulator = accumulator;
+		}
+		
+		public abstract void execute() throws Exception;
+		
+		public boolean cancel(boolean mayInterruptIfRunning) {
+			return true;
+		}
+		
+		public DefaultDbSessionFuture<T> getFuture() {
+			return future;
+		}
+		
+		public boolean canRemove() {
+			return true;
+		}
+
+		public void setFuture(DefaultDbSessionFuture<T> future) {
+			if (this.future != null) {
+				throw new IllegalStateException("future can only be set once");
+			}
+			this.future = future;
+		}
+
+		public Object getPayload() {
+			return payload;
+		}
+
+		public void setPayload(Object payload) {
+			this.payload = payload;
+		}
+
+		public T getAccumulator() {
+			return accumulator;
+		}
+		
+		public ResultEventHandler<T> getEventHandler() {
+			return eventHandler;
+		}
+		
+		public Object getTransaction() {
+			return transaction;
+		}
+
+		public void setTransaction(Object transaction) {
+			this.transaction = transaction;
+		}
+		
+	}
+
 }

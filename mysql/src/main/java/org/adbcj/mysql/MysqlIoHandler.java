@@ -27,7 +27,7 @@ import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.support.DefaultResult;
-import org.adbcj.support.Request;
+import org.adbcj.support.AbstractSessionRequestQueue.Request;
 import org.adbcj.support.AbstractTransactionalSession.Transaction;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;

@@ -41,7 +41,6 @@ import org.adbcj.support.DbSessionFutureConcurrentProxy;
 import org.adbcj.support.DefaultField;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.DefaultValue;
-import org.adbcj.support.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

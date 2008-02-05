@@ -23,14 +23,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.mina.common.IoBuffer;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
-import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.adbcj.Type;
 import org.adbcj.Value;
-import org.adbcj.support.DefaultValue;
-import org.adbcj.support.Request;
 import org.adbcj.postgresql.ConfigurationVariable;
 import org.adbcj.postgresql.ErrorField;
 import org.adbcj.postgresql.FormatCode;
@@ -39,6 +33,12 @@ import org.adbcj.postgresql.PgConnection;
 import org.adbcj.postgresql.PgField;
 import org.adbcj.postgresql.PgFieldType;
 import org.adbcj.postgresql.PgIoHandler;
+import org.adbcj.support.DefaultValue;
+import org.adbcj.support.AbstractSessionRequestQueue.Request;
+import org.apache.mina.common.IoBuffer;
+import org.apache.mina.common.IoSession;
+import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
+import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
