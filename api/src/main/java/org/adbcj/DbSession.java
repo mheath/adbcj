@@ -27,6 +27,11 @@ public interface DbSession {
 	// Rolling back a transaction may cancel pending requests
 	DbSessionFuture<Void> rollback();
 	
+	/**
+	 * Indicates whether or not the current session is involved in a transaction.
+	 * 
+	 * @return  true if the session is in a transaction, false otherwise
+	 */
 	boolean isInTransaction();
 	
 	// TODO Make transaction isolation level a parameter in the config stuff
