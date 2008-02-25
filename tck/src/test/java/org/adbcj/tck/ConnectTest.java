@@ -207,7 +207,7 @@ public class ConnectTest {
 		connection.close(false).get();
 		assertTrue(connection.isClosed(), "Connection should be closed");
 		for (DbSessionFuture<ResultSet> future : futures) {
-			assertTrue(future.isDone(), "Future did not finish before connection was closed.");
+			assertTrue(future.isDone(), "Request did not finish before connection was closed: " + future);
 			assertFalse(future.isCancelled(), "Future was cancelled and should have been");
 		}
 	}
@@ -234,7 +234,7 @@ public class ConnectTest {
 
 		assertTrue(connection.isClosed(), "Connection should be closed");
 		for (DbSessionFuture<ResultSet> future : futures) {
-			assertTrue(future.isDone(), "Future did not finish before connection was closed.");
+			assertTrue(future.isDone(), "Request did not finish before connection was closed: " + future);
 			assertTrue(future.isCancelled(), "Future should have been cancelled at close");
 		}
 		logger.debug("Closing locking connection");

@@ -25,8 +25,7 @@ import org.adbcj.ResultSet;
 import org.adbcj.Value;
 import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.support.DefaultResult;
-import org.adbcj.support.AbstractSessionRequestQueue.Request;
-import org.adbcj.support.AbstractTransactionalSession.Transaction;
+import org.adbcj.support.AbstractDbSession.Request;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
 import org.slf4j.Logger;
@@ -74,12 +73,6 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 			if (activeRequest != null) {
 				if (!activeRequest.isDone()) {
 					try {
-						// TODO Make cancelling the transaction the default behavior of the request -- merge AbstractSessionRequestQueue and Abstract TransactionSession
-						Transaction transaction = (Transaction)activeRequest.getTransaction();
-						if (transaction != null) {
-							transaction.cancelPendingRequests();
-						}
-
 						activeRequest.error(dbException);
 
 						return;

@@ -34,7 +34,7 @@ import org.adbcj.postgresql.PgField;
 import org.adbcj.postgresql.PgFieldType;
 import org.adbcj.postgresql.PgIoHandler;
 import org.adbcj.support.DefaultValue;
-import org.adbcj.support.AbstractSessionRequestQueue.Request;
+import org.adbcj.support.AbstractDbSession.Request;
 import org.apache.mina.common.IoBuffer;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;

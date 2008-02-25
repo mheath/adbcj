@@ -44,11 +44,43 @@ public abstract class AbstractDbSession implements DbSession {
 	
 	private Transaction transaction; // Access must by synchronized on lock
 	
+	private volatile boolean pipeliningEnabled = true;
+	
+	private boolean pipelining = false; // Access must be synchronized on lock
+	
+	@Override
+	public boolean isPipeliningEnabled() {
+		return pipeliningEnabled;
+	}
+	
+	@Override
+	public void setPipeliningEnabled(boolean pipeliningEnabled) {
+		this.pipeliningEnabled = pipeliningEnabled;
+		if (!pipeliningEnabled) {
+			synchronized (lock) {
+				pipelining = false;
+			}
+		}
+	}
+	
 	protected <E> void enqueueRequest(final Request<E> request) {
+		// Check to see if the request can be pipelined
+		if (request.isPipelinable()) {
+			// Check to see if we're in a piplinging state
+			if (pipelining) {
+				invokeExecuteWithCatch(request);
+				// If the request errors out on execution, return
+				if (request.isDone()) {
+					return;
+				}
+				
+			}
+		} else {
+			pipelining = false;
+		}
 		synchronized (lock) {
-			boolean isEmpty = requestQueue.peek() == null && activeRequest == null;
 			requestQueue.add(request);
-			if (isEmpty) {
+			if (activeRequest == null) {
 				makeNextRequestActive();
 			}
 		}
@@ -57,21 +89,60 @@ public abstract class AbstractDbSession implements DbSession {
 	@SuppressWarnings("unchecked")
 	protected final <E> Request<E> makeNextRequestActive() {
 		Request<E> request;
+		boolean executePipelining = false;
 		synchronized (lock) {
 			if (activeRequest != null && !activeRequest.isDone()) {
 				throw new DbException("Active request is not done: " + activeRequest);
 			}
 			request = (Request<E>)requestQueue.poll();
+		
+			// Determine if we need to execute pipelinable requests
+			if (pipeliningEnabled && request != null) {
+				if (request.isPipelinable()) {
+					executePipelining = !pipelining;
+				} else {
+					pipelining = false;
+				}
+			}
+			
 			activeRequest = request;
 		}
 		if (request != null) {
-			try {
-				request.invokeExecute();
-			} catch (Throwable e) {
-				request.error(DbException.wrap(this, e));
-			}
+			invokeExecuteWithCatch(request);
 		}
+
+		// Check if we need to execute pending pipelinable requests
+		if (executePipelining) {
+			synchronized (lock) {
+				// Iterate over queue
+				Iterator<Request<?>> iterator = requestQueue.iterator();
+				while (iterator.hasNext()) {
+					Request<?> next = iterator.next();
+					if (next.isPipelinable()) {
+						invokeExecuteWithCatch(next);
+						
+						// If there are nore more requests to iterate over, put DbSession in pipelining enabled state
+						if (!iterator.hasNext()) {
+							pipelining = true;
+						}
+					} else {
+						// Stop looping once we find a non pipelinable request.
+						break;
+					}
+				}
+			}
+			
+		}
+		
 		return request;
+	}
+
+	private <E> void invokeExecuteWithCatch(Request<E> request) {
+		try {
+			request.invokeExecute();
+		} catch (Throwable e) {
+			request.error(DbException.wrap(this, e));
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -325,7 +396,7 @@ public abstract class AbstractDbSession implements DbSession {
 		}
 		
 		@Override
-		public boolean canPipeline() {
+		public boolean isPipelinable() {
 			return false;
 		}
 	}
@@ -375,7 +446,11 @@ public abstract class AbstractDbSession implements DbSession {
 		 */
 		public final synchronized void invokeExecute() throws Exception {
 			if (cancelled || executed) {
-				makeNextRequestActive();
+				synchronized (lock) {
+					if (isDone() && activeRequest == this) {
+						makeNextRequestActive();
+					}
+				}
 			} else {
 				executed = true;
 				execute();
@@ -410,7 +485,7 @@ public abstract class AbstractDbSession implements DbSession {
 			return true;
 		}
 		
-		public boolean canPipeline() {
+		public boolean isPipelinable() {
 			return true;
 		}
 

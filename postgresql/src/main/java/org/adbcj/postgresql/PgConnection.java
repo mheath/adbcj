@@ -25,6 +25,7 @@ import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
+import org.adbcj.DbSessionClosedException;
 import org.adbcj.DbSessionFuture;
 import org.adbcj.PreparedStatement;
 import org.adbcj.Result;
@@ -36,12 +37,12 @@ import org.adbcj.postgresql.frontend.DescribeMessage;
 import org.adbcj.postgresql.frontend.ExecuteMessage;
 import org.adbcj.postgresql.frontend.FrontendMessage;
 import org.adbcj.postgresql.frontend.ParseMessage;
-import org.adbcj.support.AbstractTransactionalSession;
+import org.adbcj.support.AbstractDbSession;
 import org.apache.mina.common.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PgConnection extends AbstractTransactionalSession implements Connection {
+public class PgConnection extends AbstractDbSession implements Connection {
 	
 	private final Logger logger = LoggerFactory.getLogger(PgConnection.class);
 
@@ -49,7 +50,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	private final PgConnectFuture connectFuture;
 	private final IoSession session;
 	// TODO Determine if we really need to distinguish frontend and backend charsets
-	// TODO Make charset configurable
+	// TODO Make frontend charset configurable
 	private final Charset frontendCharset = Charset.forName("UTF-8");
 	// TODO Update backendCharset based on what backend returns
 	private Charset backendCharset = Charset.forName("US-ASCII");
@@ -82,7 +83,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 	@Override
 	protected void checkClosed() {
 		if (isClosed()) {
-			throw new DbException(this, "This connection has been closed");
+			throw new DbSessionClosedException(this, "This connection has been closed");
 		}
 	}
 
@@ -97,6 +98,10 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 					public void execute() throws Exception {
 						// Do nothing since close has already occurred
 					}
+					@Override
+					public String toString() {
+						return "Connection closed";
+					}
 				};
 				return closeRequest;
 			}
@@ -109,38 +114,35 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 				closeRequest = new Request<Void>() {
 					@Override
 					protected boolean cancelRequest(boolean mayInterruptIfRunning) {
+						// Immediate close can not be cancelled
 						return false;
 					}
 					@Override
 					public void execute() throws Exception {
 						// Do nothing, close message has already been sent
 					}
+					@Override
+					public String toString() {
+						return "Immediate close";
+					}
 				};
 			} else {
 				// If the close is NOT immediate, schedule the close
 				closeRequest = new Request<Void>() {
-					private boolean requestClosed = false;
-					private boolean cancelled = false;
 					@Override
-					public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
-						if (!requestClosed) {
-							logger.debug("Cancelling close");
-							cancelled = true;
-							unclose();
-							return true;
-						}
-						logger.debug("Close in progress, cannot cancel");
-						return false;
+					public boolean cancelRequest(boolean mayInterruptIfRunning) {
+						logger.debug("Cancelling close");
+						unclose();
+						return true;
 					}
-					public synchronized void execute() {
-						if (cancelled) {
-							makeNextRequestActive();
-							return;
-						}
-						logger.debug("Executing deferred close");
-						requestClosed = true;
-						// Do a close immediate to close the connection
+					@Override
+					public void execute() {
+						logger.debug("Sending TERMINATE to server");
 						session.write(FrontendMessage.TERMINATE);
+					}
+					@Override
+					public String toString() {
+						return "Deferred close";
 					}
 				};
 				enqueueRequest(closeRequest);
@@ -176,7 +178,7 @@ public class PgConnection extends AbstractTransactionalSession implements Connec
 			}
 			@Override
 			public String toString() {
-				return "Select request: " + sql;
+				return "SELECT request: " + sql;
 			}
 		};
 		return enqueueTransactionalRequest(request);

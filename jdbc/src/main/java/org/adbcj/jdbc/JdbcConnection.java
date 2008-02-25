@@ -30,13 +30,14 @@ import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
+import org.adbcj.DbSessionClosedException;
 import org.adbcj.DbSessionFuture;
 import org.adbcj.Field;
 import org.adbcj.PreparedStatement;
 import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
 import org.adbcj.Type;
-import org.adbcj.support.AbstractTransactionalSession;
+import org.adbcj.support.AbstractDbSession;
 import org.adbcj.support.DbSessionFutureConcurrentProxy;
 import org.adbcj.support.DefaultField;
 import org.adbcj.support.DefaultResult;
@@ -44,7 +45,7 @@ import org.adbcj.support.DefaultValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcConnection extends AbstractTransactionalSession implements Connection {
+public class JdbcConnection extends AbstractDbSession implements Connection {
 	
 	private final Logger logger = LoggerFactory.getLogger(JdbcConnection.class);
 	
@@ -114,6 +115,10 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 						cancelled = true;
 						unclose();
 						return true;
+					}
+					@Override
+					public boolean isPipelinable() {
+						return false;
 					}
 				};
 				enqueueRequest(closeRequest);
@@ -313,30 +318,28 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 	@Override
 	protected void checkClosed() {
 		if (isClosed()) {
-			throw new DbException(this, "Connection is closed");
+			throw new DbSessionClosedException(this, "Connection is closed");
 		}
 	}
 
 	private abstract class CallableRequest<E> extends Request<E> implements Callable<E> {
 		private Future<E> future = null;
-		private boolean canceled = false;
 		
 		@Override
-		public synchronized boolean cancelRequest(boolean mayInterruptIfRunning) {
+		public boolean cancelRequest(boolean mayInterruptIfRunning) {
 			if (future == null) {
-				canceled = true;
 				return true;
 			}
 			return future.cancel(mayInterruptIfRunning);
 		}
 		@Override
-		final public synchronized void execute() {
+		final public void execute() {
 			logger.trace("In CallableRequest.execute() processing request {}", this);
 			this.future = connectionManager.getExecutorService().submit(this);
 		}
 		
 		final public E call() throws Exception {
-			if (canceled) {
+			if (isCancelled()) {
 				return null;
 			}
 			try {
@@ -344,11 +347,6 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 				complete(value);
 				return value;
 			} catch (Exception e) {
-				// TODO Make transaction cancelling to Request.error
-				Transaction transaction = (Transaction)getTransaction();
-				if (transaction != null) {
-					transaction.cancelPendingRequests();
-				}
 				error(DbException.wrap(JdbcConnection.this, e));
 				throw e;
 			}
@@ -376,13 +374,18 @@ public class JdbcConnection extends AbstractTransactionalSession implements Conn
 		
 		@Override
 		protected Void doCall() throws Exception {
-			request.execute();
+			request.invokeExecute();
 			return null;
 		}
 		
 		@Override
 		public boolean canRemove() {
 			return request.canRemove();
+		}
+		
+		@Override
+		public boolean isPipelinable() {
+			return request.isPipelinable();
 		}
 	}
 }

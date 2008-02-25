@@ -37,8 +37,7 @@ import org.adbcj.postgresql.frontend.FrontendMessageType;
 import org.adbcj.postgresql.frontend.StartupMessage;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultResult;
-import org.adbcj.support.AbstractSessionRequestQueue.Request;
-import org.adbcj.support.AbstractTransactionalSession.Transaction;
+import org.adbcj.support.AbstractDbSession.Request;
 import org.apache.mina.common.IoHandlerAdapter;
 import org.apache.mina.common.IoSession;
 import org.slf4j.Logger;
@@ -98,12 +97,6 @@ public class PgIoHandler extends IoHandlerAdapter {
 				if (request != null) {
 					if (!future.isDone()) {
 						try {
-							// TODO Make cancelling transaction part of Request.error()
-							Transaction transaction = (Transaction)request.getTransaction();
-							if (transaction != null) {
-								transaction.cancelPendingRequests();
-							}
-	
 							errorOutFuture(connection, future, cause);
 							
 							return;

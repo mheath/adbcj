@@ -1,3 +1,4 @@
+import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerProvider;
 import org.adbcj.mysql.Adbcj;
@@ -10,37 +11,25 @@ public class Test {
 	public static void main(String[] args) throws Exception {
 		Adbcj.init();
 		
-		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/test", "adbcjtck", "adbcjtck");
-//		Connection connection = connectionManager.connect().addListener(new DbListener<Connection>() {
-//			public void onCompletion(DbFuture<Connection> listener) throws Exception {
-//				System.out.println("In connect callback 1.");
-//			}
-//		}).get();
-//		System.out.println("Got connection");
-//		connection.executeQuery("SELECT * FROM test").addListener(new DbListener<ResultSet>() {
-//			public void onCompletion(DbFuture<ResultSet> listener) throws Exception {
-//				System.out.println("Result set count: " + listener.get().getFields().size());
-//			}
-//		}).get();
-//		System.out.println("Got result set");
-//		DbSessionFuture<Void> closeFuture = connection.close(true);
-//		closeFuture.get();
-//		
-//		System.out.println("Closed");
-//		//connectionManager.close(true);
-//		Thread.sleep(500);
-//		
-//		connectionManager.connect().addListener(new DbListener<Connection>() {
-//			public void onCompletion(DbFuture<Connection> listener)
-//					throws Exception {
-//				System.out.println("Made second connection");
-//			}
-//		}).get().close(true).get();
-//
-		System.out.println(connectionManager.connect().cancel(true));
+		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
+		Connection connection = connectionManager.connect().get();
+		Connection lockingConnection = connectionManager.connect().get();
 		
+		// Get lock
+		lockingConnection.beginTransaction();
+		lockingConnection.executeQuery("SELECT name FROM locks WHERE name='lock' FOR UPDATE").get();
+		
+		// Get lock on primary connection
+		connection.beginTransaction();
+		connection.executeQuery("SELECT name FROM locks WHERE name='lock' FOR UPDATE");
+		
+		connection.executeQuery("SELECT * FROM simple_values");
+		connection.executeQuery("SELECT * FROM simple_values");
+		connection.executeQuery("SELECT * FROM simple_values");
+		connection.executeQuery("SELECT * FROM simple_values");
+
+		lockingConnection.commit().get();
 		connectionManager.close(true);
-		System.out.println("Done");
 	}
 
 }
