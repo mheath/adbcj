@@ -118,5 +118,12 @@ public class DefaultValue implements Value {
 	public boolean isNull() {
 		return value == null;
 	}
+	
+	@Override
+	public String toString() {
+		// TODO Add padding if a display width is specified in the Field
+		String s = getString();
+		return s == null ? "null" : s;
+	}
 
 }
