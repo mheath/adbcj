@@ -164,5 +164,10 @@ public class PgConnectionManager implements ConnectionManager {
 	public String getPassword() {
 		return password;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("Postgresql Connection Manager (Db: '%s', User: '%s')", database, username);
+	}
 
 }
