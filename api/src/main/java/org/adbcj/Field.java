@@ -16,13 +16,24 @@
  */
 package org.adbcj;
 
+
 /**
- * Used to get the type and property information of database columns.
+ * Stores the column data type and other meta-data for a particular column. 
  * 
  * @author Mike Heath
+ * @see ResultSet
  */
 public interface Field {
 
+	/**
+	 * The position this column appears in the result set.
+	 * 
+	 * <p>The value returned by this method is analogous to the value return by
+	 * {@link java.sql.ResultSet#findColumn(String)} in JDBC.  However, this value is 0 based in ADBCJ and not 1 based
+	 * as it is in JDBC.
+	 * 
+	 * @return  the position this column appears in the result set, 0 based.
+	 */
 	int getIndex();
 	
 	String getCatalogName();
