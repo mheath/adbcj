@@ -348,6 +348,9 @@ public class JdbcConnection extends AbstractDbSession implements Connection {
 				return value;
 			} catch (Exception e) {
 				error(DbException.wrap(JdbcConnection.this, e));
+				if (jdbcConnection.isClosed()) {
+					connectionManager.removeConnection(JdbcConnection.this);
+				}
 				throw e;
 			}
 		}

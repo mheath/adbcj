@@ -18,19 +18,23 @@ package org.adbcj.jdbc;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
-import org.adbcj.DbSessionFuture;
-
+import org.adbcj.DbListener;
 import org.adbcj.support.DbFutureConcurrentProxy;
+import org.adbcj.support.DefaultDbFuture;
 
 public class JdbcConnectionManager implements ConnectionManager {
 
@@ -41,6 +45,11 @@ public class JdbcConnectionManager implements ConnectionManager {
 	private final Properties properties;
 	private final ExecutorService executorService;
 
+	private final Object lock = this;
+	private final Set<JdbcConnection> connections = new HashSet<JdbcConnection>(); // Access must be synchronized on lock 
+	
+	private volatile DefaultDbFuture<Void> closeFuture;
+	
 	public JdbcConnectionManager(String jdbcUrl, String username,
 			String password, Properties properties) {
 		this.jdbcUrl = jdbcUrl;
@@ -53,13 +62,24 @@ public class JdbcConnectionManager implements ConnectionManager {
 	}
 
 	public DbFuture<Connection> connect() throws DbException {
+		if (isClosed()) {
+			throw new DbException("This connection manager is closed");
+		}
 		final DbFutureConcurrentProxy<Connection> future = new DbFutureConcurrentProxy<Connection>();
 		Future<Connection> executorFuture = executorService.submit(new Callable<Connection>() {
 			public Connection call() throws Exception {
 				try {
 					java.sql.Connection jdbcConnection = DriverManager.getConnection(jdbcUrl, properties);
 					JdbcConnection connection = new JdbcConnection(JdbcConnectionManager.this, jdbcConnection);
-					future.setValue(connection);
+					synchronized (lock) {
+						if (isClosed()) {
+							connection.close(true);
+							future.setException(new DbException("Connection manager closed"));
+						} else {
+							connections.add(connection);
+							future.setValue(connection);
+						}
+					}
 					return connection;
 				} catch (SQLException e) {
 					future.setException(new DbException(e));
@@ -73,14 +93,54 @@ public class JdbcConnectionManager implements ConnectionManager {
 		return future;
 	}
 
-	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
-		// TODO Implement JdbcConnectionManager.close(boolean immediate)
-		throw new IllegalStateException("Not implemented");
+	public DbFuture<Void> close(boolean immediate) throws DbException {
+		synchronized (lock) {
+			if (closeFuture == null) {
+				closeFuture = new DefaultDbFuture<Void>();
+				closeFuture.addListener(new DbListener<Void>() {
+					@Override
+					public void onCompletion(DbFuture<Void> future) throws Exception {
+						executorService.shutdown();
+					}
+				});
+			} else {
+				return closeFuture;
+			}
+		}
+		final AtomicInteger countDown = new AtomicInteger();
+		final AtomicBoolean allClosed = new AtomicBoolean(false);
+		
+		DbListener<Void> listener = new DbListener<Void>() {
+			@Override
+			public void onCompletion(DbFuture<Void> future) {
+				try {
+					future.get();
+					int count = countDown.decrementAndGet();
+					if (allClosed.get() && count == 0) {
+						closeFuture.setResult(null);
+					}
+				} catch (Exception e) {
+					// If the connection close errored out, error out our closeFuture too
+					closeFuture.setException(e);
+				}
+			}
+		};
+		synchronized (lock) {
+			for (JdbcConnection connection : connections) {
+				countDown.incrementAndGet();
+				connection.close(immediate).addListener(listener);
+			}
+		}
+		allClosed.set(true);
+		if (countDown.get() == 0) {
+			closeFuture.setResult(null);
+		}
+		
+		return closeFuture;
 	}
 
 	public boolean isClosed() {
-		// TODO Implement JdbcConnectionManager.isClosed()
-		throw new IllegalStateException("Not implemented");
+		return closeFuture != null;
 	}
 
 	/*
@@ -93,6 +153,12 @@ public class JdbcConnectionManager implements ConnectionManager {
 		return executorService;
 	}
 
+	boolean removeConnection(JdbcConnection connection) {
+		synchronized (lock) {
+			return connections.remove(connection);
+		}
+	}
+	
 	@Override
 	public String toString() {
 		return String.format("%s: %s (user: %s)", getClass().getName(), jdbcUrl, properties.get(USER));
