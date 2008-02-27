@@ -20,7 +20,7 @@ import java.util.Set;
 
 import org.adbcj.support.DefaultField;
 
-
+// TODO Add support for 'ZEROFILL' when doing toString on integer Value objects
 public class MysqlField extends DefaultField {
 
 	private final MysqlType mysqlType;
@@ -91,6 +91,11 @@ public class MysqlField extends DefaultField {
 
 	public long getFieldDefault() {
 		return fieldDefault;
+	}
+	
+	@Override
+	public String toString() {
+		return getColumnType() + " (" + mysqlType + ")";
 	}
 
 }
