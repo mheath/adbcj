@@ -170,14 +170,20 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 					Object value = null;
 					if (in.get() != NULL_VALUE) {
 						in.position(in.position() - 1);
+						
+						// We will have to move this as some datatypes will not be sent across the wire as strings
+						String strVal = decodeLengthCodedString(in);
+						
 						switch (field.getColumnType()) {
+						case TINYINT:
+							value = Byte.valueOf(strVal);
+							break;
 						case INTEGER:
 						case BIGINT:
-							String strVal = decodeLengthCodedString(in);
 							value = Long.valueOf(strVal);
 							break;
 						case VARCHAR:
-							value = decodeLengthCodedString(in);
+							value = strVal;
 							break;
 						default:
 							throw new IllegalStateException("Don't know how to handle column type of "
