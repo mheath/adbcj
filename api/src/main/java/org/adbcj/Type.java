@@ -18,6 +18,11 @@ package org.adbcj;
 
 import java.sql.Types;
 
+/**
+ * TODO Needs to be updated per http://code.google.com/p/adbcj/wiki/DataTypes
+ * 
+ * @author Mike Heath
+ */
 public enum Type {
 	ARRAY(Types.ARRAY),
 	BIGINT(Types.BIGINT),
