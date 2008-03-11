@@ -171,6 +171,9 @@ public class DefaultDbFuture<T> implements DbFuture<T> {
             waiters++;
             try {
                 lock.wait(timeoutMillis);
+                if (!done) {
+                	throw new TimeoutException();
+                }
             } finally {
                 waiters--;
             }

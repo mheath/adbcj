@@ -38,7 +38,7 @@ import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
 import org.adbcj.Type;
 import org.adbcj.support.AbstractDbSession;
-import org.adbcj.support.DbSessionFutureConcurrentProxy;
+import org.adbcj.support.DefaultDbSessionFuture;
 import org.adbcj.support.DefaultField;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.DefaultValue;
@@ -53,7 +53,6 @@ public class JdbcConnection extends AbstractDbSession implements Connection {
 	private final java.sql.Connection jdbcConnection;
 	
 	private DbSessionFuture<Void> closeFuture;
-	private volatile boolean closed = false;
 	
 	public JdbcConnection(JdbcConnectionManager connectionManager, java.sql.Connection jdbcConnection) {
 		this.connectionManager = connectionManager;
@@ -66,35 +65,16 @@ public class JdbcConnection extends AbstractDbSession implements Connection {
 
 	public synchronized DbSessionFuture<Void> close(boolean immediate) throws DbException {
 		if (!isClosed()) {
-			closed = true;
-			
 			if (immediate) {
 				cancelPendingRequests(true);
-				final DbSessionFutureConcurrentProxy<Void> localFuture = new DbSessionFutureConcurrentProxy<Void>(this) {
-					/**
-					 * If the future gets cancelled, unclose the connection.
-					 */
-					@Override
-					public boolean cancel(boolean mayInterruptIfRunning) {
-						boolean cancelled = super.cancel(mayInterruptIfRunning);
-						if (cancelled) {
-							unclose();
-						}
-						return cancelled;
-					}
-				}; 
-				Future<Void> future = connectionManager.getExecutorService().submit(new Callable<Void>() {
-					public Void call() throws Exception {
-						try {
-							jdbcConnection.close();
-						} finally {
-							localFuture.setDone();
-						}
-						return null;
-					}
-				});
-				localFuture.setFuture(future);
-				closeFuture = localFuture;
+				DefaultDbSessionFuture<Void> future = new DefaultDbSessionFuture<Void>(this);
+				try {
+					jdbcConnection.close();
+					future.setResult(null);
+				} catch (SQLException e) {
+					future.setException(e);
+				}
+				closeFuture = future;
 			} else {
 				CallableRequest<Void> closeRequest = new CallableRequest<Void>() {
 					private boolean started = false;
@@ -130,12 +110,11 @@ public class JdbcConnection extends AbstractDbSession implements Connection {
 
 	private synchronized void unclose() {
 		this.closeFuture = null;
-		closed = false;
 	}
 	
 	public boolean isClosed() {
 		try {
-			return closed || jdbcConnection.isClosed();
+			return closeFuture != null || jdbcConnection.isClosed();
 		} catch (SQLException e) {
 			throw new DbException(this, e);
 		}
@@ -356,6 +335,11 @@ public class JdbcConnection extends AbstractDbSession implements Connection {
 		}
 
 		protected abstract E doCall() throws Exception;
+		
+		@Override
+		public boolean isPipelinable() {
+			return false;
+		}
 		
 	}
 

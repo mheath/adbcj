@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.adbcj.DbException;
 import org.adbcj.DbSession;
@@ -38,7 +39,7 @@ public abstract class AbstractDbSession implements DbSession {
 
 	protected final Object lock = this;
 	
-	private final Queue<Request<?>> requestQueue = new LinkedList<Request<?>>(); // Access must by synchronized on lock
+	protected final Queue<Request<?>> requestQueue = new ConcurrentLinkedQueue<Request<?>>();
 	
 	private Request<?> activeRequest; // Access must by synchronized on lock
 	
@@ -78,8 +79,8 @@ public abstract class AbstractDbSession implements DbSession {
 		} else {
 			pipelining = false;
 		}
+		requestQueue.add(request);
 		synchronized (lock) {
-			requestQueue.add(request);
 			if (activeRequest == null) {
 				makeNextRequestActive();
 			}
@@ -92,7 +93,7 @@ public abstract class AbstractDbSession implements DbSession {
 		boolean executePipelining = false;
 		synchronized (lock) {
 			if (activeRequest != null && !activeRequest.isDone()) {
-				throw new DbException("Active request is not done: " + activeRequest);
+				throw new ActiveRequestIncomplete(this, "Active request is not done: " + activeRequest);
 			}
 			request = (Request<E>)requestQueue.poll();
 		
@@ -153,11 +154,29 @@ public abstract class AbstractDbSession implements DbSession {
 	}
 	
 	protected void cancelPendingRequests(boolean mayInterruptIfRunning) {
+		for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
+			Request<?> request = i.next();
+			request.cancel(mayInterruptIfRunning);
+		}
+	}
+	
+	/**
+	 * This will error out any pending requests.
+	 */
+	public void errorPendingRequests(Throwable exception) {
 		synchronized (lock) {
-			for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
-				Request<?> request = i.next();
-				i.remove();
-				request.cancel(mayInterruptIfRunning);
+			if (activeRequest != null && !activeRequest.isDone()) {
+				activeRequest.setException(exception);
+			}
+		}
+		for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
+			Request<?> request = i.next();
+			if (!request.isDone()) {
+				try {
+					request.setException(exception);
+				} catch (IllegalStateException e) {
+					// Disregard exception
+				}
 			}
 		}
 	}
@@ -465,12 +484,14 @@ public abstract class AbstractDbSession implements DbSession {
 			
 			// The the request was cancelled and it can be removed
 			if (cancelled && canRemove()) {
-				synchronized (lock) {
 					// Remove the quest and if the removal was successful and this request is active, go to the next request
-					if (canRemove() && requestQueue.remove(this) && this == activeRequest) {
-						makeNextRequestActive();
+					if (canRemove() && requestQueue.remove(this)) {
+						synchronized (lock) {
+							if (this == activeRequest) {
+								makeNextRequestActive();
+							}
+						}
 					}
-				}
 			}
 			return cancelled;
 		}
@@ -513,19 +534,13 @@ public abstract class AbstractDbSession implements DbSession {
 			this.transaction = transaction;
 		}
 		
-		@Override
-		public final void setResult(T result) {
-			throw new IllegalStateException("You must call complete(T result) instead");
-		}
-		
-		@Override
-		public final void setException(Throwable exception) {
-			throw new IllegalStateException("You must call error(DbException exception) instead");
-		}
-		
 		public void complete(T result) {
 			super.setResult(result);
-			makeNextRequestActive();
+			synchronized (lock) {
+				if (activeRequest == this) {
+					makeNextRequestActive();
+				}
+			}
 		}
 		
 		public void error(DbException exception) {
@@ -533,7 +548,11 @@ public abstract class AbstractDbSession implements DbSession {
 			if (transaction != null) {
 				transaction.cancelPendingRequests();
 			}
-			makeNextRequestActive();
+			synchronized (lock) {
+				if (activeRequest == this) {
+					makeNextRequestActive();
+				}
+			}
 		}
 	}
 
@@ -546,7 +565,8 @@ public abstract class AbstractDbSession implements DbSession {
 		
 		/**
 		 * Indicates if the transaction has been started on the server (i.e. if 'begin' has been sent to server)
-		 * @return
+		 * 
+		 * @return  true if 'begin' has been sent to the server, false otherwise
 		 */
 		public boolean isStarted() {
 			return started;
@@ -557,8 +577,9 @@ public abstract class AbstractDbSession implements DbSession {
 		}
 		
 		/**
-		 * Indicates if 'begin' has been scheduled to be sent to server but not necessarily sent.
-		 * @return
+		 * Indicates if 'begin' has been scheduled to be sent to remote database server but not necessarily sent.
+		 * 
+		 * @return true if 'begin' has been queued to be sent to the remote database server, false otherwise.
 		 */
 		public boolean isBeginScheduled() {
 			return beginScheduled;

@@ -78,14 +78,6 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 		}
 		final byte packetNumber = in.get();
 		
-		// Create a new buffer to process the current message
-		try {
-			in.setAutoExpand(false);
-		} catch (IllegalStateException e) {
-			System.out.println(in.getClass());
-			throw e;
-		}
-		
 		final int originalLimit = in.limit();
 		try {
 			in.limit(in.position() + length);
@@ -159,6 +151,7 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 				if (fieldCount == RESPONSE_EOF) {
 					EofResponse rowEof = decodeEofResponse(in, length, packetNumber, EofResponse.Type.ROW);
 					out.write(rowEof);
+					out.flush();
 	
 					state = State.RESPONSE;
 	

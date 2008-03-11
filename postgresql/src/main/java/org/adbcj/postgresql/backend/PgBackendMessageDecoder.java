@@ -75,9 +75,9 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		in.getInt(); // Throw away length because we've already fetched it
 		
 		// Create a buffer for just the current message being processed
-		IoBuffer buffer = in.duplicate();
-		buffer.limit(buffer.position() + length);
-		in.skip(length); // Skip the bytes the will be processed with 'buffer'
+		//IoBuffer buffer = in.duplicate();
+		final int originalLimit = in.limit();
+		in.limit(in.position() + length);
 		
 		// If type is null, throw exception
 		if (type == null) {
@@ -98,28 +98,28 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			out.write(new BackendMessage(type));
 			break;
 		case AUTHENTICATION:
-			decodeAuthentication(session, buffer, out);
+			decodeAuthentication(session, in, out);
 			break;
 		case COMMAND_COMPLETE:
-			decodeCommandComplete(session, buffer, out);
+			decodeCommandComplete(session, in, out);
 			break;
 		case DATA_ROW:
-			decodeDataRow(session, buffer, out);
+			decodeDataRow(session, in, out);
 			break;
 		case ERROR_RESPONSE:
-			decodeError(session, buffer, out);
+			decodeError(session, in, out);
 			break;
 		case KEY:
-			decodeKey(session, buffer, out);
+			decodeKey(session, in, out);
 			break;
 		case PARAMETER_STATUS:
-			decodeParameterStatus(session, buffer, out);
+			decodeParameterStatus(session, in, out);
 			break;
 		case READY_FOR_QUERY:
-			decodeReadyForQuery(session, buffer, out);
+			decodeReadyForQuery(session, in, out);
 			break;
 		case ROW_DESCRIPTION:
-			decodeRowDescription(session, buffer, out);
+			decodeRowDescription(session, in, out);
 			break;
 		case COPY_DATA:
 		case COPY_IN_RESPONSE:
@@ -135,9 +135,11 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			throw new IllegalStateException(String.format("Messages of type %s are not implemented", type)); 
 		}
 
-		if (buffer.hasRemaining()) {
-			throw new IllegalStateException(String.format("buffer has %d unread bytes after decoding message of type %s", buffer.remaining(), type));
+		if (in.hasRemaining()) {
+			throw new IllegalStateException(String.format("buffer has %d unread bytes after decoding message of type %s", in.remaining(), type));
 		}
+		in.limit(originalLimit);
+
 		
 		return in.hasRemaining();
 	}
@@ -321,6 +323,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		}
 		ReadyMessage message = new ReadyMessage(status);
 		out.write(message);
+		out.flush();
 	}
 
 	private void decodeRowDescription(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
@@ -385,6 +388,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 					typeSize,
 					typeModifier
 					);
+			logger.debug("Setting payload for request: {}", request);
 			request.setPayload(fields);
 		}
 		

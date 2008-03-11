@@ -18,7 +18,7 @@ package org.adbcj;
 
 /**
  * Receives notification of the logical results of a database query.  You may think of this as the SAX
- * @{link org.sax.ContentHandler} for database parsing.
+ * {@link org.sax.ContentHandler} for database resultset parsing.
  * 
  * <p>Each method accepts an accumulator that may be used for holding the parsing state.
  * 

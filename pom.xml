@@ -22,7 +22,7 @@
 		<module>mysql</module>
 		<module>postgresql</module>
 		<module>tck</module>
-                <module>perf</module>
+		<module>perf</module>
 	</modules>
 	
 	<scm>

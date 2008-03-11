@@ -1,0 +1,48 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="ADBCJ-TCK" verbose="1" >
+	<test name="MySQL">
+		<parameter name="url" value="adbcj:mysql://localhost/adbcjtck" />
+		<parameter name="user" value="adbcjtck" />
+		<parameter name="password" value="adbcjtck" />
+		<packages>
+			<package name="org.adbcj.tck.test" />
+		</packages>
+		<classes>
+			<class name="org.adbcj.tck.InitMysql" />
+		</classes>
+	</test>
+	<test name="MySQL-JDBC">
+		<parameter name="url" value="adbcj:jdbc:mysql://localhost/adbcjtck" />
+		<parameter name="user" value="adbcjtck" />
+		<parameter name="password" value="adbcjtck" />
+		<packages>
+			<package name="org.adbcj.tck.test" />
+		</packages>
+		<classes>
+			<class name="org.adbcj.tck.InitMysqlJdbc" />
+		</classes>
+	</test>
+	<test name="Postgresql">
+		<parameter name="url" value="adbcj:postgresql://localhost/adbcjtck" />
+		<parameter name="user" value="adbcjtck" />
+		<parameter name="password" value="adbcjtck" />
+		<packages>
+			<package name="org.adbcj.tck.test" />
+		</packages>
+		<classes>
+			<class name="org.adbcj.tck.InitPostgresql" />
+		</classes>
+	</test>
+	<test name="Postgresql-JDBC">
+		<parameter name="url" value="adbcj:jdbc:postgresql://localhost/adbcjtck" />
+		<parameter name="user" value="adbcjtck" />
+		<parameter name="password" value="adbcjtck" />
+		<packages>
+			<package name="org.adbcj.tck.test" />
+		</packages>
+		<classes>
+			<class name="org.adbcj.tck.InitPostgresqlJdbc" />
+		</classes>
+	</test>
+</suite>

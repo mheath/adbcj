@@ -14,7 +14,21 @@
 	<artifactId>adbcj-tck</artifactId>
 	<packaging>jar</packaging>
 	<name>ADBCJ - TCK</name>
-	
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<suiteXmlFiles>
+						<suitXmlFile>testng.xml</suitXmlFile>
+					</suiteXmlFiles>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 	<dependencies>
 		<dependency>
 			<artifactId>adbcj-api</artifactId>

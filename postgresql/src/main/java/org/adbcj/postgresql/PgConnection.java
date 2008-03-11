@@ -17,6 +17,7 @@
 package org.adbcj.postgresql;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -55,10 +56,10 @@ public class PgConnection extends AbstractDbSession implements Connection {
 	// TODO Update backendCharset based on what backend returns
 	private Charset backendCharset = Charset.forName("US-ASCII");
 
-	private Request<Void> closeRequest;
+	private Request<Void> closeRequest; // Access synchronized on lock
 
-	private int pid;
-	private int key;
+	private volatile int pid;
+	private volatile int key;
 	
 	// Constant Messages
 	private static final ExecuteMessage DEFAULT_EXECUTE = new ExecuteMessage();
@@ -69,6 +70,7 @@ public class PgConnection extends AbstractDbSession implements Connection {
 		this.connectionManager = connectionManager;
 		this.connectFuture = connectFuture;
 		this.session = session;
+		//setPipeliningEnabled(false);
 	}
 	
 	public ConnectionManager getConnectionManager() {
@@ -87,77 +89,87 @@ public class PgConnection extends AbstractDbSession implements Connection {
 		}
 	}
 
-	public synchronized DbSessionFuture<Void> close(boolean immediate) throws DbException {
+	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
 		// TODO PgConnection.close(boolean) is almost identical to MySQL close method, generify this
 		
 		// If the connection is already closed, return existing close future
-		if (isClosed()) {
-			if (closeRequest == null) {
-				closeRequest = new Request<Void>() {
-					@Override
-					public void execute() throws Exception {
-						// Do nothing since close has already occurred
-					}
-					@Override
-					public String toString() {
-						return "Connection closed";
-					}
-				};
-				return closeRequest;
-			}
-		} else {
-			if (immediate) {
-				logger.debug("Executing immediate close");
-				// If the close is immediate, cancel pending requests and send request to server
-				cancelPendingRequests(true);
-				session.write(FrontendMessage.TERMINATE);
-				closeRequest = new Request<Void>() {
-					@Override
-					protected boolean cancelRequest(boolean mayInterruptIfRunning) {
-						// Immediate close can not be cancelled
-						return false;
-					}
-					@Override
-					public void execute() throws Exception {
-						// Do nothing, close message has already been sent
-					}
-					@Override
-					public String toString() {
-						return "Immediate close";
-					}
-				};
+		synchronized (lock) {
+			if (isClosed()) {
+				if (closeRequest == null) {
+					closeRequest = new Request<Void>() {
+						@Override
+						public void execute() throws Exception {
+							// Do nothing since close has already occurred
+						}
+						@Override
+						public String toString() {
+							return "Connection closed";
+						}
+					};
+					closeRequest.setResult(null);
+				}
 			} else {
-				// If the close is NOT immediate, schedule the close
-				closeRequest = new Request<Void>() {
-					@Override
-					public boolean cancelRequest(boolean mayInterruptIfRunning) {
-						logger.debug("Cancelling close");
-						unclose();
-						return true;
-					}
-					@Override
-					public void execute() {
-						logger.debug("Sending TERMINATE to server");
-						session.write(FrontendMessage.TERMINATE);
-					}
-					@Override
-					public String toString() {
-						return "Deferred close";
-					}
-				};
-				enqueueRequest(closeRequest);
+				if (immediate) {
+					logger.debug("Executing immediate close");
+					// If the close is immediate, cancel pending requests and send request to server
+					cancelPendingRequests(true);
+					session.write(FrontendMessage.TERMINATE);
+					closeRequest = new Request<Void>() {
+						@Override
+						protected boolean cancelRequest(boolean mayInterruptIfRunning) {
+							// Immediate close can not be cancelled
+							return false;
+						}
+						@Override
+						public void execute() throws Exception {
+							// Do nothing, close message has already been sent
+						}
+						@Override
+						public String toString() {
+							return "Immediate close";
+						}
+					};
+				} else {
+					// If the close is NOT immediate, schedule the close
+					closeRequest = new Request<Void>() {
+						@Override
+						public boolean cancelRequest(boolean mayInterruptIfRunning) {
+							logger.debug("Cancelling close");
+							unclose();
+							return true;
+						}
+						@Override
+						public void execute() {
+							logger.debug("Sending TERMINATE to server (Request queue size: {})", requestQueue.size());
+							session.write(FrontendMessage.TERMINATE);
+						}
+						@Override
+						public boolean isPipelinable() {
+							return false;
+						}
+						@Override
+						public String toString() {
+							return "Deferred close";
+						}
+					};
+					enqueueRequest(closeRequest);
+				}
 			}
+			return closeRequest;
 		}
-		return closeRequest;
 	}
 
-	private synchronized void unclose() {
-		logger.debug("Unclosing");
-		this.closeRequest = null;
+	private void unclose() {
+		synchronized (lock) {
+			logger.debug("Unclosing");
+			this.closeRequest = null;
+		}
 	}
 	
 	public boolean isClosed() throws DbException {
-		return closeRequest != null || session.isClosing();
+		synchronized (lock) {
+			return closeRequest != null || session.isClosing();
+		}
 	}
 	
 	public <T> DbSessionFuture<T> executeQuery(final String sql, ResultEventHandler<T> eventHandler, T accumulator) {
@@ -221,7 +233,7 @@ public class PgConnection extends AbstractDbSession implements Connection {
 	// ******** Transaction methods ***********************************************************************************
 	
 	private final AtomicLong statementCounter = new AtomicLong();
-	private Map<String, String> statementCache = new HashMap<String, String>();
+	private final Map<String, String> statementCache = Collections.synchronizedMap(new HashMap<String, String>());
 	
 	@Override
 	protected void sendBegin() {
@@ -238,7 +250,7 @@ public class PgConnection extends AbstractDbSession implements Connection {
 		executeStatement("ROLLBACK");
 	}
 	
-	private synchronized void executeStatement(String statement) {
+	private void executeStatement(String statement) {
 		String statementId = statementCache.get(statement);
 		if (statementId == null) {
 			long id = statementCounter.incrementAndGet();

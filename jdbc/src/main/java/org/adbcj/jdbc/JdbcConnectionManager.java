@@ -114,8 +114,8 @@ public class JdbcConnectionManager implements ConnectionManager {
 			@Override
 			public void onCompletion(DbFuture<Void> future) {
 				try {
-					future.get();
 					int count = countDown.decrementAndGet();
+					future.get();
 					if (allClosed.get() && count == 0) {
 						closeFuture.setResult(null);
 					}
@@ -135,7 +135,6 @@ public class JdbcConnectionManager implements ConnectionManager {
 		if (countDown.get() == 0) {
 			closeFuture.setResult(null);
 		}
-		
 		return closeFuture;
 	}
 

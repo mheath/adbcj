@@ -14,17 +14,16 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.tck;
+package org.adbcj.tck.test;
 
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
-import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.concurrent.TimeoutException;
 
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
@@ -34,18 +33,34 @@ import org.adbcj.DbFuture;
 import org.adbcj.DbListener;
 import org.adbcj.DbSessionFuture;
 import org.adbcj.ResultSet;
+import org.adbcj.tck.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+@Test(invocationCount=50, threadPoolSize=10)
 public class ConnectTest {
 	
 	private final Logger logger = LoggerFactory.getLogger(ConnectTest.class);
 
-	private static final String UNREACHABLE_HOST = "1.0.0.1";
+	private ConnectionManager connectionManager;
 
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testConnectImmediateClose(ConnectionManager connectionManager) throws DbException, InterruptedException {
+	@Parameters({"url", "user", "password"})
+	@BeforeTest
+	public void createConnectionManager(String url, String user, String password) {
+		connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, password);
+	}
+
+	@AfterTest
+	public void closeConnectionManager() {
+		DbFuture<Void> closeFuture = connectionManager.close(true);
+		closeFuture.getUninterruptably();
+	}
+
+	public void testConnectImmediateClose() throws Exception {
 		final boolean[] callbacks = {false, false};
 		final CountDownLatch latch = new CountDownLatch(2);
 		
@@ -56,7 +71,7 @@ public class ConnectTest {
 				latch.countDown();
 			}
 		});
-		Connection connection = connectFuture.get();
+		Connection connection = connectFuture.get(5, TimeUnit.SECONDS);
 		assertTrue(!connection.isClosed());
 		DbFuture<Void> closeFuture = connection.close(true).addListener(new DbListener<Void>() {
 			public void onCompletion(DbFuture<Void> future) throws Exception {
@@ -65,15 +80,14 @@ public class ConnectTest {
 				latch.countDown();
 			}
 		});
-		closeFuture.get();
+		closeFuture.get(5, TimeUnit.SECONDS);
 		assertTrue(connection.isClosed());
 		latch.await(1, TimeUnit.SECONDS);
 		assertTrue(callbacks[0], "Callback on connection future was not invoked");
 		assertTrue(callbacks[1], "Callback on close future was not invoked");
 	}
 
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testConnectNonImmediateClose(ConnectionManager connectionManager) throws DbException, InterruptedException {
+	public void testConnectNonImmediateClose() throws DbException, InterruptedException {
 		final boolean[] callbacks = {false};
 		final CountDownLatch latch = new CountDownLatch(1);
 
@@ -91,8 +105,7 @@ public class ConnectTest {
 		assertTrue(callbacks[0], "Callback on close future was not invoked");
 	}
 
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testCancelClose(final ConnectionManager connectionManager) throws DbException, InterruptedException {
+	public void testCancelClose() throws DbException, InterruptedException {
 		final boolean[] closeCallback = {false, false};
 		
 		// This connection is used for doing a select for update lock
@@ -141,70 +154,26 @@ public class ConnectTest {
 		assertTrue(closeCallback[1], "The close future did not indicate the close was cancelled");
 	}
 	
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="urlDataProvider", timeOut=5000)
-	public void testConnectBadCredentials(String url, String user, String password) throws InterruptedException {
-		final boolean[] callbacks = {false};
-		final CountDownLatch latch = new CountDownLatch(1);
-
-		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, "__BADPASSWORD__");
-		DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
-			public void onCompletion(DbFuture<Connection> future) throws Exception {
-				callbacks[0] = true;
-				latch.countDown();
-			}
-		});
-		try {
-			connectFuture.get();
-			fail("Connect should have failed because of bad credentials");
-		} catch (DbException e) {
-			assertTrue(connectFuture.isDone(), "Connect future should be marked done even though it failed");
-			assertTrue(!connectFuture.isCancelled(), "Connect future should not be marked as cancelled");
-		}
-		assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
-		assertTrue(callbacks[0], "Connect future callback was not invoked with connect failure");
-	}
-	
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="urlDataProvider", timeOut=60000)
-	public void testConnectCancel(String url, String user, String password) throws Exception {
-		StringBuilder urlBuilder = new StringBuilder();
-		
-		URI connectUrl = new URI(url);
-		String scheme = connectUrl.getScheme();
-		while (scheme != null) {
-			urlBuilder.append(scheme).append(":");
-			connectUrl = new URI(connectUrl.getSchemeSpecificPart());
-			scheme = connectUrl.getScheme();
-		}
-		
-		urlBuilder.append("//").append(UNREACHABLE_HOST);
-		urlBuilder.append(connectUrl.getPath());
-		
-		final boolean[] callbacks = {false};
-		final CountDownLatch latch = new CountDownLatch(1);
-
-		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(urlBuilder.toString(), "dummyuser", "dummypassword");
-		DbFuture<Connection> connectFuture = connectionManager.connect().addListener(new DbListener<Connection>() {
-			public void onCompletion(DbFuture<Connection> future) throws Exception {
-				callbacks[0] = true;
-				latch.countDown();
-			}
-		});
-		assertTrue(connectFuture.cancel(true), "Connection to unreachable host was not canceled");
-		assertTrue(connectFuture.isCancelled());
-		assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
-		assertTrue(callbacks[0], "Connect future callback was not invoked with connect cancellation");
-	}
-
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testNonImmediateClose(final ConnectionManager connectionManager) throws InterruptedException {
+	public void testNonImmediateClose() throws Exception {
 		Connection connection = connectionManager.connect().get();
 
 		List<DbSessionFuture<ResultSet>> futures = new ArrayList<DbSessionFuture<ResultSet>>();
 
 		for (int i = 0; i < 5; i++) {
-			futures.add(connection.executeQuery("SELECT * FROM simple_values"));
+			futures.add(connection.executeQuery(String.format("SELECT *, %d FROM simple_values", i)));
 		}
-		connection.close(false).get();
+		try {
+			connection.close(false).get(10, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			for (DbSessionFuture<ResultSet> future : futures) {
+				if (future.isDone()) {
+					future.get(); // Will throw exception if failed
+				} else {
+					throw new AssertionError("future " + future + " did not complete in time");
+				}
+			}
+			throw new AssertionError("close future failed to complete");
+		}
 		assertTrue(connection.isClosed(), "Connection should be closed");
 		for (DbSessionFuture<ResultSet> future : futures) {
 			assertTrue(future.isDone(), "Request did not finish before connection was closed: " + future);
@@ -212,34 +181,4 @@ public class ConnectTest {
 		}
 	}
 
-	@Test(dataProviderClass=ConnectionManagerDataProvider.class, dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testImmediateClose(final ConnectionManager connectionManager) throws InterruptedException {
-		Connection lockingConnection = connectionManager.connect().get();
-		Connection connection = connectionManager.connect().get();
-
-		lockingConnection.beginTransaction();
-		TestUtils.selectForUpdate(lockingConnection).get();
-
-		List<DbSessionFuture<ResultSet>> futures = new ArrayList<DbSessionFuture<ResultSet>>();
-
-		connection.beginTransaction();
-
-		for (int i = 0; i < 5; i++) {
-			futures.add(TestUtils.selectForUpdate(connection));
-		}
-
-		logger.debug("Closing connection");
-		connection.close(true).get();
-		logger.debug("Closed");
-
-		assertTrue(connection.isClosed(), "Connection should be closed");
-		for (DbSessionFuture<ResultSet> future : futures) {
-			assertTrue(future.isDone(), "Request did not finish before connection was closed: " + future);
-			assertTrue(future.isCancelled(), "Future should have been cancelled at close");
-		}
-		logger.debug("Closing locking connection");
-		lockingConnection.rollback().get();
-		lockingConnection.close(true).get();
-		logger.debug("Locking connection close");
-	}
 }

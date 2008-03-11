@@ -14,27 +14,50 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.tck;
+package org.adbcj.tck.test;
 
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
 import org.adbcj.DbListener;
+import org.adbcj.DbSessionFuture;
 import org.adbcj.ResultSet;
 import org.adbcj.Row;
 import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 
 // TODO Write test for result set metadata
-public class SelectTest extends ConnectionManagerDataProvider {
+@Test(invocationCount=50, threadPoolSize=10)
+public class SelectTest {
 
-	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testSimpleSelect(ConnectionManager connectionManager) throws DbException, InterruptedException {
+	private ConnectionManager connectionManager;
+	
+	@Parameters({"url", "user", "password"})
+	@BeforeTest
+	public void createConnectionManager(String url, String user, String password) {
+		connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, password);
+	}
+
+	@AfterTest
+	public void closeConnectionManager() {
+		DbFuture<Void> closeFuture = connectionManager.close(true);
+		closeFuture.getUninterruptably();
+	}
+
+	public void testSimpleSelect() throws DbException, InterruptedException {
 		final boolean[] callbacks = {false};
 		final CountDownLatch latch = new CountDownLatch(callbacks.length); 
 		
@@ -89,6 +112,39 @@ public class SelectTest extends ConnectionManagerDataProvider {
 			Assert.assertTrue(callbacks[0], "Result set callback was not invoked");
 		} finally {
 			connection.close(true);
+		}
+	}
+	
+	public void testMultipleSelectStatements() throws Exception {
+		Connection connection = connectionManager.connect().get();
+		
+		List<DbFuture<ResultSet>> futures = new LinkedList<DbFuture<ResultSet>>();
+		for (int i = 0; i < 1000; i++) {
+			futures.add(
+					connection.executeQuery(String.format("SELECT *, %d FROM simple_values", i))
+					);
+		}
+		
+		for (DbFuture<ResultSet> future : futures) {
+			try {
+				future.get(5, TimeUnit.MINUTES);
+			} catch (TimeoutException e) {
+				throw new AssertionError("Timed out waiting on future: " + future);
+			}
+		}
+	}
+	
+	public void testBrokenSelect() throws Exception {
+		Connection connection = connectionManager.connect().get();
+		
+		DbSessionFuture<ResultSet> future = connection.executeQuery("SELECT broken_query");
+		try {
+			future.get(5, TimeUnit.SECONDS);
+			throw new AssertionError("Issues a bad query, future should have failed");
+		} catch (DbException e) {
+			// Pass
+		} finally {
+			connection.close(true).get();
 		}
 	}
 	

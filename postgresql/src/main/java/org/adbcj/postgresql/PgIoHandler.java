@@ -61,8 +61,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 	@Override
 	public void sessionOpened(IoSession session) throws Exception {
 		logger.debug("sessionOpened");
-		
-		
+				
 		// Send start message to backend
 		logger.trace("Sending start message");
 		Map<ConfigurationVariable, String> parameters = new HashMap<ConfigurationVariable, String>();
@@ -79,8 +78,10 @@ public class PgIoHandler extends IoHandlerAdapter {
 		Request<Void> closeRequest = connection.getCloseRequest();
 		if (closeRequest != null) {
 			logger.debug("Completing close request");
-			closeRequest.complete(null);
+			closeRequest.setResult(null);
 		}
+		// TODO Make a DbSessionClosedException and use here
+		connection.errorPendingRequests(new DbException("Connection closed"));
 	}
 	
 	@Override
@@ -89,15 +90,15 @@ public class PgIoHandler extends IoHandlerAdapter {
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		if (connection != null) {
 			DefaultDbFuture<?> future = connection.getConnectFuture();
-			if (future != null) {
+			if (future != null && !future.isDone()) {
 				errorOutFuture(connection, future, cause);
 				return;
 			} else {
 				Request<?> request = connection.getActiveRequest();
 				if (request != null) {
-					if (!future.isDone()) {
+					if (!request.isDone()) {
 						try {
-							errorOutFuture(connection, future, cause);
+							errorOutFuture(connection, request, cause);
 							
 							return;
 						} catch (Exception e) {
@@ -113,6 +114,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 	}
 	
 	private void errorOutFuture(PgConnection connection, DefaultDbFuture<?> future, Throwable cause) {
+		logger.debug("Erroring out future: {}", future);
 		if (!future.isDone()) {
 			future.setException(DbException.wrap(connection, cause));
 		}
@@ -224,7 +226,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 		if (request == null) {
 			throw new IllegalStateException("Received a data row without an active request");
 		}
-
+		logger.debug("Received data row for request {}", request);
 		request.getEventHandler().startRow(request.getAccumulator());
 		for (Value value : dataRowMessage.getValues()) {
 			request.getEventHandler().value(value, request.getAccumulator());
@@ -291,6 +293,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 		if (request == null) {
 			throw new IllegalStateException("Received a row description without an active request");
 		}
+		//logger.debug("Received row description for request {}", request);
 		
 		request.getEventHandler().startFields(request.getAccumulator());
 		for (Field field : rowDescriptionMessage.getFields()) {

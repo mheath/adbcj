@@ -14,25 +14,43 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.tck;
+package org.adbcj.tck.test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
 import org.adbcj.DbException;
+import org.adbcj.DbFuture;
 import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Value;
 import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+@Test
+public class TransactionTest {
 
-public class TransactionTest extends ConnectionManagerDataProvider {
+	private ConnectionManager connectionManager;
 
-	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testBeginTransaction(ConnectionManager connectionManager) throws Exception {
+	@Parameters({"url", "user", "password"})
+	@BeforeTest
+	public void createConnectionManager(String url, String user, String password) {
+		connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, password);
+	}
+
+	@AfterTest
+	public void closeConnectionManager() {
+		DbFuture<Void> closeFuture = connectionManager.close(true);
+		closeFuture.getUninterruptably();
+	}
+
+	public void testBeginTransaction() throws Exception {
 		Connection connection = connectionManager.connect().get();
 		try {
 			Assert.assertTrue(!connection.isInTransaction(), "Connections should not start with transaction started");
@@ -49,8 +67,7 @@ public class TransactionTest extends ConnectionManagerDataProvider {
 		}
 	}
 	
-	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testCommitRollbackWithNoTransaction(ConnectionManager connectionManager) throws Exception {
+	public void testCommitRollbackWithNoTransaction() throws Exception {
 		Connection connection = connectionManager.connect().get();
 		try {
 			// Test commit with no transaction
@@ -81,8 +98,7 @@ public class TransactionTest extends ConnectionManagerDataProvider {
 		}
 	}
 	
-	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testRollback(ConnectionManager connectionManager) throws Exception {
+	public void testRollback() throws Exception {
 		Connection connection = connectionManager.connect().get();
 		try {
 			// Clear out updates table
@@ -116,8 +132,7 @@ public class TransactionTest extends ConnectionManagerDataProvider {
 		}
 	}
 
-	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testCommit(ConnectionManager connectionManager) throws Exception {
+	public void testCommit() throws Exception {
 		Connection connection = connectionManager.connect().get();
 		Connection connection2 = connectionManager.connect().get();
 		try {

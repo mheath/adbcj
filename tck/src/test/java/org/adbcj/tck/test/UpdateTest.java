@@ -14,23 +14,42 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.tck;
+package org.adbcj.tck.test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbFuture;
 import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Value;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 
-public class UpdateTest extends ConnectionManagerDataProvider {
+@Test
+public class UpdateTest {
 
-	@Test(dataProvider="connectionManagerDataProvider", timeOut=5000)
-	public void testSimpleUpdates(ConnectionManager connectionManager) throws InterruptedException {
+	private ConnectionManager connectionManager;
+
+	@Parameters({"url", "user", "password"})
+	@BeforeTest
+	public void createConnectionManager(String url, String user, String password) {
+		connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, password);
+	}
+
+	@AfterTest
+	public void closeConnectionManager() {
+		DbFuture<Void> closeFuture = connectionManager.close(true);
+		closeFuture.getUninterruptably();
+	}
+
+	public void testSimpleUpdates() throws InterruptedException {
 		Connection connection = connectionManager.connect().get();
 		assertNotNull(connection);
 

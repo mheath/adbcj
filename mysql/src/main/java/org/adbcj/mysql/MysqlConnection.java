@@ -73,7 +73,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 					}
 					@Override
 					public String toString() {
-						return "Closed MySQL session";
+						return "Close MySQL session";
 					}
 				};
 				closeRequest.setResult(null);

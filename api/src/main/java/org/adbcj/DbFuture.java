@@ -22,19 +22,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A <tt>DbFuture</tt> represents the result of an asynchronous database operation.  Methods are provided to check if
+ * A {@code DbFuture} represents the result of an asynchronous database operation.  Methods are provided to check if
  * the operation is complete, to wait for its completion, to retrieve the result of the operation, and to register
  * {@link DbListener} objects that will be invoked when the operation completes.  The result is retrieved using methods
- * {@link #get()}, {@link #get(long, TimeUnit), or {@link #getUninterruptably()} when the operation has completed.
- * These methods will block if necessary until the operation completes.  Cancellation is performed by the
- * {@link #cancel()} method.  Additional methods are provided to determine if the operation completed normally or was
- * cancelled. Once an operation has completed, it cannot be cancelled.  However, you may still use
+ * {@link #get()}, {@link #get(long, TimeUnit)}, or {@link #getUninterruptably()} when the operation has completed.
+ * These methods will block if necessary until the operation completes.  Cancellation is performed with
+ * {@link #cancel(boolean)}.  Additional methods are provided to determine if the operation completed normally or was
+ * cancelled.  Once an operation has completed, it cannot be cancelled.  However, you may still use
  * {@link #addListener(DbListener)} when an operation has completed and the {@link DbListener#onCompletion(DbFuture)}
  * method will be invoked immediately.
  *
  * @author Mike Heath
  *
- * @param <V> The result type returned by this <tt>DbFuture</tt>'s <tt>get</tt> methods
+ * @param <T> The result type returned by this {@code DbFuture}'s {@code get()} methods
  */
 public interface DbFuture<T> extends Future<T> {
 

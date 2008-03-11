@@ -54,6 +54,8 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		if (closeRequest != null) {
 			closeRequest.complete(null);
 		}
+		// TODO Make a DbSessionClosedException and use here
+		connection.errorPendingRequests(new DbException("Connection closed"));
 		logger.debug("IoSession closed");
 	}
 	
