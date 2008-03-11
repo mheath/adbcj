@@ -22,6 +22,7 @@
 		<module>mysql</module>
 		<module>postgresql</module>
 		<module>tck</module>
+                <module>perf</module>
 	</modules>
 	
 	<scm>
@@ -172,6 +173,18 @@
 				<groupId>${project.groupId}</groupId>
 				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+				<artifactId>slf4j-log4j12</artifactId>
+				<groupId>org.slf4j</groupId>
+				<version>1.4.3</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<artifactId>slf4j-nop</artifactId>
+				<groupId>org.slf4j</groupId>
+				<version>1.4.3</version>
+				<scope>test</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -182,12 +195,6 @@
 			<version>5.7</version>
 			<scope>test</scope>
 			<classifier>jdk15</classifier>
-		</dependency>
-		<dependency>
-			<artifactId>slf4j-log4j12</artifactId>
-			<groupId>org.slf4j</groupId>
-			<version>1.4.3</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
