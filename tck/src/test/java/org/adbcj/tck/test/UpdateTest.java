@@ -32,7 +32,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 
-@Test
+@Test(timeOut = 5000)
 public class UpdateTest {
 
 	private ConnectionManager connectionManager;

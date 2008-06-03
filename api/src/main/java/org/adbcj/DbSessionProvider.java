@@ -18,6 +18,11 @@ package org.adbcj;
 
 public interface DbSessionProvider {
 
-	DbFuture<? extends DbSession> connect();
+    /**
+     * Retrieves a new DbSession instance.
+     *
+     * @return  a DbFuture object that can be used to obtain a DbSession instance
+     */
+    DbFuture<? extends DbSession> connect();
 	
 }

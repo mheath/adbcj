@@ -41,7 +41,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test(invocationCount=50, threadPoolSize=10)
+@Test(invocationCount = 50, threadPoolSize = 10, timeOut = 30000)
 public class ConnectTest {
 	
 	private final Logger logger = LoggerFactory.getLogger(ConnectTest.class);

@@ -33,7 +33,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test
+@Test(timeOut = 5000)
 public class TransactionTest {
 
 	private ConnectionManager connectionManager;

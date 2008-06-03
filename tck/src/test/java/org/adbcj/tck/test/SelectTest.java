@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
 
 
 // TODO Write test for result set metadata
-@Test(invocationCount=50, threadPoolSize=10)
+@Test(invocationCount=50, threadPoolSize=10, timeOut = 50000)
 public class SelectTest {
 
 	private ConnectionManager connectionManager;
