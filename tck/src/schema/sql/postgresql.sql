@@ -29,3 +29,10 @@ CREATE TABLE adbcj_types (
   type_real real,
   type_smallint smallint
 );
+
+DROP TABLE IF EXISTS large;
+CREATE TABLE large (
+  a varchar(255),
+  b varchar(255),
+  c varchar(255)
+);

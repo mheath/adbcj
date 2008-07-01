@@ -12,7 +12,6 @@ import java.net.InetSocketAddress;
 import java.io.IOException;
 
 public class Test {
-	private static DbListener<ResultSet> listener;
 
 	/**
 	 * @param args
@@ -31,15 +30,14 @@ public class Test {
 
 //		DbSession session = connectionManager.connect().get();
 
-		for (int i = 0; i < 200; i++) {
-			listener = new DbListener<ResultSet>() {
-				public void onCompletion(DbFuture<ResultSet> future) throws Exception {
-					ResultSet rs = future.get();
-					logger.info("Connection id: {}", rs.get(0).get("id"));
-				}
-			};
+		DbListener<ResultSet> listener = new DbListener<ResultSet>() {
+			public void onCompletion(DbFuture<ResultSet> future) throws Exception {
+				ResultSet rs = future.get();
+				logger.info("Connection id: {}", rs.get(0).get("id"));
+			}
+		};
+		for (int i = 0; i < 1000; i++) {
 			session.executeQuery("SELECT connection_id() as id").addListener(listener);
-			session.executeQuery("SELECT uuid() as id").addListener(listener);
 		}
 
 		//connectionManager.close(true);
