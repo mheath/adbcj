@@ -67,7 +67,4 @@ public interface DbSession {
 	
 	boolean isClosed() throws DbException;
 
-	boolean isPipeliningEnabled();
-	
-	void setPipeliningEnabled(boolean pipeliningEnabled);
 }

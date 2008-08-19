@@ -100,8 +100,8 @@ public class ConnectSpecialCaseTest {
 		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(url, user, password);
 		try {
 			Connection lockingConnection = connectionManager.connect().get();
+			connectionManager.setPipeliningEnabled(false);
 			Connection connection = connectionManager.connect().get();
-			connection.setPipeliningEnabled(false);
 	
 			lockingConnection.beginTransaction();
 			TestUtils.selectForUpdate(lockingConnection).get();

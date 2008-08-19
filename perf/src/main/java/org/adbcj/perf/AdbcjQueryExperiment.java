@@ -1,9 +1,6 @@
 package org.adbcj.perf;
 
-import org.adbcj.Connection;
-import org.adbcj.ResultSet;
-import org.adbcj.DbListener;
-import org.adbcj.DbFuture;
+import org.adbcj.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +13,7 @@ public class AdbcjQueryExperiment extends AbstractAdbcjExperiment {
 	private final String query;
 	private final int count;
 
-	private Connection connection;
+	private DbSession connection;
 
 	public AdbcjQueryExperiment(Configuration configuration, String host, String query, int count) {
 		super(configuration, host);
@@ -27,8 +24,12 @@ public class AdbcjQueryExperiment extends AbstractAdbcjExperiment {
 	@Override
 	public void init() throws Exception {
 		super.init();
-		connection = getConnectionManager().connect().getUninterruptably();
-		connection.setPipeliningEnabled(getConfiguration().isPipelined());
+		getConnectionManager().setPipeliningEnabled(getConfiguration().isPipelined());
+		connection = getDbSession();
+	}
+
+	protected DbSession getDbSession() {
+		return getConnectionManager().connect().getUninterruptably();
 	}
 
 	public void execute() throws Exception {

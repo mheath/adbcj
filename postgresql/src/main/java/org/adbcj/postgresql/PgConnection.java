@@ -67,6 +67,7 @@ public class PgConnection extends AbstractDbSession implements Connection {
 	private static final DescribeMessage DEFAULT_DESCRIBE = DescribeMessage.createDescribePortalMessage(null);
 	
 	public PgConnection(PgConnectionManager connectionManager, PgConnectFuture connectFuture, IoSession session) {
+		super(connectionManager.isPipeliningEnabled());
 		this.connectionManager = connectionManager;
 		this.connectFuture = connectFuture;
 		this.session = session;

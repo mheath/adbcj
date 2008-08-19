@@ -55,6 +55,7 @@ public class JdbcConnection extends AbstractDbSession implements Connection {
 	private DbSessionFuture<Void> closeFuture;
 	
 	public JdbcConnection(JdbcConnectionManager connectionManager, java.sql.Connection jdbcConnection) {
+		super(false);
 		this.connectionManager = connectionManager;
 		this.jdbcConnection = jdbcConnection;
 	}

@@ -151,7 +151,7 @@ public class DbSessionPool implements DbSessionProvider {
 			// Start all the connections
 			// TODO This is not at all efficient, develop a better solution for this
 			for (int i = 0; i < connectionCount; i++) {
-				connectionManager.connect().addListener(connectionListener);
+				connectionManager.connect().addListener(connectionListener).getUninterruptably();
 			}
 
 		}

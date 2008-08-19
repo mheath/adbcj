@@ -55,25 +55,17 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			return false;
 		}
 
-		// Check to see if we've read the entire message
-		int length;
-		try {
-			in.mark();
-			in.get(); // Throw away type
-			length = in.getInt() - 4;  // Subtract 4 because we don't want to include the length field itself
-			if (in.remaining() < length) {
-				logger.trace("Need more data");
-				return false;
-			}
-		} finally {
-			in.reset();
-		}
-		
-		// Get the type and length
+		in.mark();
 		byte typeValue = in.get();
+		int length = in.getInt() - 4;  // Subtract 4 because we don't want to include the length field itself
+		// Make sure enough data has been received to process the message
+		if (in.remaining() < length) {
+			logger.trace("Need more data");
+			in.reset();
+			return false;
+		}
 		BackendMessageType type = BackendMessageType.fromValue(typeValue);
-		in.getInt(); // Throw away length because we've already fetched it
-		
+
 		// Create a buffer for just the current message being processed
 		//IoBuffer buffer = in.duplicate();
 		final int originalLimit = in.limit();

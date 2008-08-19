@@ -49,7 +49,9 @@ public class JdbcConnectionManager implements ConnectionManager {
 	private final Set<JdbcConnection> connections = new HashSet<JdbcConnection>(); // Access must be synchronized on lock 
 	
 	private volatile DefaultDbFuture<Void> closeFuture;
-	
+
+	private volatile boolean pipeliningEnabled = false;
+
 	public JdbcConnectionManager(String jdbcUrl, String username,
 			String password, Properties properties) {
 		this.jdbcUrl = jdbcUrl;
@@ -157,7 +159,15 @@ public class JdbcConnectionManager implements ConnectionManager {
 			return connections.remove(connection);
 		}
 	}
-	
+
+	public boolean isPipeliningEnabled() {
+		return pipeliningEnabled;
+	}
+
+	public void setPipeliningEnabled(boolean pipeliningEnabled) {
+		this.pipeliningEnabled = pipeliningEnabled;
+	}
+
 	@Override
 	public String toString() {
 		return String.format("%s: %s (user: %s)", getClass().getName(), jdbcUrl, properties.get(USER));

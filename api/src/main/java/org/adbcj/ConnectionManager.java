@@ -52,6 +52,23 @@ public interface ConnectionManager extends DbSessionProvider {
 	 * 
 	 * @return  true if this {@code ConnectionManager} is closed, false otherwise.
 	 */
-	boolean isClosed(); 
+	boolean isClosed();
+
+	/**
+	 * Indicates if pipelining is enabled.  If pipelining is enabled, new connections will be pipelined.
+	 *
+	 * <p>Pipelined connections send multiple requests to the server without waiting for previous requests to complete.
+	 *
+	 * @return  true if pipelining is enabled, false otherwise.
+	 */
+	boolean isPipeliningEnabled();
+
+	/**
+	 * Changes if pipelinging is enabled or not.
+	 *
+	 * @param pipeliningEnabled  true if subsequent connections should be pipelined, false otherwise.
+	 * @see #isPipeliningEnabled()
+	 */
+	void setPipeliningEnabled(boolean pipeliningEnabled);
 
 }

@@ -45,23 +45,12 @@ public abstract class AbstractDbSession implements DbSession {
 	
 	private Transaction transaction; // Access must by synchronized on lock
 	
-	private volatile boolean pipeliningEnabled = true;
+	private final boolean pipelined;
 	
 	private boolean pipelining = false; // Access must be synchronized on lock
-	
-	@Override
-	public boolean isPipeliningEnabled() {
-		return pipeliningEnabled;
-	}
-	
-	@Override
-	public void setPipeliningEnabled(boolean pipeliningEnabled) {
-		this.pipeliningEnabled = pipeliningEnabled;
-		if (!pipeliningEnabled) {
-			synchronized (lock) {
-				pipelining = false;
-			}
-		}
+
+	protected AbstractDbSession(boolean pipelined) {
+		this.pipelined = pipelined;
 	}
 	
 	protected <E> void enqueueRequest(final Request<E> request) {
@@ -98,7 +87,7 @@ public abstract class AbstractDbSession implements DbSession {
 			request = (Request<E>)requestQueue.poll();
 		
 			// Determine if we need to execute pipelinable requests
-			if (pipeliningEnabled && request != null) {
+			if (pipelined && request != null) {
 				if (request.isPipelinable()) {
 					executePipelining = !pipelining;
 				} else {

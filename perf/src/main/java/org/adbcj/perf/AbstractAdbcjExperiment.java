@@ -1,7 +1,8 @@
 package org.adbcj.perf;
 
-import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbSessionProvider;
+import org.adbcj.ConnectionManager;
 
 /**
  *

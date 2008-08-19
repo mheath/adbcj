@@ -42,7 +42,10 @@ public class SelectBenchMark {
 		Adbcj.init();
 
 		ConnectionManager mysqlConnectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
+		mysqlConnectionManager.setPipeliningEnabled(false);
 		DbSession session = mysqlConnectionManager.connect().get();
+		mysqlConnectionManager.setPipeliningEnabled(true);
+		DbSession pipelinedSession = mysqlConnectionManager.connect().get();
 
 		DbSessionPool sessionPool = new DbSessionPool();
 		sessionPool.addConnectionManager(mysqlConnectionManager, 5);
@@ -52,105 +55,89 @@ public class SelectBenchMark {
 		SelectBenchMark benchMark = new SelectBenchMark();
 
 		System.out.println("MySQL - Micro Warm Up");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small Warm Up");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(false);
 		System.out.println("MySQL - Micro - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - No Pipe");
 		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
 
-		session.setPipeliningEnabled(true);
 		System.out.println("MySQL - Micro - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT 1", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT 1", 1000);
 		System.out.println("MySQL - Small - Pipe");
-		benchMark.benchMarkSelect(session, "SELECT * FROM simple_values", 1000);
+		benchMark.benchMarkSelect(pipelinedSession, "SELECT * FROM simple_values", 1000);
 
 		System.out.println("MySQL Pool - Micro - Pipe");
 		benchMark.benchMarkSelect(pooledSession, "SELECT 1", 1000);

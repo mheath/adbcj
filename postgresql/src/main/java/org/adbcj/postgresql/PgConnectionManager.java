@@ -63,6 +63,8 @@ public class PgConnectionManager implements ConnectionManager {
 	
 	private DefaultDbFuture<Void> closeFuture = null;
 
+	private volatile boolean pipeliningEnabled = true;
+
 	public PgConnectionManager(String host, int port, String username, String password, String database,
 			Properties properties) {
 		logger.debug("Creating new PostgresqlConnectionManager");
@@ -147,6 +149,14 @@ public class PgConnectionManager implements ConnectionManager {
 		return closeFuture != null;
 	}
 	
+	public boolean isPipeliningEnabled() {
+		return pipeliningEnabled;
+	}
+
+	public void setPipeliningEnabled(boolean pipeliningEnabled) {
+		this.pipeliningEnabled = pipeliningEnabled;
+	}
+
 	// ================================================================================================================
 	//
 	// Non-API methods
@@ -164,7 +174,7 @@ public class PgConnectionManager implements ConnectionManager {
 	public String getPassword() {
 		return password;
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format("Postgresql Connection Manager (Db: '%s', User: '%s')", database, username);

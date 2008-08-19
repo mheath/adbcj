@@ -50,6 +50,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 	private Request<Void> closeRequest;
 	
 	public MysqlConnection(ConnectionManager connectionManager, MysqlConnectFuture connectFuture, IoSession session, LoginCredentials credentials, int id) {
+		super(connectionManager.isPipeliningEnabled());
 		this.connectionManager = connectionManager;
 		this.connectFuture = connectFuture;
 		this.session = session;

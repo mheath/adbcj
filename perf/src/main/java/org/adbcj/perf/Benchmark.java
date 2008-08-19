@@ -18,6 +18,7 @@ public class Benchmark {
 			host = args[0];
 		} else {
 			host = "localhost";
+			//host = "10.108.37.26";
 		}
 		System.out.println("Database Host: " + host);
 
@@ -114,11 +115,54 @@ public class Benchmark {
 		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_JDBC,  host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING,  host, "INSERT INTO updates (id) VALUES (%d)", count));
 
+		// === Multiplexing benchmarks ===
+
+		final int MAX_CONNECTIONS = 50;
+		final int multiplexCount = MAX_CONNECTIONS * 4;
+
+		// Select tiny
+		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
+			Group mxSelectTiny = new Group("Multiplex Select Tiny " + i);
+			groups.add(mxSelectTiny);
+			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, tinyQuery, multiplexCount, i));
+			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, tinyQuery, multiplexCount, i));
+			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
+			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, tinyQuery, multiplexCount, i));
+			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, tinyQuery, multiplexCount, i));
+			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
+		}
+
+		// Select small
+		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
+			Group mxSelectSmall = new Group("Multiplex Select Small " + i);
+			groups.add(mxSelectSmall);
+			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, smallQuery, multiplexCount, i));
+			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, smallQuery, multiplexCount, i));
+			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, smallQuery, multiplexCount, i));
+			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, smallQuery, multiplexCount, i));
+			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, smallQuery, multiplexCount, i));
+			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, smallQuery, multiplexCount, i));
+		}
+
+		// Select large
+		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
+			Group mxSelectLarge = new Group("Multiplex Select Large " + i);
+			groups.add(mxSelectLarge);
+			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, largeQuery, multiplexCount, i));
+			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, largeQuery, multiplexCount, i));
+			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, largeQuery, multiplexCount, i));
+			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, largeQuery, multiplexCount, i));
+			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, largeQuery, multiplexCount, i));
+			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, largeQuery, multiplexCount, i));
+		}
+
+
 		// Run experiments
 		List<Experiment> experiments = new ArrayList<Experiment>();
 		for (Group group: groups) {
 			experiments.addAll(group.getExperiments());
 		}
+		System.out.println("Warm up JIT");
 		// Run each experiment twice to warm up JIT
 		runAll(experiments);
 		runAll(experiments);
@@ -130,12 +174,14 @@ public class Benchmark {
 
 
 		// Run all experiments
+		System.out.println("Run all");
 		for (int i = 0; i < 25; i++) {
 			Collections.shuffle(experiments);
 			runAll(experiments);
 		}
 
 		// Ouput results
+		System.out.println("Output results");
 		for (Group group: groups) {
 			final PrintStream out = new PrintStream(group.getName() + ".txt");
 			group.dump(out, true);

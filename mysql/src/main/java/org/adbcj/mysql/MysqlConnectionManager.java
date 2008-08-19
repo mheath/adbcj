@@ -63,6 +63,8 @@ public class MysqlConnectionManager implements ConnectionManager {
 			return ENCODER;
 		}
 	};
+
+	private volatile boolean pipeliningEnabled = true;
 	
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties) {
 		socketConnector = new NioSocketConnector();
@@ -142,7 +144,15 @@ public class MysqlConnectionManager implements ConnectionManager {
 			return true;
 		}
 	}
-	
+
+	public boolean isPipeliningEnabled() {
+		return pipeliningEnabled;
+	}
+
+	public void setPipeliningEnabled(boolean pipeliningEnabled) {
+		this.pipeliningEnabled = pipeliningEnabled;
+	}
+
 	public void removeConnection(MysqlConnection connection) {
 		synchronized (connections) {
 			connections.remove(connection);
