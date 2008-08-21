@@ -98,14 +98,6 @@ public class DbSessionPool implements DbSessionProvider {
 			public boolean isClosed() throws DbException {
 				return closed;
 			}
-
-			public boolean isPipeliningEnabled() {
-				return false;
-			}
-
-			public void setPipeliningEnabled(boolean pipeliningEnabled) {
-				throw new IllegalStateException("Can't change pipelining on pooled session");
-			}
 		});
 		return future;
 	}
@@ -122,7 +114,7 @@ public class DbSessionPool implements DbSessionProvider {
 		}
 	}
 
-	private class ConnectionManagerEntry {
+	private static class ConnectionManagerEntry {
 		// Access must be syncrhonized on entryLock
 		private List<DbSession> sessions;
 

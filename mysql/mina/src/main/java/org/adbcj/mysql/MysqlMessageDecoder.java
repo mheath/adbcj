@@ -20,13 +20,13 @@ import java.nio.ByteOrder;
 import java.nio.charset.CharacterCodingException;
 import java.util.Set;
 
-import org.apache.mina.common.IoBuffer;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
-import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.adbcj.DbException;
 import org.adbcj.Value;
 import org.adbcj.support.DefaultValue;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
+import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +67,7 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 		if (in.remaining() < 3) {
 			return false;
 		}
-		
+
 		// Read the packet length and determine if the buffer is big enough
 		in.mark();
 		final int length = in.getUnsignedMediumInt();
@@ -77,11 +77,11 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 			return false;
 		}
 		final byte packetNumber = in.get();
-		
+
 		final int originalLimit = in.limit();
 		try {
 			in.limit(in.position() + length);
-			
+
 			logger.debug("Decoding in state {}", state);
 			switch (state) {
 			case CONNECTING:
@@ -103,34 +103,34 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 					throw new IllegalStateException("Did not expect an EOF response from the server");
 				} else {
 					// Must be receiving result set header
-	
+
 					// Rewind the buffer to read the binary length encoding
 					in.position(in.position() - 1);
-	
+
 					// Get the number of fields. The largest this can be is a 24-bit
 					// integer so cast to int is ok
 					fieldPacketCount = (int)getBinaryLengthEncoding(in);
 					fields = new MysqlField[fieldPacketCount];
 					logger.trace("Field count {}", fieldPacketCount);
-					
+
 					Long extra = null;
 					if (in.remaining() > 0) {
 						extra = getBinaryLengthEncoding(in);
 					}
-	
+
 					// Create result set response
 					logger.debug("Sending result set response up filter chain");
 					ResultSetResponse resultSetResponse = new ResultSetResponse(length, packetNumber,
 							fieldPacketCount, extra);
 					out.write(resultSetResponse);
-	
+
 					state = State.FIELD;
 				}
 				break;
 			case FIELD:
 				ResultSetFieldResponse resultSetFieldResponse = decodeFieldResponse(in, length, packetNumber);
 				out.write(resultSetFieldResponse);
-	
+
 				fieldPacketCount--;
 				logger.trace("fieldPacketCount: {}", fieldPacketCount);
 				if (fieldPacketCount == 0) {
@@ -141,7 +141,7 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 				EofResponse fieldEof = decodeEofResponse(in, length, packetNumber, EofResponse.Type.FIELD);
 				out.write(fieldEof);
 				out.flush();
-	
+
 				state = State.ROW;
 				fieldIndex = 0;
 				break;
@@ -152,21 +152,21 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 					EofResponse rowEof = decodeEofResponse(in, length, packetNumber, EofResponse.Type.ROW);
 					out.write(rowEof);
 					out.flush();
-	
+
 					state = State.RESPONSE;
-	
+
 					break;
 				}
-	
+
 				Value[] values = new Value[fields.length];
 				for (MysqlField field : fields) {
 					Object value = null;
 					if (in.get() != NULL_VALUE) {
 						in.position(in.position() - 1);
-						
+
 						// We will have to move this as some datatypes will not be sent across the wire as strings
 						String strVal = decodeLengthCodedString(in);
-						
+
 						switch (field.getColumnType()) {
 						case TINYINT:
 							value = Byte.valueOf(strVal);
@@ -190,7 +190,7 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 			default:
 				throw new MysqlException(connection, "Unkown decoder state " + state);
 			}
-	
+
 			if (in.hasRemaining()) {
 				throw new IllegalStateException(String.format("Buffer has %d remaining bytes after decoding", in.remaining()));
 			}
@@ -198,9 +198,9 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 			in.limit(originalLimit);
 		}
 		return in.hasRemaining();
-		
+
 	}
-	
+
 	protected ErrorResponse decodeErrorResponse(IoBuffer buffer, int length, byte packetNumber)
 			throws CharacterCodingException {
 		int errorNumber = buffer.getUnsignedShort();

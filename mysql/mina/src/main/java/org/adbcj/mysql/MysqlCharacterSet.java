@@ -20,7 +20,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
-import org.apache.mina.common.IoBuffer;
+import org.apache.mina.core.buffer.IoBuffer;
 
 public enum MysqlCharacterSet {
 	BIG5_CHINESE_CI      ((byte)1, "Big5"),
@@ -149,11 +149,11 @@ public enum MysqlCharacterSet {
 	UTF8_PERSIAN_CI      ((byte)208, "UTF-8"),
 	UTF8_ESPERANTO_CI    ((byte)209, "UTF-8"),
 	UTF8_HUNGARIAN_CI    ((byte)210, "UTF-8");
-	 
+
 	private byte id;
 	private String charsetName;
 	private Charset charset;
-	 
+
 	MysqlCharacterSet(byte id, String charsetName) {
 		 this.id = id;
 		 this.charsetName = charsetName;
@@ -163,7 +163,7 @@ public enum MysqlCharacterSet {
 			 this.charset = null;
 		 }
 	 }
-	 
+
 	public static MysqlCharacterSet findById(int id) {
 		 for (MysqlCharacterSet charset : values()) {
 			 if (charset.id == id) {
@@ -172,19 +172,19 @@ public enum MysqlCharacterSet {
 		 }
 		 return null;
 	 }
-	 
+
 	public String getCharsetName() {
 		return charsetName;
 	}
-	 
+
 	public Charset getCharset() {
 		return charset;
 	}
-	 
+
 	public byte getId() {
 		return id;
 	}
-	 
+
 	 public int encodedLength(CharSequence s) throws CharacterCodingException {
 		 if (s == null || s.length() == 0) {
 			 return 0;
@@ -195,7 +195,7 @@ public enum MysqlCharacterSet {
 		 IoBuffer buf = IoBuffer.allocate(1024);
 		 buf.setAutoExpand(true);
 		 buf.putString(s, charset.newEncoder());
-		 
+
 		 return buf.position();
 	 }
 }

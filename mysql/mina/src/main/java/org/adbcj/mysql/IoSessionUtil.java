@@ -16,10 +16,11 @@
  */
 package org.adbcj.mysql;
 
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.session.IoSession;
+
 
 public class IoSessionUtil {
-	
+
 	private static final String CONNECTION_KEY = IoSessionUtil.class.getName() + ".connection";
 
 	public static MysqlConnection getMysqlConnection(IoSession session) {
@@ -30,7 +31,7 @@ public class IoSessionUtil {
 		}
 		return connection;
 	}
-	
+
 	public static void setMysqlConnection(IoSession session, MysqlConnection connection) {
 		session.setAttribute(CONNECTION_KEY, connection);
 	}

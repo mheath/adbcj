@@ -16,6 +16,12 @@
 	<url>http://adbcj.org/</url>
 	<inceptionYear>2007</inceptionYear>
 
+	<properties>
+		<slf4j.version>1.5.2</slf4j.version>
+		<mina.version>2.0.0-M3</mina.version>
+		<netty.version>3.0.0.CR1</netty.version>
+	</properties>
+
 	<modules>
 		<module>api</module>
 		<module>jdbc</module>
@@ -24,13 +30,13 @@
 		<module>tck</module>
 		<module>perf</module>
 	</modules>
-	
+
 	<scm>
 		<url>http://adbcj.googlecode.com/svn/adbcj/trunk</url>
 		<connection>scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk</connection>
 		<developerConnection>scm:svn:https://adbcj.googlecode.com/svn/adbcj/trunk</developerConnection>
 	</scm>
-	
+
 	<issueManagement>
 		<system>google</system>
 		<url>http://code.google.com/p/adbcj/issues/list</url>
@@ -62,10 +68,19 @@
 	<repositories>
 		<repository>
 			<id>apache.snapshots</id>
-			<url>http://people.apache.org/repo/m2-snapshot-repository/</url>
+			<url>
+				http://people.apache.org/repo/m2-snapshot-repository/
+			</url>
+		</repository>
+		<repository>
+			<id>repository.jboss.org</id>
+			<url>http://repository.jboss.org/maven2</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
-	
+
 	<pluginRepositories>
 		<pluginRepository>
 			<id>apache.snapshots</id>
@@ -164,7 +179,12 @@
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<artifactId>adbcj-mysql</artifactId>
+				<artifactId>mysql-mina</artifactId>
+				<groupId>${project.groupId}</groupId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<artifactId>mysql-netty</artifactId>
 				<groupId>${project.groupId}</groupId>
 				<version>${project.version}</version>
 			</dependency>
@@ -173,16 +193,21 @@
 				<groupId>${project.groupId}</groupId>
 				<version>${project.version}</version>
 			</dependency>
+	        <dependency>
+	            <artifactId>slf4j-api</artifactId>
+	            <groupId>org.slf4j</groupId>
+	            <version>${slf4j.version}</version>
+	        </dependency>
 			<dependency>
 				<artifactId>slf4j-log4j12</artifactId>
 				<groupId>org.slf4j</groupId>
-				<version>1.4.3</version>
+				<version>${slf4j.version}</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
 				<artifactId>slf4j-nop</artifactId>
 				<groupId>org.slf4j</groupId>
-				<version>1.4.3</version>
+				<version>${slf4j.version}</version>
 				<scope>test</scope>
 			</dependency>
 		</dependencies>

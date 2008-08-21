@@ -31,12 +31,12 @@ public class DefaultRow extends AbstractMap<Object, Value> implements Row {
 
 	private final ResultSet resultSet;
 	private final Value[] values;
-	
+
 	private transient Set<java.util.Map.Entry<Object, Value>> entrySet;
-	
+
 	public DefaultRow(ResultSet resultSet, Value... values) {
 		this.resultSet = resultSet;
-		this.values = values;
+		this.values = values.clone();
 	}
 
 	@Override
@@ -54,34 +54,34 @@ public class DefaultRow extends AbstractMap<Object, Value> implements Row {
 	public ResultSet getResultSet() {
 		return resultSet;
 	}
-	
+
 	@Override
 	public int size() {
 		return values.length;
 	}
-	
+
 	@Override
 	public boolean containsKey(Object key) {
 		return resultSet.getField(key) != null;
 	}
-	
+
 	@Override
 	public Value get(Object key) {
 		Field field = resultSet.getField(key);
 		return values[field.getIndex()];
 	}
-	
+
 	@Override
 	public Value remove(Object key) {
 		throw new UnsupportedOperationException("Results set rows are read-only");
 	}
-	
+
 	@Override
 	public void clear() {
 		throw new UnsupportedOperationException("Results set rows are read-only");
 	}
-	
+
 	public Value[] getValues() {
-		return values;
+		return values.clone();
 	}
 }

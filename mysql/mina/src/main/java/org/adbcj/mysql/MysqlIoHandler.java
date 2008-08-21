@@ -26,26 +26,26 @@ import org.adbcj.Value;
 import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.AbstractDbSession.Request;
-import org.apache.mina.common.IoHandlerAdapter;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MysqlIoHandler extends IoHandlerAdapter {
-	
+
 	private final Logger logger = LoggerFactory.getLogger(MysqlIoHandler.class);
-	
+
 	private final MysqlConnectionManager connectionManager;
-	
+
 	public MysqlIoHandler(MysqlConnectionManager connectionManager) {
 		this.connectionManager = connectionManager;
 	}
-	
+
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
 		logger.debug("IoSession created");
 	}
-	
+
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
@@ -58,7 +58,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		connection.errorPendingRequests(new DbException("Connection closed"));
 		logger.debug("IoSession closed");
 	}
-	
+
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
 		logger.debug("Caught exception: ", cause);
@@ -118,7 +118,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 		// Save server greeting
 		connection.setServerGreeting(serverGreeting);
-		
+
 		// Send Login request
 		LoginRequest request = new LoginRequest(connection.getCredentials(), connection.getClientCapabilities(), connection.getExtendedClientCapabilities(), connection.getCharacterSet());
 		session.write(request);
@@ -126,9 +126,9 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 	private void handleOkResponse(IoSession session, OkResponse response) {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		
+
 		logger.debug("Response '{}' on connection {}", response, connection);
-				
+
 		List<String> warnings = null;
 		if (response.getWarningCount() > 0) {
 			warnings = new LinkedList<String>();
@@ -138,14 +138,14 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		}
 
 		logger.debug("Warnings: {}", warnings);
-		
+
 		Request<Result> activeRequest = connection.getActiveRequest();
 		if (activeRequest == null) {
 			// TODO Do we need to pass the warnings on to the connection?
 			MysqlConnectFuture connectFuture = connection.getConnectFuture();
 			if (!connectFuture.isDone() ) {
 				connectFuture.setResult(connection);
-				
+
 				return;
 			} else {
 				throw new IllegalStateException("Received an OkResponse with no activeRequest " + response);

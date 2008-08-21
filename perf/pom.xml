@@ -4,7 +4,7 @@
 		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<parent>
 		<groupId>org.adbcj</groupId>
 		<artifactId>adbcj</artifactId>
@@ -14,7 +14,7 @@
 	<artifactId>adbcj-perf</artifactId>
 	<packaging>jar</packaging>
 	<name>ADBCJ - Perf</name>
-	
+
 	<dependencies>
 		<dependency>
 			<artifactId>adbcj-api</artifactId>
@@ -25,7 +25,7 @@
 			<groupId>${project.groupId}</groupId>
 		</dependency>
 		<dependency>
-			<artifactId>adbcj-mysql</artifactId>
+			<artifactId>mysql-mina</artifactId>
 			<groupId>${project.groupId}</groupId>
 		</dependency>
 		<dependency>
@@ -53,5 +53,5 @@
             <version>1.2</version>
 		</dependency>
 	</dependencies>
-	
+
 </project>

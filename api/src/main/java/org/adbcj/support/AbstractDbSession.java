@@ -34,25 +34,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractDbSession implements DbSession {
-	
+
 	private final Logger logger = LoggerFactory.getLogger(AbstractDbSession.class);
 
 	protected final Object lock = this;
-	
+
 	protected final Queue<Request<?>> requestQueue = new ConcurrentLinkedQueue<Request<?>>();
-	
+
 	private Request<?> activeRequest; // Access must by synchronized on lock
-	
+
 	private Transaction transaction; // Access must by synchronized on lock
-	
+
 	private final boolean pipelined;
-	
+
 	private boolean pipelining = false; // Access must be synchronized on lock
 
 	protected AbstractDbSession(boolean pipelined) {
 		this.pipelined = pipelined;
 	}
-	
+
 	protected <E> void enqueueRequest(final Request<E> request) {
 		// Check to see if the request can be pipelined
 		if (request.isPipelinable()) {
@@ -63,7 +63,7 @@ public abstract class AbstractDbSession implements DbSession {
 				if (request.isDone()) {
 					return;
 				}
-				
+
 			}
 		} else {
 			pipelining = false;
@@ -75,7 +75,7 @@ public abstract class AbstractDbSession implements DbSession {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected final <E> Request<E> makeNextRequestActive() {
 		Request<E> request;
@@ -85,7 +85,7 @@ public abstract class AbstractDbSession implements DbSession {
 				throw new ActiveRequestIncomplete(this, "Active request is not done: " + activeRequest);
 			}
 			request = (Request<E>)requestQueue.poll();
-		
+
 			// Determine if we need to execute pipelinable requests
 			if (pipelined && request != null) {
 				if (request.isPipelinable()) {
@@ -94,7 +94,7 @@ public abstract class AbstractDbSession implements DbSession {
 					pipelining = false;
 				}
 			}
-			
+
 			activeRequest = request;
 		}
 		if (request != null) {
@@ -110,7 +110,7 @@ public abstract class AbstractDbSession implements DbSession {
 					Request<?> next = iterator.next();
 					if (next.isPipelinable()) {
 						invokeExecuteWithCatch(next);
-						
+
 						// If there are nore more requests to iterate over, put DbSession in pipelining enabled state
 						if (!iterator.hasNext()) {
 							pipelining = true;
@@ -121,9 +121,9 @@ public abstract class AbstractDbSession implements DbSession {
 					}
 				}
 			}
-			
+
 		}
-		
+
 		return request;
 	}
 
@@ -134,21 +134,21 @@ public abstract class AbstractDbSession implements DbSession {
 			request.error(DbException.wrap(this, e));
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected <E> Request<E> getActiveRequest() {
 		synchronized (lock) {
 			return (Request<E>)activeRequest;
 		}
 	}
-	
+
 	protected void cancelPendingRequests(boolean mayInterruptIfRunning) {
 		for (Iterator<Request<?>> i = requestQueue.iterator(); i.hasNext();) {
 			Request<?> request = i.next();
 			request.cancel(mayInterruptIfRunning);
 		}
 	}
-	
+
 	/**
 	 * This will error out any pending requests.
 	 */
@@ -169,10 +169,10 @@ public abstract class AbstractDbSession implements DbSession {
 			}
 		}
 	}
-	
+
 	/**
 	 * Throws {@link DbSessionClosedException} if session is closed
-	 * 
+	 *
 	 * @throws  if {@link DbSession} is closed.
 	 */
 	protected abstract void checkClosed() throws DbSessionClosedException;
@@ -202,7 +202,7 @@ public abstract class AbstractDbSession implements DbSession {
 			}
 			public void value(Value value, DefaultResultSet accumulator) {
 				logger.trace("ResultSetEventHandler: value");
-				
+
 				DefaultRow lastRow = (DefaultRow)accumulator.get(accumulator.size() - 1);
 				lastRow.getValues()[value.getField().getIndex()] = value;
 			}
@@ -223,13 +223,13 @@ public abstract class AbstractDbSession implements DbSession {
 	private <T extends ResultSet> DbSessionFuture<ResultSet> executeQuery0(String sql, ResultEventHandler<T> eventHandler, T accumulator) {
 		return (DbSessionFuture<ResultSet>)executeQuery(sql, eventHandler, accumulator);
 	}
-	
+
 	//*****************************************************************************************************************
 	//
-	//  Transaction methods 
+	//  Transaction methods
 	//
 	//*****************************************************************************************************************
-	
+
 	public boolean isInTransaction() {
 		checkClosed();
 		synchronized (lock) {
@@ -265,7 +265,7 @@ public abstract class AbstractDbSession implements DbSession {
 		}
 		return future;
 	}
-	
+
 	public DbSessionFuture<Void> rollback() {
 		checkClosed();
 		if (!isInTransaction()) {
@@ -315,7 +315,7 @@ public abstract class AbstractDbSession implements DbSession {
 		Request<Void> request = createCommitRequest(transaction);
 		enqueueTransactionalRequest(transaction, request);
 		return request;
-		
+
 	}
 
 	private Request<Void> enqueueRollback(Transaction transaction) {
@@ -339,17 +339,17 @@ public abstract class AbstractDbSession implements DbSession {
 	protected abstract void sendCommit() throws Exception;
 
 	protected abstract void sendRollback() throws Exception;
-	
+
 	protected Request<Void> createBeginRequest(final Transaction transaction) {
 		return new BeginRequest(transaction);
 	}
-	
+
 	protected Request<Void> createCommitRequest(final Transaction transaction) {
 		return new CommitRequest(transaction);
 	}
-	
+
 	/**
-	 * Default request for starting a transaction. 
+	 * Default request for starting a transaction.
 	 */
 	protected class BeginRequest extends Request<Void> {
 		private final Transaction transaction;
@@ -369,7 +369,7 @@ public abstract class AbstractDbSession implements DbSession {
 	}
 
 	/**
-	 * Default request for committing a transaction. 
+	 * Default request for committing a transaction.
 	 */
 	protected class CommitRequest extends Request<Void> {
 		private final Transaction transaction;
@@ -397,12 +397,12 @@ public abstract class AbstractDbSession implements DbSession {
 			transaction.cancelPendingRequests();
 			return true;
 		}
-		
+
 		@Override
 		public boolean canRemove() {
 			return false;
 		}
-		
+
 		@Override
 		public boolean isPipelinable() {
 			return false;
@@ -410,7 +410,7 @@ public abstract class AbstractDbSession implements DbSession {
 	}
 
 	/**
-	 * Default request for rolling back a transaction. 
+	 * Default request for rolling back a transaction.
 	 */
 	protected class RollbackRequest extends Request<Void> {
 		@Override
@@ -426,30 +426,30 @@ public abstract class AbstractDbSession implements DbSession {
 	}
 
 	public abstract class Request<T> extends DefaultDbSessionFuture<T> {
-		
+
 		private final ResultEventHandler<T> eventHandler;
 		private final T accumulator;
 
 		private volatile Object payload;
 		private volatile Transaction transaction;
-		
-		private boolean cancelled; // Access must be synchronized on this 
+
+		private boolean cancelled; // Access must be synchronized on this
 		private boolean executed; // Access must be synchronized on this
-		
+
 		public Request() {
 			this(null, null);
 		}
-		
+
 		public Request(ResultEventHandler<T> eventHandler, T accumulator) {
 			super(AbstractDbSession.this);
 			this.eventHandler = eventHandler;
 			this.accumulator = accumulator;
 		}
-		
+
 		/**
 		 * Checks to see if the request has been cancelled, if not invokes the execute method.  If pipelining, this
 		 * method ensures the request does not get executed twice.
-		 * 
+		 *
 		 * @throws Exception
 		 */
 		public final synchronized void invokeExecute() throws Exception {
@@ -464,13 +464,13 @@ public abstract class AbstractDbSession implements DbSession {
 				execute();
 			}
 		}
-		
+
 		public final synchronized boolean doCancel(boolean mayInterruptIfRunning) {
 			if (executed) {
 				return false;
 			}
 			cancelled = cancelRequest(mayInterruptIfRunning);
-			
+
 			// The the request was cancelled and it can be removed
 			if (cancelled && canRemove()) {
 					// Remove the quest and if the removal was successful and this request is active, go to the next request
@@ -484,9 +484,9 @@ public abstract class AbstractDbSession implements DbSession {
 			}
 			return cancelled;
 		}
-		
+
 		protected abstract void execute() throws Exception;
-		
+
 		protected boolean cancelRequest(boolean mayInterruptIfRunning) {
 			return true;
 		}
@@ -494,7 +494,7 @@ public abstract class AbstractDbSession implements DbSession {
 		public boolean canRemove() {
 			return true;
 		}
-		
+
 		public boolean isPipelinable() {
 			return true;
 		}
@@ -510,11 +510,11 @@ public abstract class AbstractDbSession implements DbSession {
 		public T getAccumulator() {
 			return accumulator;
 		}
-		
+
 		public ResultEventHandler<T> getEventHandler() {
 			return eventHandler;
 		}
-		
+
 		public Transaction getTransaction() {
 			return transaction;
 		}
@@ -522,7 +522,7 @@ public abstract class AbstractDbSession implements DbSession {
 		public void setTransaction(Transaction transaction) {
 			this.transaction = transaction;
 		}
-		
+
 		public void complete(T result) {
 			super.setResult(result);
 			synchronized (lock) {
@@ -531,7 +531,7 @@ public abstract class AbstractDbSession implements DbSession {
 				}
 			}
 		}
-		
+
 		public void error(DbException exception) {
 			super.setException(exception);
 			if (transaction != null) {
@@ -545,29 +545,29 @@ public abstract class AbstractDbSession implements DbSession {
 		}
 	}
 
-	public class Transaction {
+	public static class Transaction {
 
 		private volatile boolean started = false;
 		private volatile boolean beginScheduled = false;
 		private volatile boolean canceled = false;
 		private List<Request<?>> requests = new LinkedList<Request<?>>();
-		
+
 		/**
 		 * Indicates if the transaction has been started on the server (i.e. if 'begin' has been sent to server)
-		 * 
+		 *
 		 * @return  true if 'begin' has been sent to the server, false otherwise
 		 */
 		public boolean isStarted() {
 			return started;
 		}
-		
+
 		public void setStarted(boolean started) {
 			this.started = started;
 		}
-		
+
 		/**
 		 * Indicates if 'begin' has been scheduled to be sent to remote database server but not necessarily sent.
-		 * 
+		 *
 		 * @return true if 'begin' has been queued to be sent to the remote database server, false otherwise.
 		 */
 		public boolean isBeginScheduled() {
@@ -584,11 +584,11 @@ public abstract class AbstractDbSession implements DbSession {
 				requests.add(request);
 			}
 		}
-		
+
 		public boolean isCanceled() {
 			return canceled;
 		}
-		
+
 		public void cancelPendingRequests() {
 			canceled = true;
 			synchronized (requests) {
@@ -597,7 +597,7 @@ public abstract class AbstractDbSession implements DbSession {
 				}
 			}
 		}
-		
+
 	}
 
 }

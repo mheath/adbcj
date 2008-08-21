@@ -30,7 +30,7 @@ import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
 import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.support.AbstractDbSession;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,17 +38,17 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 	private final Logger logger = LoggerFactory.getLogger(MysqlConnection.class);
 
 	private final int id;
-	
+
 	private final ConnectionManager connectionManager;
 	private final MysqlConnectFuture connectFuture;
-	
+
 	private final IoSession session;
 
 	private final LoginCredentials credentials;
 	private ServerGreeting serverGreeting;
 
 	private Request<Void> closeRequest;
-	
+
 	public MysqlConnection(ConnectionManager connectionManager, MysqlConnectFuture connectFuture, IoSession session, LoginCredentials credentials, int id) {
 		super(connectionManager.isPipeliningEnabled());
 		this.connectionManager = connectionManager;
@@ -57,7 +57,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 		this.credentials = credentials;
 		this.id = id;
 	}
-	
+
 	public ConnectionManager getConnectionManager() {
 		return connectionManager;
 	}
@@ -125,12 +125,12 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 		logger.trace("Exiting close()");
 		return closeRequest;
 	}
-	
+
 	private synchronized void unclose() {
 		logger.debug("Unclosing");
 		this.closeRequest = null;
 	}
-	
+
 	public synchronized boolean isClosed() {
 		return closeRequest != null || session.isClosing();
 	}
@@ -150,7 +150,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 			}
 		});
 	}
-	
+
 	public DbSessionFuture<Result> executeUpdate(final String sql) {
 		checkClosed();
 		logger.debug("Scheduling update '{}'", sql);
@@ -172,13 +172,13 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 		// TODO Implement MySQL prepareStatement(String sql)
 		throw new IllegalStateException("Not yet implemented");
 	}
-	
+
 	public DbSessionFuture<PreparedStatement> prepareStatement(Object key, String sql) {
 		checkClosed();
 		// TODO Implement MySQL prepareStatement(Object key, String sql)
 		throw new IllegalStateException("Not yet implemented");
 	}
-	
+
 	public DbFuture<Void> ping() {
 		checkClosed();
 		// TODO Implement MySQL ping()
@@ -186,28 +186,28 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 	}
 
 	// ************* Transaction method implementations ******************************************
-	
+
 	private static final CommandRequest BEGIN = new CommandRequest(Command.QUERY, "begin");
-	private static final CommandRequest COMMIT = new CommandRequest(Command.QUERY, "commit"); 
-	private static final CommandRequest ROLLBACK = new CommandRequest(Command.QUERY, "rollback"); 
-	
+	private static final CommandRequest COMMIT = new CommandRequest(Command.QUERY, "commit");
+	private static final CommandRequest ROLLBACK = new CommandRequest(Command.QUERY, "rollback");
+
 	@Override
 	protected void sendCommit() {
 		session.write(COMMIT);
 	}
-	
+
 	@Override
 	protected void sendRollback() {
 		session.write(ROLLBACK);
 	}
-	
+
 	@Override
 	protected void sendBegin() {
 		session.write(BEGIN);
 	}
 
 	// ************* Non-API methods *************************************************************
-	
+
 	public ServerGreeting getServerGreeting() {
 		return serverGreeting;
 	}
@@ -219,7 +219,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 	public synchronized Request<Void> getCloseRequest() {
 		return closeRequest;
 	}
-	
+
 	public LoginCredentials getCredentials() {
 		return credentials;
 	}
@@ -235,7 +235,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 			return serverGreeting.getCharacterSet();
 		}
 	}
-	
+
 	private static final Set<ClientCapabilities> CLIENT_CAPABILITIES = EnumSet.of(
 			ClientCapabilities.LONG_PASSWORD,
 			ClientCapabilities.FOUND_ROWS,
@@ -269,7 +269,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 	// Queuing methods
 	//
 	//
-	
+
 	/*
 	 * Make this method public.
 	 */
@@ -277,7 +277,7 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 	public <E> void enqueueRequest(Request<E> request) {
 		super.enqueueRequest(request);
 	}
-	
+
 	/*
 	 * Make this method public
 	 */
@@ -285,16 +285,16 @@ public class MysqlConnection extends AbstractDbSession implements Connection {
 	public <E> Request<E> getActiveRequest() {
 		return super.getActiveRequest();
 	}
-	
+
 	public MysqlConnectFuture getConnectFuture() {
 		return connectFuture;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return id;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {

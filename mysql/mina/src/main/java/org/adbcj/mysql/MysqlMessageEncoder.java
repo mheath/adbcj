@@ -20,8 +20,8 @@ import java.nio.ByteOrder;
 import java.nio.charset.CharacterCodingException;
 import java.security.NoSuchAlgorithmException;
 
-import org.apache.mina.common.IoBuffer;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 
@@ -36,18 +36,18 @@ public class MysqlMessageEncoder implements ProtocolEncoder {
 	public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
 		MysqlRequest request = (MysqlRequest)message;
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		
+
 		int length = request.getLength(connection.getServerGreeting().getCharacterSet());
 
 		IoBuffer buffer = IoBuffer.allocate(length + REQUEST_HEADER_SIZE);
 		buffer.order(ByteOrder.LITTLE_ENDIAN);
-		
+
 		buffer.put((byte)(length & 0xFF));
 		buffer.put((byte)(length >> 8 & 0xFF));
 		buffer.put((byte)(length >> 16 & 0xFF));
 
 		buffer.put(request.getPacketNumber());
-		
+
 		if (message instanceof CommandRequest) {
 			encodeCommandRequest(connection, session, (CommandRequest)request, buffer);
 		} else if (message instanceof LoginRequest) {
@@ -73,14 +73,14 @@ public class MysqlMessageEncoder implements ProtocolEncoder {
 		buffer.putEnumSetShort(request.getExtendedCapabilities());
 		buffer.putInt(request.getMaxPacketSize());
 		buffer.put(request.getCharSet().getId());
-		
+
 		// Encode filler
 		buffer.fill((byte)0, LoginRequest.FILLER_LENGTH);
-		
+
 		// Encode username
 		buffer.putString(request.getCredentials().getUserName(), request.getCharSet().getCharset().newEncoder());
 		buffer.put((byte)0); // null-terminate username
-		
+
 		// Encode password
 		final String password = request.getCredentials().getPassword();
 		if (password != null && password.length() > 0) {
@@ -91,7 +91,7 @@ public class MysqlMessageEncoder implements ProtocolEncoder {
 		} else {
 			buffer.put((byte)0); // null-terminate password
 		}
-		
+
 		// Encode desired database/schema
 		final String database = request.getCredentials().getDatabase();
 		if (database != null) {

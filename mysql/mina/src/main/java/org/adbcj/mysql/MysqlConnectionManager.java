@@ -27,10 +27,10 @@ import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
 import org.adbcj.support.DefaultDbFuture;
-import org.apache.mina.common.ConnectFuture;
-import org.apache.mina.common.DefaultIoFilterChainBuilder;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.common.IoSessionInitializer;
+import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
+import org.apache.mina.core.future.ConnectFuture;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.core.session.IoSessionInitializer;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.ProtocolDecoder;
@@ -40,20 +40,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MysqlConnectionManager implements ConnectionManager {
-	
+
 	public static final String CODEC_NAME = MysqlConnectionManager.class.getName() + ".codec";
 
 	private final Logger logger = LoggerFactory.getLogger(MysqlConnectionManager.class);
 
 	private final NioSocketConnector socketConnector;
-	
+
 	private final LoginCredentials credentials;
-	
+
 	private final AtomicInteger id = new AtomicInteger();
 	private final Set<MysqlConnection> connections = new HashSet<MysqlConnection>();
-	
+
 	private DbFuture<Void> closeFuture = null;
-	
+
 	private static final ProtocolEncoder ENCODER = new MysqlMessageEncoder();
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
 		public ProtocolDecoder getDecoder(IoSession session) throws Exception {
@@ -65,21 +65,21 @@ public class MysqlConnectionManager implements ConnectionManager {
 	};
 
 	private volatile boolean pipeliningEnabled = true;
-	
+
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties) {
 		socketConnector = new NioSocketConnector();
 		//socketConnector.setWorkerTimeout(5); // TODO Make MINA worker timeout configurable in MysqlConnectionManager
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
-		
+
 		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(CODEC_FACTORY));
-		
+
 		socketConnector.setHandler(new MysqlIoHandler(this));
 		socketConnector.setDefaultRemoteAddress(new InetSocketAddress(host, port));
 
 		this.credentials = new LoginCredentials(username, password, schema);
 	}
-	
+
 	public synchronized DbFuture<Void> close(boolean immediate) throws DbException {
 		if (isClosed()) {
 			return closeFuture;
@@ -100,7 +100,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 	public synchronized boolean isClosed() {
 		return closeFuture != null;
 	}
-	
+
 	public DbFuture<Connection> connect() {
 		if (isClosed()) {
 			throw new DbException("Connection manager closed");
@@ -108,7 +108,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 		logger.debug("Starting connection");
 		MysqlConnectFuture future = new MysqlConnectFuture();
 		socketConnector.connect(future);
-		
+
 		return future;
 	}
 
@@ -123,11 +123,11 @@ public class MysqlConnectionManager implements ConnectionManager {
 				session.close();
 				return;
 			}
-			
+
 			// Create MyConnection object and place in IoSession
 			final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, this, session, credentials, id.incrementAndGet());
 			IoSessionUtil.setMysqlConnection(session, connection);
-			
+
 			// Add this connection to list of connections managed by ConnectionManager
 			synchronized (connections) {
 				connections.add(connection);
@@ -140,7 +140,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 			}
 			logger.trace("Cancelling connect");
 
-			cancelled = true; 
+			cancelled = true;
 			return true;
 		}
 	}
@@ -158,7 +158,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 			connections.remove(connection);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		InetSocketAddress address = socketConnector.getDefaultRemoteAddress();

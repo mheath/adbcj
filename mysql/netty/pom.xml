@@ -1,0 +1,34 @@
+<project
+		xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+        <groupId>org.adbcj</groupId>
+		<artifactId>mysql-build</artifactId>
+		<version>0.2-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>mysql-netty</artifactId>
+	<packaging>jar</packaging>
+	<name>ADBCJ - MySQL Netty Driver</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.jboss.netty</groupId>
+			<artifactId>netty</artifactId>
+			<version>${netty.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>adbcj-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>mysql-codec</artifactId>
+		</dependency>
+	</dependencies>
+
+</project>

@@ -1,15 +1,13 @@
-import org.adbcj.*;
+import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbFuture;
+import org.adbcj.DbListener;
+import org.adbcj.DbSession;
+import org.adbcj.DbSessionPool;
+import org.adbcj.ResultSet;
 import org.adbcj.mysql.Adbcj;
-import org.apache.mina.common.IoAcceptor;
-import org.apache.mina.common.IoHandlerAdapter;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.common.IoBuffer;
-import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
-import java.io.IOException;
 
 public class Test {
 
