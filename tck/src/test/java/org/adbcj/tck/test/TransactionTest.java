@@ -66,7 +66,7 @@ public class TransactionTest {
 			connection.close(true);
 		}
 	}
-	
+
 	public void testCommitRollbackWithNoTransaction() throws Exception {
 		Connection connection = connectionManager.connect().get();
 		try {
@@ -85,19 +85,19 @@ public class TransactionTest {
 			} catch (DbException e) {
 				// Pass
 			}
-			
+
 			connection.beginTransaction();
 			connection.rollback().get();
-			
+
 			connection.beginTransaction();
 			connection.commit().get();
-			
+
 			connection.beginTransaction();
 		} finally {
 			connection.close(true);
 		}
 	}
-	
+
 	public void testRollback() throws Exception {
 		Connection connection = connectionManager.connect().get();
 		try {
@@ -105,15 +105,20 @@ public class TransactionTest {
 			Result result = connection.executeUpdate("DELETE FROM updates").get();
 			assertNotNull(result);
 
+			// Make sure updates is empty
+			ResultSet rs = connection.executeQuery("SELECT id FROM updates").get();
+			assertNotNull(rs);
+			assertEquals(rs.size(), 0);
+
 			connection.beginTransaction();
-			
+
 			// Insert a row
 			result = connection.executeUpdate("INSERT INTO updates (id) VALUES (1)").get();
 			assertNotNull(result);
 			assertEquals(result.getAffectedRows(), Long.valueOf(1));
 
 			// Make sure we can select the row
-			ResultSet rs = connection.executeQuery("SELECT id FROM updates").get();
+			rs = connection.executeQuery("SELECT id FROM updates").get();
 			assertNotNull(rs);
 			assertEquals(rs.size(), 1);
 			Value value = rs.get(0).get(0);
@@ -121,8 +126,8 @@ public class TransactionTest {
 
 			// Rollback transaction
 			connection.rollback().get();
-			
-			// select query should now be empty 
+
+			// select query should now be empty
 			rs = connection.executeQuery("SELECT id FROM updates").get();
 			assertNotNull(rs);
 			assertEquals(rs.size(), 0);
@@ -146,25 +151,25 @@ public class TransactionTest {
 			result = connection.executeUpdate("INSERT INTO updates (id) VALUES (1)").get();
 			assertNotNull(result);
 			assertEquals(result.getAffectedRows(), Long.valueOf(1));
-			
+
 			// Make sure second connection can't see data
 			ResultSet rs = connection2.executeQuery("SELECT id FROM updates").get();
 			assertNotNull(rs);
 			assertEquals(rs.size(), 0);
-			
+
 			connection.commit().get();
-			
+
 			// Make sure both connections can see data
 			rs = connection.executeQuery("SELECT id FROM updates").get();
 			assertNotNull(rs);
 			assertEquals(rs.size(), 1);
 			assertEquals(rs.get(0).get(0).getInt(), 1);
-			
+
 			rs = connection2.executeQuery("SELECT id FROM updates").get();
 			assertNotNull(rs);
 			assertEquals(rs.size(), 1);
 			assertEquals(rs.get(0).get(0).getInt(), 1);
-			
+
 		} finally {
 			connection.close(true);
 			connection2.close(true);
