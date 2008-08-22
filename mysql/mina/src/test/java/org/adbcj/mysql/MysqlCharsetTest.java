@@ -16,7 +16,7 @@
  */
 package org.adbcj.mysql;
 
-import org.adbcj.mysql.MysqlCharacterSet;
+import org.adbcj.mysql.codec.MysqlCharacterSet;
 import org.testng.annotations.Test;
 
 public class MysqlCharsetTest {

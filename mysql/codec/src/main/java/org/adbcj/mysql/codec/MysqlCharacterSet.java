@@ -1,26 +1,25 @@
 /*
- *   Copyright (c) 2007 Mike Heath.  All rights reserved.
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
-package org.adbcj.mysql;
+	This file is part of ADBCJ.
 
-import java.nio.charset.CharacterCodingException;
+	ADBCJ is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	ADBCJ is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with ADBCJ.  If not, see <http://www.gnu.org/licenses/>.
+
+	Copyright 2008  Mike Heath
+*/
+package org.adbcj.mysql.codec;
+
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-
-import org.apache.mina.core.buffer.IoBuffer;
 
 public enum MysqlCharacterSet {
 	BIG5_CHINESE_CI      ((byte)1, "Big5"),
@@ -185,17 +184,17 @@ public enum MysqlCharacterSet {
 		return id;
 	}
 
-	 public int encodedLength(CharSequence s) throws CharacterCodingException {
-		 if (s == null || s.length() == 0) {
-			 return 0;
-		 }
-		 if (charset == null) {
-			 return 0;
-		 }
-		 IoBuffer buf = IoBuffer.allocate(1024);
-		 buf.setAutoExpand(true);
-		 buf.putString(s, charset.newEncoder());
-
-		 return buf.position();
-	 }
+//	 public int encodedLength(CharSequence s) throws CharacterCodingException {
+//		 if (s == null || s.length() == 0) {
+//			 return 0;
+//		 }
+//		 if (charset == null) {
+//			 return 0;
+//		 }
+//		 IoBuffer buf = IoBuffer.allocate(1024);
+//		 buf.setAutoExpand(true);
+//		 buf.putString(s, charset.newEncoder());
+//
+//		 return buf.position();
+//	 }
 }

@@ -18,6 +18,8 @@ package org.adbcj.mysql;
 
 import java.nio.charset.CharacterCodingException;
 
+import org.adbcj.mysql.codec.MysqlCharacterSet;
+
 public abstract class MysqlRequest {
 
 	abstract int getLength(MysqlCharacterSet charset) throws CharacterCodingException;

@@ -22,6 +22,19 @@ import java.util.Set;
 
 import org.adbcj.DbException;
 import org.adbcj.Value;
+import org.adbcj.mysql.codec.ClientCapabilities;
+import org.adbcj.mysql.codec.EofResponse;
+import org.adbcj.mysql.codec.ErrorResponse;
+import org.adbcj.mysql.codec.FieldFlag;
+import org.adbcj.mysql.codec.MysqlCharacterSet;
+import org.adbcj.mysql.codec.MysqlField;
+import org.adbcj.mysql.codec.MysqlType;
+import org.adbcj.mysql.codec.OkResponse;
+import org.adbcj.mysql.codec.ResultSetFieldResponse;
+import org.adbcj.mysql.codec.ResultSetResponse;
+import org.adbcj.mysql.codec.ResultSetRowResponse;
+import org.adbcj.mysql.codec.ServerGreeting;
+import org.adbcj.mysql.codec.ServerStatus;
 import org.adbcj.support.DefaultValue;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -259,7 +272,7 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 		int characterSetNumber = buffer.getUnsignedShort();
 		MysqlCharacterSet charSet = MysqlCharacterSet.findById(characterSetNumber);
 		long length = buffer.getUnsignedInt();
-		byte fieldTypeId = buffer.get();
+		int fieldTypeId = buffer.getUnsigned();
 		MysqlType fieldType = MysqlType.findById(fieldTypeId);
 		Set<FieldFlag> flags = buffer.getEnumSet(FieldFlag.class);
 		int decimals = buffer.getUnsigned();

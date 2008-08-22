@@ -19,10 +19,13 @@ package org.adbcj.mysql;
 import java.nio.charset.CharacterCodingException;
 import java.util.Set;
 
+import org.adbcj.mysql.codec.ClientCapabilities;
+import org.adbcj.mysql.codec.MysqlCharacterSet;
+
 public class LoginRequest extends MysqlRequest {
 
 	public static final int MAX_PACKET_SIZE = 0x00ffffff;
-	
+
 	public static final int FILLER_LENGTH = 23;
 	public static final int PASSWORD_LENGTH = 20;
 
@@ -30,14 +33,14 @@ public class LoginRequest extends MysqlRequest {
 	private final Set<ClientCapabilities> capabilities;
 	private final Set<ExtendedClientCapabilities> extendedCapabilities;
 	private final MysqlCharacterSet charset;
-	
+
 	public LoginRequest(LoginCredentials credentials, Set<ClientCapabilities> capabilities, Set<ExtendedClientCapabilities> extendedCapabilities, MysqlCharacterSet charset) {
 		this.credentials = credentials;
 		this.capabilities = capabilities;
 		this.extendedCapabilities = extendedCapabilities;
 		this.charset = charset;
 	}
-	
+
 	@Override
 	int getLength(MysqlCharacterSet charset) throws CharacterCodingException {
 		return 2 // Client Capabilities field
@@ -45,25 +48,25 @@ public class LoginRequest extends MysqlRequest {
 				+ 4 // Max packet size field
 				+ 1 // Char set
 				+ FILLER_LENGTH
-				+ charset.encodedLength(credentials.getUserName()) + 1
-				+ ((credentials.getPassword() == null || credentials.getPassword().length() == 0) ? 0 :PASSWORD_LENGTH)
+				+ credentials.getUserName().getBytes(charset.getCharset()).length + 1
+				+ ((credentials.getPassword() == null || credentials.getPassword().length() == 0) ? 0 : PASSWORD_LENGTH)
 				+ 1 // Filler after password
-				+ charset.encodedLength(credentials.getDatabase()) + 1;
+				+ credentials.getDatabase().getBytes(charset.getCharset()).length + 1;
 	}
-	
+
 	@Override
 	public byte getPacketNumber() {
 		return 1;
 	}
-	
+
 	public Set<ClientCapabilities> getCapabilities() {
 		return capabilities;
 	}
-	
+
 	public Set<ExtendedClientCapabilities> getExtendedCapabilities() {
 		return extendedCapabilities;
 	}
-	
+
 	public LoginCredentials getCredentials() {
 		return credentials;
 	}
@@ -75,5 +78,5 @@ public class LoginRequest extends MysqlRequest {
 	public MysqlCharacterSet getCharSet() {
 		return charset;
 	}
-	
+
 }

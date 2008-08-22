@@ -23,10 +23,6 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>adbcj-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
 			<artifactId>mysql-codec</artifactId>
 		</dependency>
 	</dependencies>
