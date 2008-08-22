@@ -179,6 +179,9 @@ public abstract class AbstractDbSession implements DbSession {
 
 	public DbSessionFuture<ResultSet> executeQuery(String sql) {
 		ResultEventHandler<DefaultResultSet> eventHandler = new ResultEventHandler<DefaultResultSet>() {
+
+			private Value[] currentRow;
+
 			public void startFields(DefaultResultSet accumulator) {
 				logger.trace("ResultSetEventHandler: startFields");
 			}
@@ -196,18 +199,18 @@ public abstract class AbstractDbSession implements DbSession {
 				logger.trace("ResultSetEventHandler: startRow");
 
 				int columnCount = accumulator.getFields().size();
-				Value[] values = new Value[columnCount];
-				DefaultRow row = new DefaultRow(accumulator, values);
-				accumulator.addResult(row);
+				currentRow = new Value[columnCount];
 			}
 			public void value(Value value, DefaultResultSet accumulator) {
 				logger.trace("ResultSetEventHandler: value");
 
-				DefaultRow lastRow = (DefaultRow)accumulator.get(accumulator.size() - 1);
-				lastRow.getValues()[value.getField().getIndex()] = value;
+				currentRow[value.getField().getIndex()] = value;
 			}
 			public void endRow(DefaultResultSet accumulator) {
 				logger.trace("ResultSetEventHandler: endRow");
+				DefaultRow row = new DefaultRow(accumulator, currentRow);
+				accumulator.addResult(row);
+				currentRow = null;
 			}
 			public void endResults(DefaultResultSet accumulator) {
 				logger.trace("ResultSetEventHandler: endResults");

@@ -36,6 +36,11 @@ public class DefaultRow extends AbstractMap<Object, Value> implements Row {
 
 	public DefaultRow(ResultSet resultSet, Value... values) {
 		this.resultSet = resultSet;
+		for (Value value : values) {
+			if (value == null) {
+				throw new AssertionError("Value cannot be null");
+			}
+		}
 		this.values = values.clone();
 	}
 
@@ -68,7 +73,8 @@ public class DefaultRow extends AbstractMap<Object, Value> implements Row {
 	@Override
 	public Value get(Object key) {
 		Field field = resultSet.getField(key);
-		return values[field.getIndex()];
+		Value value = values[field.getIndex()];
+		return value;
 	}
 
 	@Override
