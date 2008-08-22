@@ -1,7 +1,6 @@
-<project
-		xmlns="http://maven.apache.org/POM/4.0.0"
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -11,7 +10,10 @@
 	<packaging>pom</packaging>
 
 	<name>ADBCJ</name>
-	<description>Asynchronous Database Connectivity in Java is a framework for asynchronous database interaction.</description>
+	<description>
+		Asynchronous Database Connectivity in Java is a framework for
+		asynchronous database interaction.
+	</description>
 
 	<url>http://adbcj.org/</url>
 	<inceptionYear>2007</inceptionYear>
@@ -33,8 +35,12 @@
 
 	<scm>
 		<url>http://adbcj.googlecode.com/svn/adbcj/trunk</url>
-		<connection>scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk</connection>
-		<developerConnection>scm:svn:https://adbcj.googlecode.com/svn/adbcj/trunk</developerConnection>
+		<connection>
+			scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk
+		</connection>
+		<developerConnection>
+			scm:svn:https://adbcj.googlecode.com/svn/adbcj/trunk
+		</developerConnection>
 	</scm>
 
 	<issueManagement>
@@ -89,14 +95,31 @@
 	</pluginRepositories>
 
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-eclipse-plugin</artifactId>
+					<version>2.5.1</version>
+					<configuration>
+						<downloadSources>true</downloadSources>
+						<downloadJavadocs>true</downloadJavadocs>
+					</configuration>
+					<inherited>true</inherited>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-eclipse-plugin</artifactId>
+					</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
 					<debug>true</debug>
-
 				</configuration>
 			</plugin>
 			<plugin>
@@ -141,11 +164,17 @@
 					<breakiterator>true</breakiterator>
 					<charset>UTF-8</charset>
 					<docencoding>UTF-8</docencoding>
-					<windowtitle>ADBCJ ${project.version} API Documentation</windowtitle>
-					<doctitle>ADBCJ ${project.version} API Documentation</doctitle>
+					<windowtitle>
+						ADBCJ ${project.version} API Documentation
+					</windowtitle>
+					<doctitle>
+						ADBCJ ${project.version} API Documentation
+					</doctitle>
 					<encoding>UTF-8</encoding>
 					<links>
-						<link>http://java.sun.com/javase/6/docs/api/</link>
+						<link>
+							http://java.sun.com/javase/6/docs/api/
+						</link>
 						<link>http://www.slf4j.org/api/</link>
 					</links>
 					<locale>en_US</locale>
@@ -159,8 +188,12 @@
 					<aggregate>true</aggregate>
 					<inputEncoding>UTF-8</inputEncoding>
 					<outputEncoding>UTF-8</outputEncoding>
-					<windowTitle>ADBCJ ${project.version} Cross Reference</windowTitle>
-					<docTitle>ADBCJ ${project.version} Cross Reference</docTitle>
+					<windowTitle>
+						ADBCJ ${project.version} Cross Reference
+					</windowTitle>
+					<docTitle>
+						ADBCJ ${project.version} Cross Reference
+					</docTitle>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -193,11 +226,11 @@
 				<groupId>${project.groupId}</groupId>
 				<version>${project.version}</version>
 			</dependency>
-	        <dependency>
-	            <artifactId>slf4j-api</artifactId>
-	            <groupId>org.slf4j</groupId>
-	            <version>${slf4j.version}</version>
-	        </dependency>
+			<dependency>
+				<artifactId>slf4j-api</artifactId>
+				<groupId>org.slf4j</groupId>
+				<version>${slf4j.version}</version>
+			</dependency>
 			<dependency>
 				<artifactId>slf4j-log4j12</artifactId>
 				<groupId>org.slf4j</groupId>
