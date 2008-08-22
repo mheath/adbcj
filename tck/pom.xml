@@ -53,7 +53,7 @@
 		<dependency>
 			<artifactId>mysql-connector-java</artifactId>
 			<groupId>mysql</groupId>
-			<version>5.0.5</version>
+			<version>5.1.6</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -65,7 +65,7 @@
 		<dependency>
 			<artifactId>slf4j-log4j12</artifactId>
 			<groupId>org.slf4j</groupId>
-			<version>1.4.3</version>
+			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
