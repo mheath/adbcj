@@ -26,10 +26,10 @@ import org.adbcj.DbFuture;
 import org.adbcj.postgresql.backend.PgBackendMessageDecoder;
 import org.adbcj.postgresql.frontend.PgFrontendMessageEncoder;
 import org.adbcj.support.DefaultDbFuture;
-import org.apache.mina.common.ConnectFuture;
-import org.apache.mina.common.DefaultIoFilterChainBuilder;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.common.IoSessionInitializer;
+import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
+import org.apache.mina.core.future.ConnectFuture;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.core.session.IoSessionInitializer;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.ProtocolDecoder;
@@ -54,13 +54,13 @@ public class PgConnectionManager implements ConnectionManager {
 	};
 
 	private final Logger logger = LoggerFactory.getLogger(PgConnectionManager.class);
-	
+
 	private final NioSocketConnector socketConnector;
 
 	private final String username;
 	private final String password;
 	private final String database;
-	
+
 	private DefaultDbFuture<Void> closeFuture = null;
 
 	private volatile boolean pipeliningEnabled = true;
@@ -68,19 +68,19 @@ public class PgConnectionManager implements ConnectionManager {
 	public PgConnectionManager(String host, int port, String username, String password, String database,
 			Properties properties) {
 		logger.debug("Creating new PostgresqlConnectionManager");
-		
+
 		socketConnector = new NioSocketConnector();
 
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
 		DefaultIoFilterChainBuilder filterChain = socketConnector.getFilterChain();
 
 		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(CODEC_FACTORY));
-		
+
 		socketConnector.setHandler(new PgIoHandler(this));
 
 		InetSocketAddress address = new InetSocketAddress(host, port);
 		socketConnector.setDefaultRemoteAddress(address);
-		
+
 		this.username = username;
 		this.password = password;
 		this.database = database;
@@ -93,17 +93,17 @@ public class PgConnectionManager implements ConnectionManager {
 		logger.debug("Starting connection");
 		PgConnectFuture future = new PgConnectFuture();
 		socketConnector.connect(future);
-		
+
 		logger.debug("Started connection");
-		
+
 		return future;
 	}
-	
+
 	class PgConnectFuture extends DefaultDbFuture<Connection> implements IoSessionInitializer<ConnectFuture> {
 
 		private boolean cancelled = false;
 		private boolean started = false;
-		
+
 		@Override
 		public synchronized void initializeSession(IoSession session, ConnectFuture future) {
 			if (cancelled) {
@@ -126,7 +126,7 @@ public class PgConnectionManager implements ConnectionManager {
 			cancelled = true;
 			return true;
 		}
-		
+
 	}
 
 	public synchronized DbFuture<Void> close(boolean immediate) throws DbException {
@@ -148,7 +148,7 @@ public class PgConnectionManager implements ConnectionManager {
 	public synchronized boolean isClosed() {
 		return closeFuture != null;
 	}
-	
+
 	public boolean isPipeliningEnabled() {
 		return pipeliningEnabled;
 	}
@@ -162,15 +162,15 @@ public class PgConnectionManager implements ConnectionManager {
 	// Non-API methods
 	//
 	// ================================================================================================================
-	
+
 	public String getUsername() {
 		return username;
 	}
-	
+
 	public String getDatabase() {
 		return database;
 	}
-	
+
 	public String getPassword() {
 		return password;
 	}

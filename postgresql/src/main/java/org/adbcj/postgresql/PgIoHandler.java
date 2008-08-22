@@ -38,17 +38,17 @@ import org.adbcj.postgresql.frontend.StartupMessage;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.AbstractDbSession.Request;
-import org.apache.mina.common.IoHandlerAdapter;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PgIoHandler extends IoHandlerAdapter {
-	
+
 	private final Logger logger = LoggerFactory.getLogger(PgIoHandler.class);
 
 	private final PgConnectionManager connectionManager;
-	
+
 	public PgIoHandler(PgConnectionManager connectionManager) {
 		this.connectionManager = connectionManager;
 	}
@@ -57,11 +57,11 @@ public class PgIoHandler extends IoHandlerAdapter {
 	public void sessionCreated(IoSession session) throws Exception {
 		logger.debug("sessionCreated");
 	}
-	
+
 	@Override
 	public void sessionOpened(IoSession session) throws Exception {
 		logger.debug("sessionOpened");
-				
+
 		// Send start message to backend
 		logger.trace("Sending start message");
 		Map<ConfigurationVariable, String> parameters = new HashMap<ConfigurationVariable, String>();
@@ -70,7 +70,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 		session.write(new StartupMessage(connectionManager.getUsername(), connectionManager.getDatabase(), parameters));
 
 	}
-	
+
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		logger.debug("IoSession closed");
@@ -83,7 +83,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 		// TODO Make a DbSessionClosedException and use here
 		connection.errorPendingRequests(new DbException("Connection closed"));
 	}
-	
+
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
 		logger.debug("Exception was thrown", cause);
@@ -99,7 +99,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 					if (!request.isDone()) {
 						try {
 							errorOutFuture(connection, request, cause);
-							
+
 							return;
 						} catch (Exception e) {
 							// Hand exception over to connection manager
@@ -112,7 +112,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 		// Hand exception over to connection manager
 		cause.printStackTrace();
 	}
-	
+
 	private void errorOutFuture(PgConnection connection, DefaultDbFuture<?> future, Throwable cause) {
 		logger.debug("Erroring out future: {}", future);
 		if (!future.isDone()) {
@@ -165,10 +165,10 @@ public class PgIoHandler extends IoHandlerAdapter {
 			doRowDescription(session, (RowDescriptionMessage)backendMessage);
 			break;
 		default:
-			throw new IllegalStateException("Need to implement handler for messages of type " + backendMessage.getType());	
+			throw new IllegalStateException("Need to implement handler for messages of type " + backendMessage.getType());
 		}
 	}
-	
+
 	private void doAuthentication(IoSession session, AuthenticationMessage authenticationMessage) {
 		// TODO Support all postgresql authentication types
 		switch (authenticationMessage.getAuthenticaitonType()) {
@@ -191,7 +191,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 
 	private void doCommandComplete(IoSession session, CommandCompleteMessage commandCompleteMessage) {
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		
+
 		Request<Object> request = connection.getActiveRequest();
 		if (request == null) {
 			throw new IllegalStateException("Received a data row without an active request");
@@ -221,7 +221,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 
 	private void doDataRow(IoSession session, DataRowMessage dataRowMessage) {
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		
+
 		Request<Object> request = connection.getActiveRequest();
 		if (request == null) {
 			throw new IllegalStateException("Received a data row without an active request");
@@ -237,14 +237,14 @@ public class PgIoHandler extends IoHandlerAdapter {
 	/**
 	 * When an error packet is received, a PgException is created and thrown.  The exception is then handled by
 	 * {@link #exceptionCaught(IoSession, Throwable)}.
-	 * 
+	 *
 	 * @param session  the session under which the exception occurred
 	 * @param errorResponseMessage  the message containing the exception
 	 */
 	private void doError(IoSession session, ErrorResponseMessage errorResponseMessage) {
 		// When receiving an error packet, throw exception and let exceptionCaught notify future
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		
+
 		String message = errorResponseMessage.getFields().get(ErrorField.MESSAGE);
 		DbException exception;
 		if (message == null) {
@@ -264,7 +264,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 
 	private void doReadyForQuery(IoSession session, ReadyMessage backendMessage) {
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		
+
 		// Check if we're doing connection
 		PgConnectFuture future = connection.getConnectFuture();
 		if (!future.isDone()) {
@@ -272,7 +272,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 			future.setResult(connection);
 			return;
 		}
-		
+
 		// TODO Determine if we even need to do anything with a ReadyMessage
 		switch (backendMessage.getStatus()) {
 		case TRANSACTION:
@@ -288,13 +288,13 @@ public class PgIoHandler extends IoHandlerAdapter {
 
 	private void doRowDescription(IoSession session, RowDescriptionMessage rowDescriptionMessage) {
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		
+
 		Request<Object> request = connection.getActiveRequest();
 		if (request == null) {
 			throw new IllegalStateException("Received a row description without an active request");
 		}
 		//logger.debug("Received row description for request {}", request);
-		
+
 		request.getEventHandler().startFields(request.getAccumulator());
 		for (Field field : rowDescriptionMessage.getFields()) {
 			request.getEventHandler().field(field, request.getAccumulator());
@@ -306,5 +306,5 @@ public class PgIoHandler extends IoHandlerAdapter {
 	public PgConnectionManager getConnectionManager() {
 		return connectionManager;
 	}
-	
+
 }

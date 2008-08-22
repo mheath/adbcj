@@ -39,12 +39,12 @@ import org.adbcj.postgresql.frontend.ExecuteMessage;
 import org.adbcj.postgresql.frontend.FrontendMessage;
 import org.adbcj.postgresql.frontend.ParseMessage;
 import org.adbcj.support.AbstractDbSession;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PgConnection extends AbstractDbSession implements Connection {
-	
+
 	private final Logger logger = LoggerFactory.getLogger(PgConnection.class);
 
 	private final PgConnectionManager connectionManager;
@@ -60,12 +60,12 @@ public class PgConnection extends AbstractDbSession implements Connection {
 
 	private volatile int pid;
 	private volatile int key;
-	
+
 	// Constant Messages
 	private static final ExecuteMessage DEFAULT_EXECUTE = new ExecuteMessage();
 	private static final BindMessage DEFAULT_BIND = new BindMessage();
 	private static final DescribeMessage DEFAULT_DESCRIBE = DescribeMessage.createDescribePortalMessage(null);
-	
+
 	public PgConnection(PgConnectionManager connectionManager, PgConnectFuture connectFuture, IoSession session) {
 		super(connectionManager.isPipeliningEnabled());
 		this.connectionManager = connectionManager;
@@ -73,7 +73,7 @@ public class PgConnection extends AbstractDbSession implements Connection {
 		this.session = session;
 		//setPipeliningEnabled(false);
 	}
-	
+
 	public ConnectionManager getConnectionManager() {
 		return connectionManager;
 	}
@@ -92,7 +92,7 @@ public class PgConnection extends AbstractDbSession implements Connection {
 
 	public DbSessionFuture<Void> close(boolean immediate) throws DbException {
 		// TODO PgConnection.close(boolean) is almost identical to MySQL close method, generify this
-		
+
 		// If the connection is already closed, return existing close future
 		synchronized (lock) {
 			if (isClosed()) {
@@ -166,20 +166,20 @@ public class PgConnection extends AbstractDbSession implements Connection {
 			this.closeRequest = null;
 		}
 	}
-	
+
 	public boolean isClosed() throws DbException {
 		synchronized (lock) {
 			return closeRequest != null || session.isClosing();
 		}
 	}
-	
+
 	public <T> DbSessionFuture<T> executeQuery(final String sql, ResultEventHandler<T> eventHandler, T accumulator) {
 		checkClosed();
 		Request<T> request = new Request<T>(eventHandler, accumulator) {
 			@Override
 			public void execute() throws Exception {
 				logger.debug("Issuing query: {}", sql);
-				
+
 				ParseMessage parse = new ParseMessage(sql);
 				session.write(new AbstractFrontendMessage[] {
 					parse,
@@ -203,7 +203,7 @@ public class PgConnection extends AbstractDbSession implements Connection {
 			@Override
 			public void execute() throws Exception {
 				logger.debug("Issuing update query: {}", sql);
-				
+
 				ParseMessage parse = new ParseMessage(sql);
 				session.write(new AbstractFrontendMessage[] {
 					parse,
@@ -213,10 +213,10 @@ public class PgConnection extends AbstractDbSession implements Connection {
 					FrontendMessage.SYNC
 				});
 			}
-			
+
 			@Override
 			public String toString() {
-				return "Update request: " + sql; 
+				return "Update request: " + sql;
 			}
 		});
 	}
@@ -230,33 +230,33 @@ public class PgConnection extends AbstractDbSession implements Connection {
 		// TODO Implement prepareStatement
 		throw new IllegalStateException();
 	}
-	
+
 	// ******** Transaction methods ***********************************************************************************
-	
+
 	private final AtomicLong statementCounter = new AtomicLong();
 	private final Map<String, String> statementCache = Collections.synchronizedMap(new HashMap<String, String>());
-	
+
 	@Override
 	protected void sendBegin() {
 		executeStatement("BEGIN");
 	}
-	
+
 	@Override
 	protected void sendCommit() {
 		executeStatement("COMMIT");
 	}
-	
+
 	@Override
 	protected void sendRollback() {
 		executeStatement("ROLLBACK");
 	}
-	
+
 	private void executeStatement(String statement) {
 		String statementId = statementCache.get(statement);
 		if (statementId == null) {
 			long id = statementCounter.incrementAndGet();
 			statementId = "S_" + id;
-			
+
 			ParseMessage parseMessage = new ParseMessage(statement, statementId);
 			session.write(parseMessage);
 
@@ -268,17 +268,17 @@ public class PgConnection extends AbstractDbSession implements Connection {
 				FrontendMessage.SYNC
 		});
 	}
-	
+
 	// ================================================================================================================
 	//
 	// Non-API methods
 	//
 	// ================================================================================================================
-	
+
 	public Charset getFrontendCharset() {
 		return frontendCharset;
 	}
-	
+
 	public Charset getBackendCharset() {
 		return backendCharset;
 	}
@@ -286,21 +286,21 @@ public class PgConnection extends AbstractDbSession implements Connection {
 	public Request<Void> getCloseRequest() {
 		return closeRequest;
 	}
-	
+
 	public PgConnectFuture getConnectFuture() {
 		return connectFuture;
 	}
-	
+
 	@Override
 	protected <E> void enqueueRequest(Request<E> request) {
 		super.enqueueRequest(request);
 	}
-	
+
 	@Override
 	public <E> Request<E> getActiveRequest() {
 		return super.getActiveRequest();
 	}
-	
+
 	public int getPid() {
 		return pid;
 	}
@@ -316,5 +316,5 @@ public class PgConnection extends AbstractDbSession implements Connection {
 	public void setKey(int key) {
 		this.key = key;
 	}
-	
+
 }

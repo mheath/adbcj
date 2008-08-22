@@ -16,7 +16,7 @@
  */
 package org.adbcj.postgresql;
 
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.session.IoSession;
 
 public class IoSessionUtil {
 
@@ -29,9 +29,9 @@ public class IoSessionUtil {
 	public static PgConnection getConnection(IoSession session) {
 		return (PgConnection)session.getAttribute(CONNECTION_KEY);
 	}
-	
+
 	public static void setConnection(IoSession session, PgConnection connection) {
 		session.setAttribute(CONNECTION_KEY, connection);
 	}
-	
+
 }

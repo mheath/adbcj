@@ -35,8 +35,8 @@ import org.adbcj.postgresql.PgFieldType;
 import org.adbcj.postgresql.PgIoHandler;
 import org.adbcj.support.DefaultValue;
 import org.adbcj.support.AbstractDbSession.Request;
-import org.apache.mina.common.IoBuffer;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.slf4j.Logger;
@@ -45,11 +45,11 @@ import org.slf4j.LoggerFactory;
 public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 
 	private final Logger logger = LoggerFactory.getLogger(PgBackendMessageDecoder.class);
-	
+
 	@Override
 	protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 		logger.trace("Decoding message");
-		
+
 		// Check to see if we have enough data to read the message type and message length
 		if (in.remaining() < 5) {
 			return false;
@@ -70,14 +70,14 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		//IoBuffer buffer = in.duplicate();
 		final int originalLimit = in.limit();
 		in.limit(in.position() + length);
-		
+
 		// If type is null, throw exception
 		if (type == null) {
 			throw new IllegalStateException("Don't recognize message of type " + typeValue);
 		}
-		
+
 		logger.debug("Decoding message of type {}", type);
-		
+
 		switch (type) {
 		// Message types that don't have any extra data
 		case BIND_COMPLETE:
@@ -124,7 +124,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			// TODO Implement decoder for these backend message types
 			throw new IllegalStateException("No decoder implemented for message of type " + type);
 		default:
-			throw new IllegalStateException(String.format("Messages of type %s are not implemented", type)); 
+			throw new IllegalStateException(String.format("Messages of type %s are not implemented", type));
 		}
 
 		if (in.hasRemaining()) {
@@ -132,14 +132,14 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		}
 		in.limit(originalLimit);
 
-		
+
 		return in.hasRemaining();
 	}
 
 	private void decodeAuthentication(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) {
 		// Get authentication type
 		AuthenticationType authenticationType = buffer.getEnumInt(AuthenticationType.class);
-		
+
 		AuthenticationMessage message;
 		switch(authenticationType) {
 		// Authentication types that don't have a payload
@@ -172,19 +172,19 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		default:
 			throw new IllegalStateException("Don't know how to handle authentication type of " + authenticationType);
 		}
-		
+
 		out.write(message);
 	}
 
-	private static final Pattern COMMAND_PATTERN = Pattern.compile("(\\w+)\\s*(\\d*)\\s*(\\d*)"); 
-	
+	private static final Pattern COMMAND_PATTERN = Pattern.compile("(\\w+)\\s*(\\d*)\\s*(\\d*)");
+
 	private void decodeCommandComplete(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		CharsetDecoder decoder = connection.getBackendCharset().newDecoder();
 
 		String commandStr = buffer.getString(decoder);
 		Matcher matcher = COMMAND_PATTERN.matcher(commandStr);
-		
+
 		if (!matcher.matches()) {
 			throw new IllegalStateException(String.format("Unable to parse command completion string '%s'", commandStr));
 		}
@@ -197,7 +197,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 		} else if (matcher.group(2).length() > 0) {
 			count = Long.valueOf(matcher.group(2));
 		}
-		
+
 		CommandCompleteMessage message = new CommandCompleteMessage(command, count, oid);
 		out.write(message);
 	}
@@ -205,7 +205,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 	private void decodeDataRow(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		CharsetDecoder decoder = connection.getBackendCharset().newDecoder();
-		
+
 		Request<Object> request = connection.getActiveRequest();
 		if (request == null) {
 			throw new IllegalStateException("Received a data row without an active request");
@@ -251,14 +251,14 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 					throw new IllegalStateException("Unable to decode column of type " + field.getColumnType());
 				}
 			}
-			values[i] = value; 
+			values[i] = value;
 		}
 		out.write(new DataRowMessage(values));
 	}
 
 	private void decodeError(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws CharacterCodingException {
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		
+
 		Map<ErrorField, String> fields = new HashMap<ErrorField, String>();
 		for(;;) {
 			byte token = buffer.get();
@@ -311,7 +311,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			status = Status.TRANSACTION;
 			break;
 		default:
-			throw new IllegalStateException("Unrecognized server status " + s);	
+			throw new IllegalStateException("Unrecognized server status " + s);
 		}
 		ReadyMessage message = new ReadyMessage(status);
 		out.write(message);
@@ -334,7 +334,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			short typeSize = buffer.getShort();
 			int typeModifier = buffer.getInt();
 			FormatCode code = buffer.getEnumShort(FormatCode.class);
-			
+
 			Type type;
 			switch (typeOid) {
 			case PgFieldType.BOOLEAN:
@@ -368,7 +368,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 				// TODO Convert more typeOids to ADBCJ types
 				throw new IllegalStateException("Unable to handle field type with oid " + typeOid);
 			}
-			
+
 			fields[i] = new PgField(
 					i,
 					ioHandler.getConnectionManager().getDatabase(),
@@ -383,7 +383,7 @@ public class PgBackendMessageDecoder extends CumulativeProtocolDecoder {
 			logger.debug("Setting payload for request: {}", request);
 			request.setPayload(fields);
 		}
-		
+
 		RowDescriptionMessage rowDescription = new RowDescriptionMessage(fields);
 		out.write(rowDescription);
 		out.flush();

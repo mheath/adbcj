@@ -19,25 +19,25 @@ package org.adbcj.postgresql.frontend;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-import org.apache.mina.common.IoBuffer;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.filter.codec.ProtocolEncoder;
-import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 import org.adbcj.postgresql.ConfigurationVariable;
 import org.adbcj.postgresql.FormatCode;
 import org.adbcj.postgresql.IoSessionUtil;
 import org.adbcj.postgresql.PgConnection;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolEncoder;
+import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PgFrontendMessageEncoder implements ProtocolEncoder {
-	
+
 	private static final byte NULL = (byte)0x00;
 
 	private Logger logger = LoggerFactory.getLogger(PgFrontendMessageEncoder.class);
 
 	private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-	
+
 	public void dispose(IoSession session) throws Exception {
 		// Nothing to dispose
 	}
@@ -62,14 +62,14 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		}
 		buffer.flip();
 		out.write(buffer);
-		
+
 		logger.trace("Flushing");
 		out.flush();
 	}
-	
+
 	public IoBuffer encodeFrontendMessage(IoSession session, AbstractFrontendMessage message, ProtocolEncoderOutput out) throws Exception {
 		logger.trace("Encoding message");
-		
+
 		IoBuffer buffer;
 		switch(message.getType()) {
 		case FLUSH:
@@ -107,15 +107,15 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		if (buffer.hasRemaining()) {
 			throw new IllegalStateException(String.format("Message buffer for %s is not full", message.getType()));
 		}
-		
+
 		return buffer;
 	}
 
 	// === DateMessage encoding =======================================================================================
-	
+
 	private IoBuffer encodeDataMessage(IoSession session, FrontendMessage message) {
 		logger.trace("Encoding data message");
-		
+
 		boolean hasData = message.getData() != null;
 
 		int length = 4;
@@ -126,22 +126,22 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		if (hasData) {
 			buffer.put(message.getData()).put(NULL);
 		}
-		
+
 		return buffer;
 	}
 
 	// === Bind encoding ==============================================================================================
-	
+
 	private IoBuffer encodeBind(IoSession session, BindMessage message) {
 		logger.trace("Encoding bind message");
-		
+
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		Charset charset = connection.getFrontendCharset();
-		
+
 		final int paramFormatsLength = message.getParameterFormats() == null ? 0 : message.getParameterFormats().length;
 		final int paramValuesLength = message.getParameterValues() == null ? 0 : message.getParameterValues().length;
 		final int resultFormatsLength = message.getResultFormats() == null ? 0 : message.getResultFormats().length;
-		
+
 		byte[] portal = message.getPortal() == null ? EMPTY_BYTE_ARRAY : message.getPortal().getBytes(charset);
 		byte[] statement = message.getStatement() == null ? EMPTY_BYTE_ARRAY : message.getStatement().getBytes(charset);
 		byte[] paramValues[] = new byte[paramValuesLength][];
@@ -151,8 +151,8 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 			paramValues[i] = value;
 			valuesLength += 4 + value.length;
 		}
-		
-		int length = 4 // Length field 
+
+		int length = 4 // Length field
 			+ portal.length + 1 // Portal name field plus null-termination
 			+ statement.length + 1 // Statement name field plus null-termination
 			+ 2 // Format parameter codes count field
@@ -161,9 +161,9 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 			+ valuesLength // Parameter value lengths added below
 			+ 2 // Result-column format codes count field
 			+ resultFormatsLength * 2; // The result-column formats (2 bytes each)
-		
+
 		IoBuffer buffer = createBuffer(FrontendMessageType.BIND, length);
-		
+
 		buffer.put(portal).put(NULL);
 		buffer.put(statement).put(NULL);
 		buffer.putShort((short)paramFormatsLength);
@@ -193,7 +193,7 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 				buffer.putShort((short)0);
 				break;
 			default:
-				throw new IllegalStateException("Unable to encode format code " + formatCode);	
+				throw new IllegalStateException("Unable to encode format code " + formatCode);
 			}
 		}
 	}
@@ -202,10 +202,10 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 
 	private static final int CANCEL_REQUEST_LENGTH = 16;
 	private static final int CANCEL_REQUEST_CODE = 80877102;
-	
+
 	private IoBuffer encodeCancelRequest(IoSession session, CancelRequestMessage cancelRequestMessage) {
 		logger.trace("Encoding cancel request");
-		
+
 		IoBuffer buffer = createBuffer(FrontendMessageType.CANCEL_REQUEST, CANCEL_REQUEST_LENGTH);
 		buffer.putInt(CANCEL_REQUEST_CODE);
 		buffer.putInt(cancelRequestMessage.getProcessId());
@@ -214,45 +214,45 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 	}
 
 	// === Close Message encoding =====================================================================================
-	
+
 	private IoBuffer encodeCloseAndDescribe(IoSession session, FrontendMessageType type, byte target, String name) {
 		PgConnection connection = IoSessionUtil.getConnection(session);
 		Charset charset = connection.getFrontendCharset();
-		
+
 		byte[] nameBuffer;
 		if (name == null) {
 			nameBuffer = EMPTY_BYTE_ARRAY;
 		} else {
 			nameBuffer = name.getBytes(charset);
 		}
-		
+
 		int length = 4 // length field
 			+ 1 // target field
 			+ nameBuffer.length + 1; // name field + null terminator
-		
+
 		IoBuffer buffer = createBuffer(type, length);
 		buffer.put(target);
 		buffer.put(nameBuffer).put(NULL);
-		
+
 		return buffer;
 	}
 
 	private IoBuffer encodeCloseMessage(IoSession session, CloseMessage message) {
 		logger.trace("Encoding close");
-		
+
 		return encodeCloseAndDescribe(session, FrontendMessageType.CLOSE, message.getTarget(), message.getName());
 	}
 
 	// === Describe Message encoding ==================================================================================
-	
+
 	private IoBuffer encodeDescribeMessage(IoSession session, DescribeMessage message) {
 		logger.trace("Encoding describe message");
-		
+
 		return encodeCloseAndDescribe(session, FrontendMessageType.DESCRIBE, message.getTarget(), message.getName());
 	}
-	
+
 	// === Execute Message encoding ===================================================================================
-	
+
 	private IoBuffer encodeExecuteMessage(IoSession session, ExecuteMessage message) {
 		logger.trace("Encoding execute message");
 
@@ -269,11 +269,11 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		int length = 4 // length field
 			+ portal.length + 1 // portal field + null terminator
 			+ 4; // max row count field
-		
+
 		IoBuffer buffer = createBuffer(FrontendMessageType.EXECUTE, length);
 		buffer.put(portal).put(NULL);
 		buffer.putInt(message.getMaxRows());
-		
+
 		return buffer;
 	}
 
@@ -281,12 +281,12 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 
 	private IoBuffer encodeParseMessage(IoSession session, ParseMessage message) {
 		logger.trace("Encoding parse message");
-		
+
 		PgConnection connection = IoSessionUtil.getConnection(session);
-		
+
 		byte[] query = message.getQuery().getBytes(connection.getFrontendCharset());
 		byte[] statement = message.getStatement() == null ? EMPTY_BYTE_ARRAY : message.getStatement().getBytes(connection.getFrontendCharset());
-		
+
 		int parameterCount = message.getParameters() == null ? 0 : message.getParameters().length;
 		int length =
 			4 // Length field
@@ -294,7 +294,7 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 			+ statement.length + 1 // statement plus null-terminator
 			+ 2 // Parameter count
 			+ (4 * parameterCount); // OID for each parameter
-		
+
 		IoBuffer buffer = createBuffer(message.getType(), length);
 		buffer.put(statement).put(NULL);
 		buffer.put(query).put(NULL);
@@ -304,26 +304,26 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 				buffer.putInt(oid);
 			}
 		}
-		
+
 		return buffer;
 	}
 
 	// === Startup Message encoding ===================================================================================
-	
+
 	private static final String USER = "user";
 	private static final String DATABASE = "database";
-	
+
 	private IoBuffer encodeStartupMessage(IoSession session, StartupMessage message) {
 		logger.trace("Encoding startup message");
 
 		// Use ASCII for encoding startup messages
 		Charset charset = Charset.forName("US-ASCII");
-		
+
 		byte[] userProperty = USER.getBytes(charset);
-		byte[] username = message.getUsername().getBytes(charset); 
+		byte[] username = message.getUsername().getBytes(charset);
 		byte[] databaseProperty = DATABASE.getBytes(charset);
 		byte[] database = message.getDatabase().getBytes(charset);
-		
+
 		int length = 4 // Length field
 				+ StartupMessage.PROTOCOL_VERSION.length // version field
 				+ userProperty.length + 1 // user parameter + null termination
@@ -342,7 +342,7 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		parameters.flip();
 		length += parameters.limit();
 		length++; // Add 1 for final terminating null
-		
+
 		// Put parameters into buffer
 		IoBuffer buffer = createBuffer(FrontendMessageType.STARTUP, length);
 		buffer.put(StartupMessage.PROTOCOL_VERSION);
@@ -357,7 +357,7 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 	}
 
 	// === Utility methods ============================================================================================
-	
+
 	private IoBuffer createBuffer(FrontendMessageType type, int length) {
 		IoBuffer buffer = IoBuffer.allocate(1024);
 		buffer.setAutoExpand(false);
@@ -370,5 +370,5 @@ public class PgFrontendMessageEncoder implements ProtocolEncoder {
 		buffer.putInt(length);
 		return buffer;
 	}
-	
+
 }
