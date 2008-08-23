@@ -14,9 +14,16 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
-public enum ExtendedClientCapabilities {
-	MULTI_STATEMENTS,
-	MULTI_RESULTS
+import org.adbcj.mysql.codec.MysqlCharacterSet;
+import org.testng.annotations.Test;
+
+public class MysqlCharsetTest {
+
+	@Test
+	public void testCharset() {
+		MysqlCharacterSet.findById(0);
+	}
+	
 }

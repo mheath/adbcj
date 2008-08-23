@@ -1,7 +1,7 @@
 package org.adbcj.tck;
 
 import org.testng.annotations.BeforeSuite;
-import org.adbcj.mysql.Adbcj;
+import org.adbcj.mysql.mina.Adbcj;
 
 /**
  *

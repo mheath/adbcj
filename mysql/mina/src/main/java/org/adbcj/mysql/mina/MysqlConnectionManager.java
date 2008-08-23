@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
 import java.net.InetSocketAddress;
 import java.util.HashSet;
@@ -57,7 +57,7 @@ public class MysqlConnectionManager implements ConnectionManager {
 	private static final ProtocolEncoder ENCODER = new MysqlMessageEncoder();
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
 		public ProtocolDecoder getDecoder(IoSession session) throws Exception {
-			return new MysqlMessageDecoder(session);
+			return new MysqlMessageDecoder();
 		}
 		public ProtocolEncoder getEncoder(IoSession session) throws Exception {
 			return ENCODER;

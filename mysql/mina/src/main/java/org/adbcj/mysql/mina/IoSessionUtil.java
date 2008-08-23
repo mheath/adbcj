@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
 import org.apache.mina.core.session.IoSession;
 

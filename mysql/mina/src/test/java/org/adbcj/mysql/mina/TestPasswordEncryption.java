@@ -14,9 +14,9 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
-import org.adbcj.mysql.PasswordEncryption;
+import org.adbcj.mysql.mina.PasswordEncryption;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

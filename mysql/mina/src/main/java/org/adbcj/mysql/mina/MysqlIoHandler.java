@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -23,7 +23,6 @@ import org.adbcj.DbException;
 import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Value;
-import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.mysql.codec.EofResponse;
 import org.adbcj.mysql.codec.ErrorResponse;
 import org.adbcj.mysql.codec.OkResponse;
@@ -31,6 +30,7 @@ import org.adbcj.mysql.codec.ResultSetFieldResponse;
 import org.adbcj.mysql.codec.ResultSetResponse;
 import org.adbcj.mysql.codec.ResultSetRowResponse;
 import org.adbcj.mysql.codec.ServerGreeting;
+import org.adbcj.mysql.mina.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.AbstractDbSession.Request;
 import org.apache.mina.core.service.IoHandlerAdapter;
@@ -98,9 +98,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 	@Override
 	public void messageReceived(IoSession session, Object message) throws Exception {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Received message: " + message);
-		}
+		logger.debug("Received message: {}", message);
 		if (message instanceof ServerGreeting) {
 			handleServerGreeting(session, (ServerGreeting)message);
 		} else if (message instanceof OkResponse) {
@@ -118,6 +116,11 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		} else {
 			throw new IllegalStateException("Unable to handle message of type: " + message.getClass().getName());
 		}
+	}
+
+	@Override
+	public void messageSent(IoSession session, Object message) throws Exception {
+		logger.debug("Message sent: {}", message);
 	}
 
 	private void handleServerGreeting(IoSession session, ServerGreeting serverGreeting) {

@@ -14,19 +14,30 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
-import org.adbcj.DbException;
+public class LoginCredentials {
 
-public class MysqlException extends DbException {
-	private static final long serialVersionUID = 1L;
-
-	public MysqlException(MysqlConnection connection, String message, Throwable cause) {
-		super(connection, message, cause);
+	private final String userName;
+	private final String password;
+	private final String database;
+	
+	public LoginCredentials(String userName, String password, String database) {
+		this.userName = userName;
+		this.password = password;
+		this.database = database;
 	}
-
-	public MysqlException(MysqlConnection connection, String message) {
-		super(connection, message);
+	
+	public String getDatabase() {
+		return database;
 	}
-
+	
+	public String getPassword() {
+		return password;
+	}
+	
+	public String getUserName() {
+		return userName;
+	}
+	
 }

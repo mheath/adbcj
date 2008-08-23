@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
 enum Command {
 	SLEEP((byte)0x00),

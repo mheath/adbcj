@@ -14,16 +14,19 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
-import org.adbcj.mysql.codec.MysqlCharacterSet;
-import org.testng.annotations.Test;
+import org.adbcj.DbException;
 
-public class MysqlCharsetTest {
+public class MysqlException extends DbException {
+	private static final long serialVersionUID = 1L;
 
-	@Test
-	public void testCharset() {
-		MysqlCharacterSet.findById(0);
+	public MysqlException(MysqlConnection connection, String message, Throwable cause) {
+		super(connection, message, cause);
 	}
-	
+
+	public MysqlException(MysqlConnection connection, String message) {
+		super(connection, message);
+	}
+
 }

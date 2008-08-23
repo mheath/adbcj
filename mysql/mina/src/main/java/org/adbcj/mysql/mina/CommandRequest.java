@@ -14,17 +14,38 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
 import java.nio.charset.CharacterCodingException;
 
 import org.adbcj.mysql.codec.MysqlCharacterSet;
 
-public abstract class MysqlRequest {
+public class CommandRequest extends MysqlRequest {
 
-	abstract int getLength(MysqlCharacterSet charset) throws CharacterCodingException;
+	private final Command command;
+	private final String payload;
 
-	public byte getPacketNumber() {
-		return 0;
+	public CommandRequest(Command command) {
+		this.command = command;
+		this.payload = null;
 	}
+
+	public CommandRequest(Command command, String payload) {
+		this.command = command;
+		this.payload = payload;
+	}
+
+	public Command getCommand() {
+		return command;
+	}
+
+	public String getPayload() {
+		return payload;
+	}
+
+	@Override
+	int getLength(MysqlCharacterSet charset) throws CharacterCodingException {
+		return 1 + ((payload == null) ? 0 : payload.getBytes(charset.getCharset()).length);
+	}
+
 }

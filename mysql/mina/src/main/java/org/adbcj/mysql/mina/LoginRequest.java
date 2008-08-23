@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
 import java.nio.charset.CharacterCodingException;
 import java.util.Set;

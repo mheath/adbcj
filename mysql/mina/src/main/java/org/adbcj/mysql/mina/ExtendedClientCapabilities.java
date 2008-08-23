@@ -14,30 +14,9 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
-public class LoginCredentials {
-
-	private final String userName;
-	private final String password;
-	private final String database;
-	
-	public LoginCredentials(String userName, String password, String database) {
-		this.userName = userName;
-		this.password = password;
-		this.database = database;
-	}
-	
-	public String getDatabase() {
-		return database;
-	}
-	
-	public String getPassword() {
-		return password;
-	}
-	
-	public String getUserName() {
-		return userName;
-	}
-	
+public enum ExtendedClientCapabilities {
+	MULTI_STATEMENTS,
+	MULTI_RESULTS
 }

@@ -181,6 +181,11 @@ public class MySqlClientDecoder {
 				}
 				return resultSetFieldResponse;
 			case FIELD_EOF:
+				fieldCount = in.read();
+
+				if (fieldCount != RESPONSE_EOF) {
+					throw new IllegalStateException("Expected an EOF response from the server");
+				}
 				EofResponse fieldEof = decodeEofResponse(in, length, packetNumber, EofResponse.Type.FIELD);
 				state = State.ROW;
 				fieldIndex = 0;
@@ -196,7 +201,8 @@ public class MySqlClientDecoder {
 				}
 
 				Value[] values = new Value[fields.length];
-				for (MysqlField field : fields) {
+				for (int i = 0; i < fields.length; ) {
+					MysqlField field = fields[i++];
 					Object value = null;
 					if (fieldCount != IoUtils.NULL_VALUE) {
 						// We will have to move this as some datatypes will not be sent across the wire as strings
@@ -220,7 +226,10 @@ public class MySqlClientDecoder {
 						}
 					}
 					values[field.getIndex()] = new DefaultValue(field, value);
-					fieldCount = in.read();
+					if (i < fields.length) {
+						fieldCount = in.read();
+					}
+
 				}
 				return new ResultSetRowResponse(length, packetNumber, values);
 			default:
@@ -277,13 +286,6 @@ public class MySqlClientDecoder {
 	}
 
 	protected EofResponse decodeEofResponse(InputStream in, int length, int packetNumber, EofResponse.Type type) throws IOException {
-		// Create EOF response
-		int fieldCount = in.read();
-
-		if (fieldCount != RESPONSE_EOF) {
-			throw new IllegalStateException("Expected an EOF response from the server");
-		}
-
 		int warnings = IoUtils.readUnsignedShort(in);
 		Set<ServerStatus> serverStatus = IoUtils.readEnumSetShort(in, ServerStatus.class);
 

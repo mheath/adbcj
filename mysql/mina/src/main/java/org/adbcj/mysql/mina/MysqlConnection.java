@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql;
+package org.adbcj.mysql.mina;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -28,10 +28,10 @@ import org.adbcj.DbSessionFuture;
 import org.adbcj.PreparedStatement;
 import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
-import org.adbcj.mysql.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.mysql.codec.ClientCapabilities;
 import org.adbcj.mysql.codec.MysqlCharacterSet;
 import org.adbcj.mysql.codec.ServerGreeting;
+import org.adbcj.mysql.mina.MysqlConnectionManager.MysqlConnectFuture;
 import org.adbcj.support.AbstractDbSession;
 import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
