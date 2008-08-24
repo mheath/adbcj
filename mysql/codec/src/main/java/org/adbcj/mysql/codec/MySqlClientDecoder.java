@@ -60,7 +60,7 @@ public class MySqlClientDecoder {
 	/**
 	 * The state of the decoder.
 	 */
-	private enum State {
+	enum State {
 		/**
 		 * The client is connecting
 		 */
@@ -73,7 +73,7 @@ public class MySqlClientDecoder {
 
 	private State state = State.CONNECTING;
 
-	private ServerGreeting serverGreeting;
+	private String charset = "ISO8859_1";
 
 	/**
 	 * Holds the remaining number of field packets expected to build the result set
@@ -133,12 +133,13 @@ public class MySqlClientDecoder {
 		}
 		final int packetNumber = IoUtils.safeRead(input);
 		BoundedInputStream in = new BoundedInputStream(input, length);
+		boolean threwException = false;
 		try {
 
 			logger.trace("Decoding in state {}", state);
 			switch (state) {
 			case CONNECTING:
-				serverGreeting = decodeServerGreeting(in, length, packetNumber);
+				ServerGreeting serverGreeting = decodeServerGreeting(in, length, packetNumber);
 				state = State.RESPONSE;
 				return serverGreeting;
 			case RESPONSE:
@@ -206,7 +207,7 @@ public class MySqlClientDecoder {
 					Object value = null;
 					if (fieldCount != IoUtils.NULL_VALUE) {
 						// We will have to move this as some datatypes will not be sent across the wire as strings
-						String strVal = IoUtils.readLengthCodedString(in, fieldCount, serverGreeting.getCharacterSet().getCharset());
+						String strVal = IoUtils.readLengthCodedString(in, fieldCount, charset);
 
 						// TODO add decoding for all column types
 						switch (field.getColumnType()) {
@@ -235,16 +236,22 @@ public class MySqlClientDecoder {
 			default:
 				throw new IllegalStateException("Unkown decoder state " + state);
 			}
+		} catch (IOException e) {
+			threwException = true;
+			throw e;
+		} catch (RuntimeException e) {
+			threwException = true;
+			throw e;
 		} finally {
-			if (in.getRemaining() > 0) {
-				//throw new IllegalStateException("Buffer underrun occured; remaingin bytes: " + in.getRemaining());
+			if (!threwException && in.getRemaining() > 0) {
+				throw new IllegalStateException("Buffer underrun occured; remaining bytes: " + in.getRemaining());
 			}
 		}
 	}
 
 	protected ServerGreeting decodeServerGreeting(InputStream in, int length, int packetNumber) throws IOException {
 		int protocol = IoUtils.safeRead(in);
-		String version = IoUtils.readString(in, MysqlCharacterSet.ASCII_BIN.getCharset());
+		String version = IoUtils.readString(in, "ASCII");
 		int threadId = IoUtils.readInt(in);
 
 		byte[] salt = new byte[SALT_SIZE + SALT2_SIZE];
@@ -265,13 +272,10 @@ public class MySqlClientDecoder {
 
 	protected OkResponse decodeOkResponse(InputStream in, int length, int packetNumber) throws IOException {
 		long affectedRows = IoUtils.readBinaryLengthEncoding(in);
-		long insertId = 0;
-		if (affectedRows > 0) {
-			insertId = IoUtils.readBinaryLengthEncoding(in);
-		}
+		long insertId = insertId = IoUtils.readBinaryLengthEncoding(in);
 		Set<ServerStatus> serverStatus = IoUtils.readEnumSetShort(in, ServerStatus.class);
 		int warningCount = IoUtils.readUnsignedShort(in);
-		String message = IoUtils.readString(in, serverGreeting.getCharacterSet().getCharset());
+		String message = IoUtils.readString(in, charset);
 
 		return new OkResponse(length, packetNumber, affectedRows, insertId, serverStatus,
 				warningCount, message);
@@ -280,8 +284,8 @@ public class MySqlClientDecoder {
 	protected ErrorResponse decodeErrorResponse(InputStream in, int length, int packetNumber) throws IOException {
 		int errorNumber = IoUtils.readUnsignedShort(in);
 		in.read(); // Throw away sqlstate marker
-		String sqlState = IoUtils.readString(in, MysqlCharacterSet.ASCII_BIN.getCharset());
-		String message = IoUtils.readString(in, serverGreeting.getCharacterSet().getCharset());
+		String sqlState = IoUtils.readString(in, "ASCII");
+		String message = IoUtils.readString(in, charset);
 		return new ErrorResponse(length, packetNumber, errorNumber, sqlState, message);
 	}
 
@@ -294,7 +298,6 @@ public class MySqlClientDecoder {
 
 	protected ResultSetFieldResponse decodeFieldResponse(InputStream in,
 			int packetLength, int packetNumber) throws IOException {
-		Charset charset = serverGreeting.getCharacterSet().getCharset();
 		String catalogName = IoUtils.readLengthCodedString(in, charset);
 		String schemaName = IoUtils.readLengthCodedString(in, charset);
 		String tableLabel = IoUtils.readLengthCodedString(in, charset);
@@ -364,5 +367,14 @@ public class MySqlClientDecoder {
 			return remaining;
 		}
 
+	}
+
+	/**
+	 * Sets the state, used for testing.
+	 *
+	 * @param state
+	 */
+	void setState(State state) {
+		this.state = state;
 	}
 }

@@ -64,8 +64,8 @@ public class IoUtilsTest {
 		System.arraycopy(secondBytes, 0, newBytes, firstBytes.length + 1, secondBytes.length);
 		InputStream in = new ByteArrayInputStream(newBytes);
 
-		Assert.assertEquals(IoUtils.readString(in, Charset.defaultCharset()), first);
-		Assert.assertEquals(IoUtils.readString(in, Charset.defaultCharset()), second);
+		Assert.assertEquals(IoUtils.readString(in, "UTF-8"), first);
+		Assert.assertEquals(IoUtils.readString(in, "UTF-8"), second);
 	}
 
 }

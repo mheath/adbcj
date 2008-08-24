@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -144,11 +143,11 @@ final class IoUtils {
 	throw new IllegalStateException("Recieved a length value we don't know how to handle");
 	}
 
-	public static String readLengthCodedString(InputStream in, Charset charset) throws IOException {
+	public static String readLengthCodedString(InputStream in, String charset) throws IOException {
 		return readLengthCodedString(in, safeRead(in), charset);
 	}
 
-	public static String readLengthCodedString(InputStream in, int firstByte, Charset charset) throws IOException {
+	public static String readLengthCodedString(InputStream in, int firstByte, String charset) throws IOException {
 		long length = readBinaryLengthEncoding(in, firstByte);
 		return readFixedLengthString(in, (int)length, charset);
 	}
@@ -161,22 +160,22 @@ final class IoUtils {
 	 * @return
 	 * @throws IOException
 	 */
-	public static String readString(InputStream in, Charset charset) throws IOException {
+	public static String readString(InputStream in, String charset) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		int c;
 		while ((c = in.read()) > 0) {
 			out.write(c);
 		}
-		return new String(out.toByteArray(), charset.name());
+		return new String(out.toByteArray(), charset);
 
 	}
 
-	public static String readFixedLengthString(InputStream in, int length, Charset charset) throws IOException {
+	public static String readFixedLengthString(InputStream in, int length, String charset) throws IOException {
 		byte[] buffer = new byte[length];
 		if (in.read(buffer) < length) {
 			throw new IOException("Buffer overrun");
 		}
-		return new String(buffer, charset.name());
+		return new String(buffer, charset);
 	}
 
 	public static Set<FieldFlag> readEnumSet(InputStream in, Class<FieldFlag> enumClass) throws IOException {
@@ -184,7 +183,7 @@ final class IoUtils {
 	}
 
 	public static <E extends Enum<E>> EnumSet<E> readEnumSetShort(InputStream in, Class<E> enumClass) throws IOException {
-		return toEnumSet(enumClass, readShort(in) & 0xFFFFL);
+		return toEnumSet(enumClass, readUnsignedShort(in) & 0xFFFFL);
 	}
 
 	public static <E extends Enum<E>> E readEnum(InputStream in, Class<E> enumClass) throws IOException {
