@@ -19,7 +19,6 @@
 package org.adbcj.mysql.codec;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Set;
 
 import org.adbcj.Value;
@@ -272,7 +271,7 @@ public class MySqlClientDecoder {
 
 	protected OkResponse decodeOkResponse(InputStream in, int length, int packetNumber) throws IOException {
 		long affectedRows = IoUtils.readBinaryLengthEncoding(in);
-		long insertId = insertId = IoUtils.readBinaryLengthEncoding(in);
+		long insertId = IoUtils.readBinaryLengthEncoding(in);
 		Set<ServerStatus> serverStatus = IoUtils.readEnumSetShort(in, ServerStatus.class);
 		int warningCount = IoUtils.readUnsignedShort(in);
 		String message = IoUtils.readString(in, charset);

@@ -26,6 +26,7 @@ import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
+import org.adbcj.mysql.codec.LoginCredentials;
 import org.adbcj.support.DefaultDbFuture;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.future.ConnectFuture;

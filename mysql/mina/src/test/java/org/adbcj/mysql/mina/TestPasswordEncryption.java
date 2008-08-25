@@ -16,7 +16,7 @@
  */
 package org.adbcj.mysql.mina;
 
-import org.adbcj.mysql.mina.PasswordEncryption;
+import org.adbcj.mysql.codec.PasswordEncryption;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

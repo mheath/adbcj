@@ -25,6 +25,7 @@ import org.adbcj.ResultSet;
 import org.adbcj.Value;
 import org.adbcj.mysql.codec.EofResponse;
 import org.adbcj.mysql.codec.ErrorResponse;
+import org.adbcj.mysql.codec.LoginRequest;
 import org.adbcj.mysql.codec.OkResponse;
 import org.adbcj.mysql.codec.ResultSetFieldResponse;
 import org.adbcj.mysql.codec.ResultSetResponse;
@@ -127,10 +128,11 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
 		// Save server greeting
+		// TODO The connection should no longer need the server greeting, try removing it
 		connection.setServerGreeting(serverGreeting);
 
 		// Send Login request
-		LoginRequest request = new LoginRequest(connection.getCredentials(), connection.getClientCapabilities(), connection.getExtendedClientCapabilities(), connection.getCharacterSet());
+		LoginRequest request = new LoginRequest(connection.getCredentials(), connection.getClientCapabilities(), connection.getExtendedClientCapabilities(), connection.getCharacterSet(), serverGreeting.getSalt());
 		session.write(request);
 	}
 

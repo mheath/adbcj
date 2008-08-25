@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -59,6 +60,18 @@ final class IoUtils {
 		int b0 = safeRead(in);
 		int b1 = safeRead(in);
 		return b1 << 8 | b0;
+	}
+
+	public static void writeShort(OutputStream out, int i) throws IOException {
+		out.write(i);
+		out.write(i >> 8);
+	}
+
+	public static void writeInt(OutputStream out, int i) throws IOException {
+		out.write(i);
+		out.write(i >> 8);
+		out.write(i >> 16);
+		out.write(i >> 24);
 	}
 
 	/**
@@ -212,6 +225,27 @@ final class IoUtils {
 		return enumConstants[i];
 	}
 
+    public static <E extends Enum<E>> void writeEnumSetShort(OutputStream out, Set<E> set) throws IOException {
+        long vector = toLong(set);
+        if ((vector & ~0x0000ffff) != 0) {
+            throw new IllegalArgumentException(
+                    "The enum set is too large to fit in a short: " + set);
+        }
+        writeShort(out, (int)vector);
+    }
+
+    private static <E extends Enum<E>> long toLong(Set<E> set) {
+        long vector = 0;
+        for (E e : set) {
+            if (e.ordinal() >= Long.SIZE) {
+                throw new IllegalArgumentException(
+                        "The enum set is too large to fit in a bit vector: "
+                                + set);
+            }
+            vector |= 1L << e.ordinal();
+        }
+        return vector;
+    }
 	private IoUtils() {
 		// Non-instantiable
 	}
