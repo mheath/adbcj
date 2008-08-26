@@ -14,6 +14,7 @@ import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
 import org.adbcj.support.AbstractDbSession;
 import org.adbcj.support.DefaultDbFuture;
+import org.adbcj.support.AbstractDbSession.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -276,8 +277,15 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 		return id == ((AbstractMySqlConnection)obj).id;
 	}
 
-	public void cleanup() {
+	public void doClose() {
 		connectionManager.removeConnection(this);
+
+		Request<Void> closeRequest = getCloseRequest();
+		if (closeRequest != null) {
+			closeRequest.complete(null);
+		}
+		// TODO Make a DbSessionClosedException and use here
+		errorPendingRequests(new DbException("Connection closed"));
 	}
 
 

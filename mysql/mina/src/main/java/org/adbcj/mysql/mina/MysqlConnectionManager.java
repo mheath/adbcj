@@ -62,7 +62,7 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 
 		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(CODEC_FACTORY));
 
-		socketConnector.setHandler(new MysqlIoHandler(this));
+		socketConnector.setHandler(new MysqlIoHandler());
 		socketConnector.setDefaultRemoteAddress(new InetSocketAddress(host, port));
 	}
 

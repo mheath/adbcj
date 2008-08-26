@@ -16,27 +16,7 @@
  */
 package org.adbcj.mysql.mina;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import org.adbcj.Connection;
-import org.adbcj.DbException;
-import org.adbcj.Result;
-import org.adbcj.ResultSet;
-import org.adbcj.Value;
-import org.adbcj.mysql.codec.EofResponse;
-import org.adbcj.mysql.codec.ErrorResponse;
-import org.adbcj.mysql.codec.LoginRequest;
-import org.adbcj.mysql.codec.MysqlException;
-import org.adbcj.mysql.codec.OkResponse;
-import org.adbcj.mysql.codec.ResultSetFieldResponse;
-import org.adbcj.mysql.codec.ResultSetResponse;
-import org.adbcj.mysql.codec.ResultSetRowResponse;
-import org.adbcj.mysql.codec.ServerGreeting;
-import org.adbcj.mysql.mina.MysqlConnectionManager.MysqlConnectFuture;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.support.DefaultResult;
-import org.adbcj.support.AbstractDbSession.Request;
+import org.adbcj.mysql.codec.ProtocolHandler;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
@@ -46,11 +26,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 	private final Logger logger = LoggerFactory.getLogger(MysqlIoHandler.class);
 
-	private final MysqlConnectionManager connectionManager;
-
-	public MysqlIoHandler(MysqlConnectionManager connectionManager) {
-		this.connectionManager = connectionManager;
-	}
+	private final ProtocolHandler handler = new ProtocolHandler();
 
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
@@ -59,15 +35,9 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
+		logger.trace("IoSession closed");
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		connection.cleanup();
-		Request<Void> closeRequest = connection.getCloseRequest();
-		if (closeRequest != null) {
-			closeRequest.complete(null);
-		}
-		// TODO Make a DbSessionClosedException and use here
-		connection.errorPendingRequests(new DbException("Connection closed"));
-		logger.debug("IoSession closed");
+		handler.connectionClosed(connection);
 	}
 
 	@Override
@@ -75,149 +45,23 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 		logger.debug("Caught exception: ", cause);
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
 
-		DbException dbException = DbException.wrap(connection, cause);
-		if (connection != null) {
-			DefaultDbFuture<Connection> connectFuture = connection.getConnectFuture();
-			if (!connectFuture.isDone()) {
-				connectFuture.setException(dbException);
-				return;
-			}
-			Request<?> activeRequest = connection.getActiveRequest();
-			if (activeRequest != null) {
-				if (!activeRequest.isDone()) {
-					try {
-						activeRequest.error(dbException);
-
-						return;
-					} catch (Throwable e) {
-						// TODO Pass exception to ConnectionManager
-						e.printStackTrace();
-					}
-				}
-			}
+		Throwable e = handler.handleException(connection, cause);
+		if (e != null) {
+			// TODO: Pass exception on to connectionManager
+			e.printStackTrace();
 		}
-		// TODO Pass exception to ConnectionManager
-		dbException.printStackTrace();
 	}
 
 	@Override
 	public void messageReceived(IoSession session, Object message) throws Exception {
 		logger.debug("Received message: {}", message);
-		if (message instanceof ServerGreeting) {
-			handleServerGreeting(session, (ServerGreeting)message);
-		} else if (message instanceof OkResponse) {
-			handleOkResponse(session, (OkResponse)message);
-		} else if (message instanceof ErrorResponse) {
-			handleErrorResponse(session, (ErrorResponse)message);
-		} else if (message instanceof ResultSetResponse) {
-			handleResultSetResponse(session, (ResultSetResponse)message);
-		} else if (message instanceof ResultSetFieldResponse) {
-			handleResultSetFieldResponse(session, (ResultSetFieldResponse)message);
-		} else if (message instanceof ResultSetRowResponse) {
-			handleResultSetRowResponse(session, (ResultSetRowResponse)message);
-		} else if (message instanceof EofResponse) {
-			handleEofResponse(session, (EofResponse)message);
-		} else {
-			throw new IllegalStateException("Unable to handle message of type: " + message.getClass().getName());
-		}
+		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
+		handler.messageReceived(connection, message);
 	}
 
 	@Override
 	public void messageSent(IoSession session, Object message) throws Exception {
 		logger.trace("Message sent: {}", message);
-	}
-
-	private void handleServerGreeting(IoSession session, ServerGreeting serverGreeting) {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-
-		// Send Login request
-		LoginRequest request = new LoginRequest(connection.getCredentials(), connection.getClientCapabilities(), connection.getExtendedClientCapabilities(), connection.getCharacterSet(), serverGreeting.getSalt());
-		session.write(request);
-	}
-
-	private void handleOkResponse(IoSession session, OkResponse response) {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-
-		logger.debug("Response '{}' on connection {}", response, connection);
-
-		List<String> warnings = null;
-		if (response.getWarningCount() > 0) {
-			warnings = new LinkedList<String>();
-			for (int i = 0; i < response.getWarningCount(); i++) {
-				warnings.add(response.getMessage());
-			}
-		}
-
-		logger.debug("Warnings: {}", warnings);
-
-		Request<Result> activeRequest = connection.getActiveRequest();
-		if (activeRequest == null) {
-			// TODO Do we need to pass the warnings on to the connection?
-			MysqlConnectFuture connectFuture = connection.getConnectFuture();
-			if (!connectFuture.isDone() ) {
-				connectFuture.setResult(connection);
-
-				return;
-			}
-			if (!connection.isClosed() && !connection.isTransportClosing()) {
-				throw new IllegalStateException("Received an OkResponse with no activeRequest " + response);
-			}
-		}
-		Result result = new DefaultResult(response.getAffectedRows(), warnings);
-		activeRequest.complete(result);
-	}
-
-	private void handleErrorResponse(IoSession session, ErrorResponse message) {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		throw new MysqlException(connection, message.getMessage());
-	}
-
-	private void handleResultSetResponse(IoSession session, ResultSetResponse message) {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		Request<ResultSet> activeRequest = connection.getActiveRequest();
-
-		logger.debug("Start field definitions");
-		activeRequest.getEventHandler().startFields(activeRequest.getAccumulator());
-	}
-
-	private void handleResultSetFieldResponse(IoSession session, ResultSetFieldResponse message) {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		Request<ResultSet> activeRequest = connection.getActiveRequest();
-
-		ResultSetFieldResponse fieldResponse = (ResultSetFieldResponse)message;
-		activeRequest.getEventHandler().field(fieldResponse.getField(), activeRequest.getAccumulator());
-	}
-
-	private void handleResultSetRowResponse(IoSession session, ResultSetRowResponse message) {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		Request<ResultSet> activeRequest = connection.getActiveRequest();
-
-		ResultSetRowResponse rowResponse = (ResultSetRowResponse)message;
-
-		activeRequest.getEventHandler().startRow(activeRequest.getAccumulator());
-		for (Value value : rowResponse.getValues()) {
-			activeRequest.getEventHandler().value(value, activeRequest.getAccumulator());
-		}
-		activeRequest.getEventHandler().endRow(activeRequest.getAccumulator());
-	}
-
-	private void handleEofResponse(IoSession session, EofResponse message) {
-		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		logger.trace("Fetching active request in handleEofResponse()");
-		Request<ResultSet> activeRequest = connection.getActiveRequest();
-
-		EofResponse eof = (EofResponse)message;
-		switch (eof.getType()) {
-		case FIELD:
-			activeRequest.getEventHandler().endFields(activeRequest.getAccumulator());
-			break;
-		case ROW:
-			activeRequest.getEventHandler().endResults(activeRequest.getAccumulator());
-			activeRequest.complete(activeRequest.getAccumulator());
-			break;
-		default:
-			throw new MysqlException(connection, "Unkown eof response type");
-		}
 	}
 
 }

@@ -19,15 +19,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author Mike Heath <mheath@apache.org>
  */
-public class AsyncProtocolHandler {
-	private final Logger logger = LoggerFactory.getLogger(AsyncProtocolHandler.class);
+public class ProtocolHandler {
+	private final Logger logger = LoggerFactory.getLogger(ProtocolHandler.class);
 
 	public void connectionClosed(AbstractMySqlConnection connection) throws Exception {
 		logger.trace("IoSession closed");
-		connection.cleanup();
-
-		// TODO Make a DbSessionClosedException and use here
-		connection.errorPendingRequests(new DbException("Connection closed"));
+		connection.doClose();
 	}
 
 	/**
