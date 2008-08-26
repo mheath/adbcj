@@ -17,16 +17,10 @@
 package org.adbcj.mysql.mina;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.adbcj.Connection;
-import org.adbcj.ConnectionManager;
-import org.adbcj.DbException;
-import org.adbcj.DbFuture;
-import org.adbcj.mysql.codec.LoginCredentials;
+import org.adbcj.mysql.codec.AbstractMySqlConnectionManager;
 import org.adbcj.support.DefaultDbFuture;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.future.ConnectFuture;
@@ -40,20 +34,13 @@ import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MysqlConnectionManager implements ConnectionManager {
+public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
+
+	private static final Logger logger = LoggerFactory.getLogger(MysqlConnectionManager.class);
 
 	public static final String CODEC_NAME = MysqlConnectionManager.class.getName() + ".codec";
 
-	private final Logger logger = LoggerFactory.getLogger(MysqlConnectionManager.class);
-
 	private final NioSocketConnector socketConnector;
-
-	private final LoginCredentials credentials;
-
-	private final AtomicInteger id = new AtomicInteger();
-	private final Set<MysqlConnection> connections = new HashSet<MysqlConnection>();
-
-	private DbFuture<Void> closeFuture = null;
 
 	private static final ProtocolEncoder ENCODER = new MysqlMessageEncoder();
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
@@ -65,9 +52,9 @@ public class MysqlConnectionManager implements ConnectionManager {
 		}
 	};
 
-	private volatile boolean pipeliningEnabled = true;
-
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties) {
+		super(username, password, schema, properties);
+
 		socketConnector = new NioSocketConnector();
 		//socketConnector.setWorkerTimeout(5); // TODO Make MINA worker timeout configurable in MysqlConnectionManager
 		socketConnector.getSessionConfig().setTcpNoDelay(true);
@@ -77,36 +64,15 @@ public class MysqlConnectionManager implements ConnectionManager {
 
 		socketConnector.setHandler(new MysqlIoHandler(this));
 		socketConnector.setDefaultRemoteAddress(new InetSocketAddress(host, port));
-
-		this.credentials = new LoginCredentials(username, password, schema);
 	}
 
-	public synchronized DbFuture<Void> close(boolean immediate) throws DbException {
-		if (isClosed()) {
-			return closeFuture;
-		}
-		// TODO: Close all open connections
-		if (immediate) {
-			socketConnector.dispose();
-			DefaultDbFuture<Void> future = new DefaultDbFuture<Void>();
-			future.setResult(null);
-			closeFuture = future;
-			return closeFuture;
-		} else {
-			// TODO In MysqlConnectionManager.close() implement deferred close
-			throw new IllegalStateException("Deferred close not yet implemented");
-		}
+	@Override
+	protected void dispose() {
+		socketConnector.dispose();
 	}
 
-	public synchronized boolean isClosed() {
-		return closeFuture != null;
-	}
-
-	public DbFuture<Connection> connect() {
-		if (isClosed()) {
-			throw new DbException("Connection manager closed");
-		}
-		logger.debug("Starting connection");
+	@Override
+	protected DefaultDbFuture<Connection> createConnectionFuture() {
 		MysqlConnectFuture future = new MysqlConnectFuture();
 		socketConnector.connect(future);
 
@@ -126,13 +92,8 @@ public class MysqlConnectionManager implements ConnectionManager {
 			}
 
 			// Create MyConnection object and place in IoSession
-			final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, this, session, credentials, id.incrementAndGet());
+			final MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, this, session, getCredentials());
 			IoSessionUtil.setMysqlConnection(session, connection);
-
-			// Add this connection to list of connections managed by ConnectionManager
-			synchronized (connections) {
-				connections.add(connection);
-			}
 		}
 		@Override
 		protected synchronized boolean doCancel(boolean mayInterruptIfRunning) {
@@ -146,24 +107,10 @@ public class MysqlConnectionManager implements ConnectionManager {
 		}
 	}
 
-	public boolean isPipeliningEnabled() {
-		return pipeliningEnabled;
-	}
-
-	public void setPipeliningEnabled(boolean pipeliningEnabled) {
-		this.pipeliningEnabled = pipeliningEnabled;
-	}
-
-	public void removeConnection(MysqlConnection connection) {
-		synchronized (connections) {
-			connections.remove(connection);
-		}
-	}
-
 	@Override
 	public String toString() {
 		InetSocketAddress address = socketConnector.getDefaultRemoteAddress();
-		return String.format("%s: mysql://%s:%d/%s (user: %s)", getClass().getName(), address.getHostName(), address.getPort(), credentials.getDatabase(), credentials.getUserName());
+		return String.format("%s: mysql://%s:%d/%s (user: %s)", getClass().getName(), address.getHostName(), address.getPort(), getCredentials().getDatabase(), getCredentials().getUserName());
 	}
 
 }

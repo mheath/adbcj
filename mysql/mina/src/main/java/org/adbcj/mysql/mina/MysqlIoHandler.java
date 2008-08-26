@@ -19,6 +19,7 @@ package org.adbcj.mysql.mina;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.adbcj.Connection;
 import org.adbcj.DbException;
 import org.adbcj.Result;
 import org.adbcj.ResultSet;
@@ -26,12 +27,14 @@ import org.adbcj.Value;
 import org.adbcj.mysql.codec.EofResponse;
 import org.adbcj.mysql.codec.ErrorResponse;
 import org.adbcj.mysql.codec.LoginRequest;
+import org.adbcj.mysql.codec.MysqlException;
 import org.adbcj.mysql.codec.OkResponse;
 import org.adbcj.mysql.codec.ResultSetFieldResponse;
 import org.adbcj.mysql.codec.ResultSetResponse;
 import org.adbcj.mysql.codec.ResultSetRowResponse;
 import org.adbcj.mysql.codec.ServerGreeting;
 import org.adbcj.mysql.mina.MysqlConnectionManager.MysqlConnectFuture;
+import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultResult;
 import org.adbcj.support.AbstractDbSession.Request;
 import org.apache.mina.core.service.IoHandlerAdapter;
@@ -51,13 +54,13 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
-		logger.debug("IoSession created");
+		logger.trace("IoSession created");
 	}
 
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-		connectionManager.removeConnection(connection);
+		connection.cleanup();
 		Request<Void> closeRequest = connection.getCloseRequest();
 		if (closeRequest != null) {
 			closeRequest.complete(null);
@@ -74,7 +77,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 		DbException dbException = DbException.wrap(connection, cause);
 		if (connection != null) {
-			MysqlConnectFuture connectFuture = connection.getConnectFuture();
+			DefaultDbFuture<Connection> connectFuture = connection.getConnectFuture();
 			if (!connectFuture.isDone()) {
 				connectFuture.setException(dbException);
 				return;
@@ -121,15 +124,11 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 	@Override
 	public void messageSent(IoSession session, Object message) throws Exception {
-		logger.debug("Message sent: {}", message);
+		logger.trace("Message sent: {}", message);
 	}
 
 	private void handleServerGreeting(IoSession session, ServerGreeting serverGreeting) {
 		MysqlConnection connection = IoSessionUtil.getMysqlConnection(session);
-
-		// Save server greeting
-		// TODO The connection should no longer need the server greeting, try removing it
-		connection.setServerGreeting(serverGreeting);
 
 		// Send Login request
 		LoginRequest request = new LoginRequest(connection.getCredentials(), connection.getClientCapabilities(), connection.getExtendedClientCapabilities(), connection.getCharacterSet(), serverGreeting.getSalt());
@@ -159,7 +158,8 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 				connectFuture.setResult(connection);
 
 				return;
-			} else {
+			}
+			if (!connection.isClosed() && !connection.isTransportClosing()) {
 				throw new IllegalStateException("Received an OkResponse with no activeRequest " + response);
 			}
 		}

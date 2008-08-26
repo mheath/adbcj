@@ -14,18 +14,18 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql.mina;
+package org.adbcj.mysql.codec;
 
 import org.adbcj.DbException;
 
 public class MysqlException extends DbException {
 	private static final long serialVersionUID = 1L;
 
-	public MysqlException(MysqlConnection connection, String message, Throwable cause) {
+	public MysqlException(AbstractMySqlConnection connection, String message, Throwable cause) {
 		super(connection, message, cause);
 	}
 
-	public MysqlException(MysqlConnection connection, String message) {
+	public MysqlException(AbstractMySqlConnection connection, String message) {
 		super(connection, message);
 	}
 
