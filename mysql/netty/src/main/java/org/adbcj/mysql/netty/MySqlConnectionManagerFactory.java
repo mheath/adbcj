@@ -37,7 +37,11 @@ public class MySqlConnectionManagerFactory implements ConnectionManagerFactory {
 			if (port < 0) {
 				port = DEFAULT_PORT;
 			}
-			String schema = uri.getPath().substring(1);
+			String path = uri.getPath().trim();
+			if (path.length() == 0 || "/".equals(path)) {
+				throw new DbException("You must specific a database in the URL path");
+			}
+			String schema = path.substring(1);
 
 			return new MysqlConnectionManager(host, port, username, password, schema, properties);
 		} catch (URISyntaxException e) {
