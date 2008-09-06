@@ -28,6 +28,7 @@ public class Group {
 				throw new IllegalStateException("We already have a configuration of that type");
 			}
 		}
+		experiment.setGroup(this);
 		experiments.add(experiment);
 	}
 

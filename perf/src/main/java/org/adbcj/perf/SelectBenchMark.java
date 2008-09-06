@@ -1,14 +1,19 @@
 package org.adbcj.perf;
 
-import org.adbcj.*;
-import org.adbcj.mysql.Adbcj;
-
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 
+import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbException;
+import org.adbcj.DbFuture;
+import org.adbcj.DbListener;
+import org.adbcj.DbSession;
+import org.adbcj.DbSessionPool;
+import org.adbcj.ResultSet;
+import org.adbcj.mysql.mina.Adbcj;
+
 /**
- * 
+ *
  */
 public class SelectBenchMark {
 

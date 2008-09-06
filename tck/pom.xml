@@ -46,6 +46,11 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<artifactId>mysql-netty</artifactId>
+			<groupId>${project.groupId}</groupId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<artifactId>adbcj-postgresql</artifactId>
 			<groupId>${project.groupId}</groupId>
 			<scope>test</scope>

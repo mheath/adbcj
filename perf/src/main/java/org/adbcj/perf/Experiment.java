@@ -17,6 +17,16 @@ public abstract class Experiment implements Runnable {
 
 	private final DescriptiveStatistics timings = new DescriptiveStatistics();
 
+	private Group group;
+
+	public Group getGroup() {
+		return group;
+	}
+
+	public void setGroup(Group group) {
+		this.group = group;
+	}
+
 	public Experiment(Configuration configuration, String host) {
 		this.configuration = configuration;
 		this.host = host;

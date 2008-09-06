@@ -34,6 +34,7 @@ public class AdbcjUpdateExperiment extends AbstractAdbcjExperiment {
 		final DbListener<Result> listener = new DbListener<Result>() {
 			public void onCompletion(DbFuture<Result> resultSetDbFuture) throws Exception {
 				latch.countDown();
+				resultSetDbFuture.get();
 			}
 		};
 
@@ -41,6 +42,8 @@ public class AdbcjUpdateExperiment extends AbstractAdbcjExperiment {
 			final String sql = String.format(template, rand.nextInt());
 			connection.executeUpdate(sql).addListener(listener);
 		}
-		latch.await(1, TimeUnit.MINUTES);
+		if (!latch.await(1, TimeUnit.MINUTES)) {
+			throw new RuntimeException("Timed out");
+		}
 	}
 }

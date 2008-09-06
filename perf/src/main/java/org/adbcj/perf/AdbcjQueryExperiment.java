@@ -1,9 +1,12 @@
 package org.adbcj.perf;
 
-import org.adbcj.*;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import org.adbcj.DbFuture;
+import org.adbcj.DbListener;
+import org.adbcj.DbSession;
+import org.adbcj.ResultSet;
 
 /**
  *
@@ -28,6 +31,11 @@ public class AdbcjQueryExperiment extends AbstractAdbcjExperiment {
 		connection = getDbSession();
 	}
 
+	@Override
+	public void cleanup() throws Exception {
+		connection.close(true).get();
+		super.cleanup();
+	}
 	protected DbSession getDbSession() {
 		return getConnectionManager().connect().getUninterruptably();
 	}
@@ -37,11 +45,14 @@ public class AdbcjQueryExperiment extends AbstractAdbcjExperiment {
 		final DbListener<ResultSet> listener = new DbListener<ResultSet>() {
 			public void onCompletion(DbFuture<ResultSet> resultSetDbFuture) throws Exception {
 				latch.countDown();
+				resultSetDbFuture.get();
 			}
 		};
 		for (int i = 0; i < count; i++) {
 			connection.executeQuery(query).addListener(listener);
 		}
-		latch.await(1, TimeUnit.MINUTES);
+		if (!latch.await(10, TimeUnit.MINUTES)) {
+			throw new RuntimeException("Timed out!");
+		}
 	}
 }

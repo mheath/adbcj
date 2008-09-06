@@ -36,6 +36,8 @@ public class AdbcjCloseExperiment extends AbstractAdbcjExperiment {
 				}
 			});
 		}
-		latch.await(1, TimeUnit.MINUTES);
+		if (!latch.await(1, TimeUnit.MINUTES)) {
+			throw new RuntimeException("Timed out!");
+		}
 	}
 }
