@@ -15,4 +15,13 @@
 	<packaging>jar</packaging>
 	<name>ADBCJ - MySQL Codec</name>
 
+	<dependencies>
+		<dependency>
+			<artifactId>slf4j-log4j12</artifactId>
+			<groupId>org.slf4j</groupId>
+			<version>${slf4j.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
 </project>

@@ -6,9 +6,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.MessageEvent;
 
+@ChannelPipelineCoverage("one")
 class MessageQueuingHandler implements ChannelUpstreamHandler {
 
 	private final AtomicReference<ChannelHandlerContext> context = new AtomicReference<ChannelHandlerContext>();
