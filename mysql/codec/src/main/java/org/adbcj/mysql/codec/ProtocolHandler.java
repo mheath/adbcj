@@ -100,7 +100,7 @@ public class ProtocolHandler {
 			}
 		}
 
-		logger.debug("Warnings: {}", warnings);
+		logger.warn("Warnings: {}", warnings);
 
 		Request<Result> activeRequest = connection.getActiveRequest();
 		if (activeRequest == null) {
@@ -124,6 +124,10 @@ public class ProtocolHandler {
 
 	private void handleResultSetResponse(AbstractMySqlConnection connection, ResultSetResponse message) {
 		Request<ResultSet> activeRequest = connection.getActiveRequest();
+
+		if (activeRequest == null) {
+			throw new IllegalStateException("No active request for response: " + message);
+		}
 
 		logger.debug("Start field definitions");
 		activeRequest.getEventHandler().startFields(activeRequest.getAccumulator());
@@ -151,6 +155,10 @@ public class ProtocolHandler {
 	private void handleEofResponse(AbstractMySqlConnection connection, EofResponse message) {
 		logger.trace("Fetching active request in handleEofResponse()");
 		Request<ResultSet> activeRequest = connection.getActiveRequest();
+
+		if (activeRequest == null) {
+			throw new IllegalStateException("No active request for response: " + message);
+		}
 
 		EofResponse eof = (EofResponse)message;
 		switch (eof.getType()) {
