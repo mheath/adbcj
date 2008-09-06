@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.mysql.mina;
+package org.adbcj.mysql.codec;
 
 import org.adbcj.mysql.codec.PasswordEncryption;
 import org.testng.Assert;
