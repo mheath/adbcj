@@ -184,8 +184,12 @@ final class IoUtils {
 	}
 
 	public static String readFixedLengthString(InputStream in, int length, String charset) throws IOException {
+		if (length == 0) {
+			return "";
+		}
 		byte[] buffer = new byte[length];
-		if (in.read(buffer) < length) {
+		int readBytes = in.read(buffer);
+		if (readBytes < length) {
 			throw new IOException("Buffer overrun");
 		}
 		return new String(buffer, charset);
