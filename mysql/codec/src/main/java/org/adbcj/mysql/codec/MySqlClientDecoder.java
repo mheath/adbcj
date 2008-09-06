@@ -269,12 +269,12 @@ public class MySqlClientDecoder {
 				serverStatus);
 	}
 
-	protected OkResponse decodeOkResponse(InputStream in, int length, int packetNumber) throws IOException {
+	protected OkResponse decodeOkResponse(BoundedInputStream in, int length, int packetNumber) throws IOException {
 		long affectedRows = IoUtils.readBinaryLengthEncoding(in);
 		long insertId = IoUtils.readBinaryLengthEncoding(in);
 		Set<ServerStatus> serverStatus = IoUtils.readEnumSetShort(in, ServerStatus.class);
 		int warningCount = IoUtils.readUnsignedShort(in);
-		String message = IoUtils.readString(in, charset);
+		String message = IoUtils.readFixedLengthString(in, in.getRemaining(), charset);
 
 		return new OkResponse(length, packetNumber, affectedRows, insertId, serverStatus,
 				warningCount, message);
