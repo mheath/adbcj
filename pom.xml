@@ -21,7 +21,7 @@
 	<properties>
 		<slf4j.version>1.5.2</slf4j.version>
 		<mina.version>2.0.0-M3</mina.version>
-		<netty.version>3.0.0.CR1</netty.version>
+		<netty.version>3.0.0.CR4-SNAPSHOT</netty.version>
 	</properties>
 
 	<modules>
