@@ -55,21 +55,21 @@ public abstract class AbstractDbSession implements DbSession {
 
 	protected <E> void enqueueRequest(final Request<E> request) {
 		// Check to see if the request can be pipelined
-		if (request.isPipelinable()) {
-			// Check to see if we're in a piplinging state
-			if (pipelining) {
-				invokeExecuteWithCatch(request);
-				// If the request errors out on execution, return
-				if (request.isDone()) {
-					return;
-				}
-
-			}
-		} else {
-			pipelining = false;
-		}
-		requestQueue.add(request);
 		synchronized (lock) {
+			if (request.isPipelinable()) {
+				// Check to see if we're in a piplinging state
+				if (pipelining) {
+					invokeExecuteWithCatch(request);
+					// If the request errors out on execution, return
+					if (request.isDone()) {
+						return;
+					}
+
+				}
+			} else {
+				pipelining = false;
+			}
+			requestQueue.add(request);
 			if (activeRequest == null) {
 				makeNextRequestActive();
 			}
@@ -476,14 +476,14 @@ public abstract class AbstractDbSession implements DbSession {
 
 			// The the request was cancelled and it can be removed
 			if (cancelled && canRemove()) {
-					// Remove the quest and if the removal was successful and this request is active, go to the next request
-					if (canRemove() && requestQueue.remove(this)) {
-						synchronized (lock) {
-							if (this == activeRequest) {
-								makeNextRequestActive();
-							}
+				// Remove the quest and if the removal was successful and this request is active, go to the next request
+				if (canRemove() && requestQueue.remove(this)) {
+					synchronized (lock) {
+						if (this == activeRequest) {
+							makeNextRequestActive();
 						}
 					}
+				}
 			}
 			return cancelled;
 		}
@@ -527,7 +527,7 @@ public abstract class AbstractDbSession implements DbSession {
 		}
 
 		public void complete(T result) {
-			super.setResult(result);
+			setResult(result);
 			synchronized (lock) {
 				if (activeRequest == this) {
 					makeNextRequestActive();
