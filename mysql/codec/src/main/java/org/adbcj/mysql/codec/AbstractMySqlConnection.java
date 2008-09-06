@@ -284,8 +284,13 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 		if (closeRequest != null) {
 			closeRequest.complete(null);
 		}
+
 		// TODO Make a DbSessionClosedException and use here
-		errorPendingRequests(new DbException("Connection closed"));
+		DbException closedException = new DbException("Connection closed");
+		if (!getConnectFuture().isDone() ) {
+			getConnectFuture().setException(closedException);
+		}
+		errorPendingRequests(closedException);
 	}
 
 
