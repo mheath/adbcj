@@ -29,7 +29,7 @@ public class ConnectSpecialCaseTest {
 	//private static final String UNREACHABLE_HOST = "1.0.0.1";
 
 	private final Logger logger = LoggerFactory.getLogger(ConnectSpecialCaseTest.class);
-	
+
 	@Parameters({"url", "user", "password"})
 	@Test(timeOut=60000)
 	public void testConnectBadCredentials(String url, String user, String password) throws InterruptedException {
@@ -102,28 +102,28 @@ public class ConnectSpecialCaseTest {
 			Connection lockingConnection = connectionManager.connect().get();
 			connectionManager.setPipeliningEnabled(false);
 			Connection connection = connectionManager.connect().get();
-	
+
 			lockingConnection.beginTransaction();
 			TestUtils.selectForUpdate(lockingConnection).get();
-	
+
 			List<DbSessionFuture<ResultSet>> futures = new ArrayList<DbSessionFuture<ResultSet>>();
-	
+
 			connection.beginTransaction();
-	
+
 			TestUtils.selectForUpdate(connection);
 			for (int i = 0; i < 5; i++) {
 				futures.add(connection.executeQuery(String.format("SELECT *, %d FROM simple_values", i)));
 			}
-	
+
 			logger.debug("Closing connection");
 			connection.close(true).get();
 			logger.debug("Closed");
-	
+
 			logger.debug("Closing locking connection");
 			lockingConnection.rollback().get();
 			lockingConnection.close(true).get();
 			logger.debug("Locking connection close");
-	
+
 			assertTrue(connection.isClosed(), "Connection should be closed");
 			for (DbSessionFuture<ResultSet> future : futures) {
 				assertTrue(future.isCancelled(), "Future should have been cancelled at close: " + future);
