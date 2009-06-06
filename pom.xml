@@ -21,7 +21,7 @@
 	<properties>
 		<slf4j.version>1.5.2</slf4j.version>
 		<mina.version>2.0.0-M3</mina.version>
-		<netty.version>3.0.0.CR4-SNAPSHOT</netty.version>
+		<netty.version>3.0.2.GA</netty.version>
 	</properties>
 
 	<modules>
@@ -30,7 +30,7 @@
 		<module>mysql</module>
 		<module>postgresql</module>
 		<module>tck</module>
-		<module>perf</module>
+		<!--<module>perf</module>-->
 	</modules>
 
 	<scm>
@@ -125,7 +125,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.4-SNAPSHOT</version>
+				<version>2.4.3</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>

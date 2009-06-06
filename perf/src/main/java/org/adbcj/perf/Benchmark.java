@@ -5,6 +5,7 @@ import static org.adbcj.perf.Configuration.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.io.File;
 import java.io.PrintStream;
 
 /**
@@ -17,8 +18,8 @@ public class Benchmark {
 		if (args.length > 0) {
 			host = args[0];
 		} else {
-			//host = "localhost";
-			host = "10.108.37.24";
+			host = "localhost";
+			//host = "10.108.37.24";  // rldb
 		}
 		System.out.println("Database Host: " + host);
 
@@ -35,7 +36,7 @@ public class Benchmark {
 		// Connect
 		List<Group> groups = new ArrayList<Group>();
 		Group connect = new Group("Connect");
-		groups.add(connect);
+//		groups.add(connect);
 		final int count = 50;
 		connect.addExperiment(new JDBCConnectExperiment(MYSQL_JDBC, host, count));
 		connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ_JDBC, host, count));
@@ -46,7 +47,7 @@ public class Benchmark {
 		connect.addExperiment(new AdbcjConnectExperiment(POSTGRESQL_ADBCJ, host, count));
 
 		Group close = new Group("Close");
-		groups.add(close);
+//		groups.add(close);
 		close.addExperiment(new JDBCCloseExperiment(MYSQL_JDBC, host, count));
 		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_JDBC, host, count));
 		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ, host, count));
@@ -61,10 +62,10 @@ public class Benchmark {
 		groups.add(selectsTiny);
 		selectsTiny.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, host, tinyQuery, count));
-		//selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, tinyQuery, count));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, tinyQuery, count));
-		//selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, count));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, count));
 		selectsTiny.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, tinyQuery, count));
@@ -75,10 +76,10 @@ public class Benchmark {
 		groups.add(selectsSmall);
 		selectsSmall.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, host, smallQuery, count));
-		//selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, smallQuery, count));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, smallQuery, count));
-		//selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, count));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, count));
 		selectsSmall.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, smallQuery, count));
@@ -89,24 +90,24 @@ public class Benchmark {
 		groups.add(selectsLarge);
 		selectsLarge.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, host, largeQuery, count));
-		//selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, largeQuery, count));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, largeQuery, count));
-		//selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, largeQuery, count));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, largeQuery, count));
 		selectsLarge.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, largeQuery, count));
 
 		Group updates = new Group("Updates");
-		groups.add(updates);
+//		groups.add(updates);
 		updates.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC, host, "UPDATE updates SET id=%d", count));
 		updates.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC_BATCH, host, "UPDATE updates SET id=%d", count));
 		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ,  host, "UPDATE updates SET id=%d", count));
-		//updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  host, "UPDATE updates SET id=%d", count));
+		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  host, "UPDATE updates SET id=%d", count));
 		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_JDBC,  host, "UPDATE updates SET id=%d", count));
 		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NO_PIPELINING,  host, "UPDATE updates SET id=%d", count));
-		//updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  host, "UPDATE updates SET id=%d", count));
+		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  host, "UPDATE updates SET id=%d", count));
 		updates.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC, host, "UPDATE updates SET id=%d", count));
 		updates.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC_BATCH, host, "UPDATE updates SET id=%d", count));
 		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ,  host, "UPDATE updates SET id=%d", count));
@@ -114,14 +115,14 @@ public class Benchmark {
 		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING,  host, "UPDATE updates SET id=%d", count));
 
 		Group inserts = new Group("Inserts");
-		groups.add(inserts);
+//		groups.add(inserts);
 		inserts.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC, host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC_BATCH, host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		//inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  host, "INSERT INTO updates (id) VALUES (%d)", count));
+		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_JDBC,  host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NO_PIPELINING,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		//inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  host, "INSERT INTO updates (id) VALUES (%d)", count));
+		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC, host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC_BATCH, host, "INSERT INTO updates (id) VALUES (%d)", count));
 		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ,  host, "INSERT INTO updates (id) VALUES (%d)", count));
@@ -134,46 +135,46 @@ public class Benchmark {
 		final int multiplexCount = MAX_CONNECTIONS * 4;
 
 		// Select tiny
-		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
-			Group mxSelectTiny = new Group("Multiplex Select Tiny " + i);
-			groups.add(mxSelectTiny);
-			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, tinyQuery, multiplexCount, i));
-			//mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, tinyQuery, multiplexCount, i));
-			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, tinyQuery, multiplexCount, i));
-			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
-			//mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
-			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, tinyQuery, multiplexCount, i));
-			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, tinyQuery, multiplexCount, i));
-			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
-		}
+//		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
+//			Group mxSelectTiny = new Group("Multiplex Select Tiny " + i);
+//			groups.add(mxSelectTiny);
+//			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, tinyQuery, multiplexCount, i));
+//			//mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, tinyQuery, multiplexCount, i));
+//			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, tinyQuery, multiplexCount, i));
+//			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
+//			//mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
+//			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, tinyQuery, multiplexCount, i));
+//			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, tinyQuery, multiplexCount, i));
+//			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
+//		}
 
 		// Select small
-		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
-			Group mxSelectSmall = new Group("Multiplex Select Small " + i);
-			groups.add(mxSelectSmall);
-			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, smallQuery, multiplexCount, i));
-			//mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, smallQuery, multiplexCount, i));
-			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, smallQuery, multiplexCount, i));
-			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, smallQuery, multiplexCount, i));
-			//mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, multiplexCount, i));
-			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, smallQuery, multiplexCount, i));
-			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, smallQuery, multiplexCount, i));
-			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, smallQuery, multiplexCount, i));
-		}
+//		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
+//			Group mxSelectSmall = new Group("Multiplex Select Small " + i);
+//			groups.add(mxSelectSmall);
+//			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, smallQuery, multiplexCount, i));
+//			//mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, smallQuery, multiplexCount, i));
+//			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, smallQuery, multiplexCount, i));
+//			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, smallQuery, multiplexCount, i));
+//			//mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, multiplexCount, i));
+//			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, smallQuery, multiplexCount, i));
+//			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, smallQuery, multiplexCount, i));
+//			mxSelectSmall.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, smallQuery, multiplexCount, i));
+//		}
 
 		// Select large
-		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
-			Group mxSelectLarge = new Group("Multiplex Select Large " + i);
-			groups.add(mxSelectLarge);
-			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, largeQuery, multiplexCount, i));
-			//mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, largeQuery, multiplexCount, i));
-			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, largeQuery, multiplexCount, i));
-			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, largeQuery, multiplexCount, i));
-			//mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, largeQuery, multiplexCount, i));
-			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, largeQuery, multiplexCount, i));
-			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, largeQuery, multiplexCount, i));
-			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, largeQuery, multiplexCount, i));
-		}
+//		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
+//			Group mxSelectLarge = new Group("Multiplex Select Large " + i);
+//			groups.add(mxSelectLarge);
+//			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, largeQuery, multiplexCount, i));
+//			//mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, largeQuery, multiplexCount, i));
+//			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, largeQuery, multiplexCount, i));
+//			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, largeQuery, multiplexCount, i));
+//			//mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, largeQuery, multiplexCount, i));
+//			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, largeQuery, multiplexCount, i));
+//			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, largeQuery, multiplexCount, i));
+//			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, largeQuery, multiplexCount, i));
+//		}
 
 
 		// Run experiments
@@ -194,9 +195,12 @@ public class Benchmark {
 
 		// Run all experiments
 		System.out.println("Run all");
-		for (int i = 0; i < 25; i++) {
+		//final int runCount = 25;
+		final int runCount = 10;
+		for (int i = 0; i < runCount; i++) {
 			Collections.shuffle(experiments);
 			runAll(experiments);
+			System.out.printf("========= Run %d out of %d =================================\n", i + 1, runCount);
 		}
 
 		// Ouput results

@@ -30,11 +30,6 @@ public class PgConnectionManagerFactory implements ConnectionManagerFactory {
 	public static final String PROTOCOL = "postgresql";
 	public static final int DEFAULT_PORT = 5432; 
 
-	static void register() {
-		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL, new PgConnectionManagerFactory());
-
-	}
-	
 	private PgConnectionManagerFactory() {
 		// Empty private constructor
 	}
@@ -59,6 +54,11 @@ public class PgConnectionManagerFactory implements ConnectionManagerFactory {
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}
+	}
+
+	@Override
+	public boolean canHandle(String protocol) {
+		return PROTOCOL.equals(protocol);
 	}
 
 }

@@ -14,14 +14,6 @@ public class MySqlConnectionManagerFactory implements ConnectionManagerFactory {
 	public static final String PROTOCOL = "mysqlnetty";
 	public static final int DEFAULT_PORT = 3306;
 
-	static void register() {
-		MySqlConnectionManagerFactory mysqlConnectionManagerFactory = new MySqlConnectionManagerFactory();
-		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL, mysqlConnectionManagerFactory);
-	}
-
-	private MySqlConnectionManagerFactory() {
-	}
-
 	@Override
 	public ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
 		try {
@@ -47,6 +39,11 @@ public class MySqlConnectionManagerFactory implements ConnectionManagerFactory {
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}
+	}
+
+	@Override
+	public boolean canHandle(String protocol) {
+		return PROTOCOL.equals(protocol); 
 	}
 
 }

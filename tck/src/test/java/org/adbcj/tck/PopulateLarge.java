@@ -12,9 +12,6 @@ import java.util.Random;
 public class PopulateLarge {
 
 	public static void main(String[] args) throws Exception {
-		org.adbcj.mysql.mina.Adbcj.init();
-		org.adbcj.postgresql.Adbcj.init();
-
 		ConnectionManager mysqlCM = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
 		ConnectionManager pgCM = ConnectionManagerProvider.createConnectionManager("adbcj:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
 

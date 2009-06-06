@@ -14,7 +14,6 @@ import org.adbcj.DbSession;
 import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Value;
-import org.adbcj.mysql.mina.Adbcj;
 
 public class Test {
 
@@ -22,8 +21,6 @@ public class Test {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		Adbcj.init();
-
 		ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
 
 		final boolean[] callbacks = {false, false};

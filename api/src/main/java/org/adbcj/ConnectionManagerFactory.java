@@ -22,4 +22,6 @@ public interface ConnectionManagerFactory {
 
 	ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException;
 
+	public boolean canHandle(String protocol);
+
 }

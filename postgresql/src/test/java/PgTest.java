@@ -1,11 +1,14 @@
+import org.adbcj.DbException;
+import org.adbcj.ConnectionManager;
+import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.Connection;
+import org.adbcj.ResultSet;
+import org.adbcj.Row;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.adbcj.*;
-import org.adbcj.postgresql.Adbcj;
-
 
 public class PgTest {
 
@@ -15,8 +18,6 @@ public class PgTest {
 	 * @throws DbException 
 	 */
 	public static void main(String[] args) throws DbException, InterruptedException {
-		Adbcj.init();
-		
 		ConnectionManager cm = ConnectionManagerProvider.createConnectionManager("adbcj:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
 		Connection connection = cm.connect().get();
 

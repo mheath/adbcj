@@ -21,13 +21,12 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 public class ConnectionManagerProvider {
 
 	public static final String ADBCJ_PROTOCOL = "adbcj";
 
-	private static final Map<String, ConnectionManagerFactory> CONNECTION_MANAGER_FACTORIES = new HashMap<String, ConnectionManagerFactory>();
-	
 	private ConnectionManagerProvider () {}
 	
 	public static ConnectionManager createConnectionManager(String url, String username, String password) throws DbException {
@@ -47,26 +46,17 @@ public class ConnectionManagerProvider {
 			}
 			URI driverUri = new URI(uri.getSchemeSpecificPart());
 			String protocol = driverUri.getScheme();
-			
-			ConnectionManagerFactory factory = getConnectionManagerFactory(protocol, properties);
-			return factory.createConnectionManager(url, username, password, properties);
+
+			ServiceLoader<ConnectionManagerFactory> serviceLoader = ServiceLoader.load(ConnectionManagerFactory.class);
+			for (ConnectionManagerFactory factory : serviceLoader) {
+				if (factory.canHandle(protocol)) {
+					return factory.createConnectionManager(url, username, password, properties);
+				}
+			}
+			throw new DbException("Could not find ConnectionManagerFactory for protocol '" + protocol + "'");
 		} catch (URISyntaxException e) {
 			throw new DbException("Invalid connection URL: " + url);
 		}
-		
 	}
 	
-	public static synchronized void registerConnectionManagerFactory(String protocol, ConnectionManagerFactory factory) {
-		CONNECTION_MANAGER_FACTORIES.put(protocol, factory);
-	}
-	
-	private static synchronized ConnectionManagerFactory getConnectionManagerFactory(String protocol, Properties properties) {
-		ConnectionManagerFactory factory = CONNECTION_MANAGER_FACTORIES.get(protocol);
-		if (factory == null) {
-			throw new DbException(String.format("No adbcj driver registered with protocol '%s'", protocol));
-		}
-		return factory;
-	}
-	
-
 }

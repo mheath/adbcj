@@ -29,30 +29,30 @@ import org.adbcj.DbListener;
 public class DefaultDbFuture<T> implements DbFuture<T> {
 
     private final Object lock;
-	
+
     private DbListener<T> firstListener;
     private List<DbListener<T>> otherListeners;
-    
+
     /**
      * The result of this future.
      */
     private volatile T result;
-    
+
     /**
      * The exception thrown if there was an error.
      */
     private volatile Throwable exception;
-    
+
     /**
      * Indicates if the future was cancelled.
      */
     private volatile boolean cancelled;
-    
+
     /**
      * Indicates if the future has completed or not.
      */
     private volatile boolean done;
-    
+
     /**
      * The number of threads waiting on the future.  Access must by synchronized on {@link #lock}.
      */
@@ -61,12 +61,12 @@ public class DefaultDbFuture<T> implements DbFuture<T> {
     public DefaultDbFuture() {
 		this.lock = this;
 	}
-	
+
 	public DbFuture<T> addListener(DbListener<T> listener) {
 		if (listener == null) {
 			throw new IllegalArgumentException("listener can NOT be null");
 		}
-		
+
         boolean notifyNow = true;
         if (!done) {
 	        synchronized (lock) {
@@ -150,7 +150,7 @@ public class DefaultDbFuture<T> implements DbFuture<T> {
     		}
             waiters++;
             try {
-                lock.wait();
+           		lock.wait();
             } finally {
                 waiters--;
             }
@@ -238,7 +238,7 @@ public class DefaultDbFuture<T> implements DbFuture<T> {
 
         notifyListeners();
 	}
-	
+
     private void notifyListener(DbListener<T> listener) {
         try {
             listener.onCompletion(this);
@@ -272,7 +272,7 @@ public class DefaultDbFuture<T> implements DbFuture<T> {
 	public boolean isDone() {
 		return done;
 	}
-	
+
 	public void setException(Throwable exception) {
 		synchronized (lock) {
 			if (done) {
@@ -286,5 +286,5 @@ public class DefaultDbFuture<T> implements DbFuture<T> {
 		}
 		notifyListeners();
 	}
-	
+
 }

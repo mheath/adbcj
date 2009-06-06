@@ -30,12 +30,6 @@ public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 
 	private static final String PROTOCOL = "jdbc";
 
-	static void register() {
-		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL,
-				new JdbcConnectionManagerFactory());
-
-	}
-
 	public ConnectionManager createConnectionManager(String url, String username, String password,
 	                                                 Properties properties) throws DbException {
 		try {
@@ -49,6 +43,11 @@ public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}
+	}
+
+	@Override
+	public boolean canHandle(String protocol) {
+		return PROTOCOL.equals(protocol);
 	}
 
 }

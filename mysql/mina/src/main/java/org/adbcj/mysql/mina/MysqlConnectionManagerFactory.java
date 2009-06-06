@@ -19,6 +19,7 @@ package org.adbcj.mysql.mina;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
+import java.util.Arrays;
 
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerFactory;
@@ -28,23 +29,15 @@ import org.adbcj.DbException;
 public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 
 	public static final String PROTOCOL = "mysql";
+	private static final String PROTOCOL_MINA = "mysqlmina";
 	public static final int DEFAULT_PORT = 3306;
-
-	static void register() {
-		MysqlConnectionManagerFactory mysqlConnectionManagerFactory = new MysqlConnectionManagerFactory();
-		ConnectionManagerProvider.registerConnectionManagerFactory(PROTOCOL, mysqlConnectionManagerFactory);
-		ConnectionManagerProvider.registerConnectionManagerFactory("mysqlmina", mysqlConnectionManagerFactory);
-	}
-
 
 	private MysqlConnectionManagerFactory() {
 	}
 
 	public ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
 		try {
-			/*
-			 * Parse URL
-			 */
+			// Parse URL
 			URI uri = new URI(url);
 			// Throw away the 'adbcj' protocol part of the URL
 			uri = new URI(uri.getSchemeSpecificPart());
@@ -60,6 +53,11 @@ public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 		} catch (URISyntaxException e) {
 			throw new DbException(e);
 		}
+	}
+
+	@Override
+	public boolean canHandle(String protocol) {
+		return PROTOCOL.equals(protocol) | PROTOCOL_MINA.equals(protocol);
 	}
 
 }

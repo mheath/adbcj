@@ -8,9 +8,6 @@
 		<packages>
 			<package name="org.adbcj.tck.test" />
 		</packages>
-		<classes>
-			<class name="org.adbcj.tck.InitMysql" />
-		</classes>
 	</test>
 	<test name="MySQL-Netty">
 		<parameter name="url" value="adbcj:mysqlnetty://localhost/adbcjtck" />
@@ -19,9 +16,6 @@
 		<packages>
 			<package name="org.adbcj.tck.test" />
 		</packages>
-		<classes>
-			<class name="org.adbcj.tck.InitMysqlNetty" />
-		</classes>
 	</test>
 	<test name="MySQL-JDBC">
 		<parameter name="url" value="adbcj:jdbc:mysql://localhost/adbcjtck" />
@@ -41,9 +35,6 @@
 		<packages>
 			<package name="org.adbcj.tck.test" />
 		</packages>
-		<classes>
-			<class name="org.adbcj.tck.InitPostgresql" />
-		</classes>
 	</test>
 	<test name="Postgresql-JDBC">
 		<parameter name="url" value="adbcj:jdbc:postgresql://localhost/adbcjtck" />
