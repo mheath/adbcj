@@ -42,7 +42,9 @@ public class MysqlMessageDecoder extends CumulativeProtocolDecoder {
 				return false;
 			}
 			out.write(message);
-			out.flush();
+
+			// Where did flush go?
+			//out.flush();
 			return buffer.hasRemaining();
 		} finally {
 			in.close();

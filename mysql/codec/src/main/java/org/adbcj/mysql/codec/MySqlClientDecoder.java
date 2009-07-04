@@ -100,7 +100,7 @@ public class MySqlClientDecoder {
 		if (!input.markSupported() && !block) {
 			throw new IllegalArgumentException("Non-blocking decoding requires an InputStream that supports marking");
 		}
-		// TODO This should be the max packet size from - make this configurable
+		// TODO This should be the max packet size - make this configurable
 		input.mark(Integer.MAX_VALUE);
 		ServerPacket message = null;
 		try {
@@ -113,7 +113,7 @@ public class MySqlClientDecoder {
 		return message;
 	}
 
-	private ServerPacket doDecode(InputStream input, boolean block) throws IOException {
+	protected ServerPacket doDecode(InputStream input, boolean block) throws IOException {
 		// If we can't block, make sure there's enough data available to read
 		if (!block) {
 			if (input.available() < 3) {
@@ -320,6 +320,7 @@ public class MySqlClientDecoder {
 		return new ResultSetFieldResponse(packetLength, packetNumber, field);
 	}
 
+	// TODO: This stream implementation doesn't even work b ecause it doesn't delegate all InputStream methods
 	private static class BoundedInputStream extends InputStream {
 
 		private final InputStream in;

@@ -11,19 +11,34 @@
 		<version>0.2-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>adbcj-postgresql</artifactId>
-	<packaging>jar</packaging>
-	<name>ADBCJ - Postgresql Driver</name>
+	<artifactId>postgresql-build</artifactId>
+	<packaging>pom</packaging>
+	<name>ADBCJ - Postgresql Drivers Build</name>
+
+	<modules>
+		<module>codec</module>
+		<module>mina</module>
+		<module>netty</module>
+	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>postgresql-codec</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
 		<dependency>
-			<artifactId>adbcj-api</artifactId>
 			<groupId>${project.groupId}</groupId>
-		</dependency>
-		<dependency>
-			<artifactId>mina-core</artifactId>
-			<groupId>org.apache.mina</groupId>
-			<version>${mina.version}</version>
+			<artifactId>adbcj-api</artifactId>
 		</dependency>
 	</dependencies>
 
