@@ -1,0 +1,27 @@
+<project
+		xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+        <groupId>org.adbcj</groupId>
+		<artifactId>postgresql-build</artifactId>
+		<version>0.2-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>postgresql-codec</artifactId>
+	<packaging>jar</packaging>
+	<name>ADBCJ - Postgresql Codec</name>
+
+	<dependencies>
+		<dependency>
+			<artifactId>slf4j-log4j12</artifactId>
+			<groupId>org.slf4j</groupId>
+			<version>${slf4j.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+</project>

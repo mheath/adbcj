@@ -125,7 +125,7 @@ public class BackendMessageDecoderTest {
 	}
 
 	private void testSimpleBackendMessage(String stream, BackendMessageType type) throws Exception {
-		BackendMessage message = decode(stream);
+		SimpleBackendMessage message = decode(stream);
 		Assert.assertEquals(message.getType(), type);
 	}
 
