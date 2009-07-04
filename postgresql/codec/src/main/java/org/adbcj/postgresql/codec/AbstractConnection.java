@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.adbcj.Connection;
-import org.adbcj.ConnectionManager;
 import org.adbcj.DbException;
 import org.adbcj.DbFuture;
 import org.adbcj.DbSessionClosedException;
@@ -35,7 +34,7 @@ import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
 import org.adbcj.postgresql.codec.frontend.BindMessage;
 import org.adbcj.postgresql.codec.frontend.DescribeMessage;
 import org.adbcj.postgresql.codec.frontend.ExecuteMessage;
-import org.adbcj.postgresql.codec.frontend.FrontendMessage;
+import org.adbcj.postgresql.codec.frontend.SimpleFrontendMessage;
 import org.adbcj.postgresql.codec.frontend.ParseMessage;
 import org.adbcj.support.AbstractDbSession;
 import org.slf4j.Logger;
@@ -107,7 +106,7 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 					logger.debug("Executing immediate close");
 					// If the close is immediate, cancel pending requests and send request to server
 					cancelPendingRequests(true);
-					write(FrontendMessage.TERMINATE);
+					write(SimpleFrontendMessage.TERMINATE);
 					closeRequest = new Request<Void>() {
 						@Override
 						protected boolean cancelRequest(boolean mayInterruptIfRunning) {
@@ -135,7 +134,7 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 						@Override
 						public void execute() {
 							logger.debug("Sending TERMINATE to server (Request queue size: {})", requestQueue.size());
-							write(FrontendMessage.TERMINATE);
+							write(SimpleFrontendMessage.TERMINATE);
 						}
 						@Override
 						public boolean isPipelinable() {
@@ -179,7 +178,7 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 					DEFAULT_BIND,
 					DEFAULT_DESCRIBE,
 					DEFAULT_EXECUTE,
-					FrontendMessage.SYNC,
+					SimpleFrontendMessage.SYNC,
 				});
 			}
 			@Override
@@ -203,7 +202,7 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 					DEFAULT_BIND,
 					DEFAULT_DESCRIBE,
 					DEFAULT_EXECUTE,
-					FrontendMessage.SYNC
+					SimpleFrontendMessage.SYNC
 				});
 			}
 
@@ -258,7 +257,7 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 		write(new AbstractFrontendMessage[] {
 				new BindMessage(statementId),
 				DEFAULT_EXECUTE,
-				FrontendMessage.SYNC
+				SimpleFrontendMessage.SYNC
 		});
 	}
 

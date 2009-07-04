@@ -9,6 +9,7 @@ public class DefaultConnectionState implements ConnectionState {
 
 	private final String databaseName;
 	private Charset backendCharset;
+	private Charset frontendCharset;
 	private PgField[] fields;
 
 	public DefaultConnectionState(String databaseName) {
@@ -18,6 +19,11 @@ public class DefaultConnectionState implements ConnectionState {
 	@Override
 	public Charset getBackendCharset() {
 		return backendCharset;
+	}
+
+	@Override
+	public Charset getFrontendCharset() {
+		return frontendCharset;
 	}
 
 	public void setBackendCharset(Charset backendCharset) {

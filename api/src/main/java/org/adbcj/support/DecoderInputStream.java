@@ -3,9 +3,6 @@ package org.adbcj.support;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.EOFException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.CharsetDecoder;
 import java.nio.charset.Charset;
 
 /**
@@ -49,19 +46,21 @@ public class DecoderInputStream extends InputStream {
 		if (i >= 0) {
 			limit--;
 		}
+		assertLimit();
+		return i;
+	}
+
+	private void assertLimit() {
 		if (limit < 0) {
 			throw new IllegalStateException("Read too many bytes");
 		}
-		return i;
 	}
 
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
 		int i = in.read(b, off, len);
 		limit -= i;
-		if (limit < 0) {
-			throw new IllegalStateException("Read too many bytes");
-		}
+		assertLimit();
 		return i;
 	}
 
@@ -69,9 +68,7 @@ public class DecoderInputStream extends InputStream {
 	public long skip(long n) throws IOException {
 		long i = in.skip(n);
 		limit -= i;
-		if (limit < 0) {
-			throw new IllegalStateException("Read too many bytes");
-		}
+		assertLimit();
 		return i;
 	}
 

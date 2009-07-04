@@ -16,25 +16,25 @@
  */
 package org.adbcj.postgresql.codec.frontend;
 
-public class FrontendMessage extends AbstractFrontendMessage {
+public class SimpleFrontendMessage extends AbstractFrontendMessage {
 
-	public static final FrontendMessage FLUSH = new FrontendMessage(FrontendMessageType.FLUSH);
-	public static final FrontendMessage SYNC = new FrontendMessage(FrontendMessageType.SYNC);
-	public static final FrontendMessage TERMINATE = new FrontendMessage(FrontendMessageType.TERMINATE);
+	public static final SimpleFrontendMessage FLUSH = new SimpleFrontendMessage(FrontendMessageType.FLUSH);
+	public static final SimpleFrontendMessage SYNC = new SimpleFrontendMessage(FrontendMessageType.SYNC);
+	public static final SimpleFrontendMessage TERMINATE = new SimpleFrontendMessage(FrontendMessageType.TERMINATE);
 	
 	private final FrontendMessageType type;
 	private final byte[] data;
 
-	public FrontendMessage(FrontendMessageType type) {
+	public SimpleFrontendMessage(FrontendMessageType type) {
 		this.type = type;
 		this.data = null;
 	}
 	
-	public FrontendMessage(FrontendMessageType type, byte[] data) {
+	public SimpleFrontendMessage(FrontendMessageType type, byte[] data) {
 		this.type = type;
 		this.data = data;
 	}
-	
+
 	@Override
 	public FrontendMessageType getType() {
 		return type;

@@ -31,7 +31,7 @@ import org.adbcj.postgresql.codec.backend.ErrorResponseMessage;
 import org.adbcj.postgresql.codec.backend.KeyMessage;
 import org.adbcj.postgresql.codec.backend.ReadyMessage;
 import org.adbcj.postgresql.codec.backend.RowDescriptionMessage;
-import org.adbcj.postgresql.codec.frontend.FrontendMessage;
+import org.adbcj.postgresql.codec.frontend.SimpleFrontendMessage;
 import org.adbcj.postgresql.codec.frontend.FrontendMessageType;
 import org.adbcj.postgresql.codec.frontend.StartupMessage;
 import org.adbcj.postgresql.codec.ErrorField;
@@ -189,7 +189,7 @@ public class PgIoHandler extends IoHandlerAdapter {
 					connectionManager.getUsername(),
 					connectionManager.getPassword(),
 					authenticationMessage.getData());
-			FrontendMessage md5Message = new  FrontendMessage(FrontendMessageType.PASSWORD, md5hash);
+			SimpleFrontendMessage md5Message = new SimpleFrontendMessage(FrontendMessageType.PASSWORD, md5hash);
 			session.write(md5Message);
 			break;
 		default:
