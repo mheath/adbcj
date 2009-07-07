@@ -16,7 +16,6 @@
  */
 package org.adbcj.postgresql.codec;
 
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +36,7 @@ import org.adbcj.postgresql.codec.frontend.ExecuteMessage;
 import org.adbcj.postgresql.codec.frontend.SimpleFrontendMessage;
 import org.adbcj.postgresql.codec.frontend.ParseMessage;
 import org.adbcj.support.AbstractDbSession;
+import org.adbcj.support.DefaultDbFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,12 +45,7 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 	private final Logger logger = LoggerFactory.getLogger(AbstractConnection.class);
 
 	private final AbstractConnectionManager connectionManager;
-	// TODO Determine if we really need to distinguish frontend and backend charsets
-	// TODO Make frontend charset configurable
-	private final Charset frontendCharset = Charset.forName("UTF-8");
-	// TODO Update backendCharset based on what backend returns
-	private Charset backendCharset = Charset.forName("US-ASCII");
-
+	private final ConnectionState connectionState;
 	private Request<Void> closeRequest; // Access synchronized on lock
 
 	private volatile int pid;
@@ -64,6 +59,7 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 	public AbstractConnection(AbstractConnectionManager connectionManager) {
 		super(connectionManager.isPipeliningEnabled());
 		this.connectionManager = connectionManager;
+		this.connectionState = new ConnectionState(connectionManager.getDatabase());
 	}
 
 	public AbstractConnectionManager getConnectionManager() {
@@ -267,14 +263,6 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 	//
 	// ================================================================================================================
 
-	public Charset getFrontendCharset() {
-		return frontendCharset;
-	}
-
-	public Charset getBackendCharset() {
-		return backendCharset;
-	}
-
 	public Request<Void> getCloseRequest() {
 		return closeRequest;
 	}
@@ -305,6 +293,9 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 		this.key = key;
 	}
 
+	public ConnectionState getConnectionState() {
+		return connectionState;
+	}
 
 	// ================================================================================================================
 	//
@@ -318,5 +309,6 @@ public abstract class AbstractConnection extends AbstractDbSession implements Co
 
 	protected abstract boolean isConnectionClosing();
 
-
+	public abstract DefaultDbFuture getConnectFuture();
+	
 }

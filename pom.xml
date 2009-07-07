@@ -73,12 +73,6 @@
 
 	<repositories>
 		<repository>
-			<id>apache.snapshots</id>
-			<url>
-				http://people.apache.org/repo/m2-snapshot-repository/
-			</url>
-		</repository>
-		<repository>
 			<id>repository.jboss.org</id>
 			<url>http://repository.jboss.org/maven2</url>
 			<snapshots>

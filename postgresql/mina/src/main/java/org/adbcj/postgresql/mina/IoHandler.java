@@ -51,13 +51,13 @@ import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PgIoHandler extends IoHandlerAdapter {
+public class IoHandler extends IoHandlerAdapter {
 
-	private final Logger logger = LoggerFactory.getLogger(PgIoHandler.class);
+	private final Logger logger = LoggerFactory.getLogger(IoHandler.class);
 
 	private final MinaConnectionManager connectionManager;
 
-	public PgIoHandler(MinaConnectionManager connectionManager) {
+	public IoHandler(MinaConnectionManager connectionManager) {
 		this.connectionManager = connectionManager;
 	}
 

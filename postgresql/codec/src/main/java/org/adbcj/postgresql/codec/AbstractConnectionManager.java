@@ -30,10 +30,22 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractConnectionManager implements ConnectionManager {
 
+	private final String username;
+	private final String password;
 	private final String database;
 
-	public AbstractConnectionManager(String database) {
+	public AbstractConnectionManager(String username, String password, String database) {
+		this.username = username;
+		this.password = password;
 		this.database = database;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getPassword() {
+		return password;
 	}
 
 	public String getDatabase() {

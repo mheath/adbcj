@@ -11,7 +11,7 @@ import java.nio.charset.Charset;
 public class DecoderInputStream extends InputStream {
 
 	private final InputStream in;
-	private int limit;
+	private int limit = Integer.MAX_VALUE;
 
 	private ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
 
@@ -172,7 +172,7 @@ public class DecoderInputStream extends InputStream {
 			}
 			buffer[pos++] = (byte)b;
 		}
-		return new String(buffer, 0, pos - 1, charset);
+		return new String(buffer, 0, pos, charset);
 	}
 
 }

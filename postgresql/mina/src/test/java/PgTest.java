@@ -18,10 +18,10 @@ public class PgTest {
 	 * @throws DbException 
 	 */
 	public static void main(String[] args) throws DbException, InterruptedException {
-		ConnectionManager cm = ConnectionManagerProvider.createConnectionManager("adbcj:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
+		ConnectionManager cm = ConnectionManagerProvider.createConnectionManager("adbcj:postgresql-mina://localhost/adbcjtck", "adbcjtck", "adbcjtck");
 		Connection connection = cm.connect().get();
-
-		final ResultSet rs = connection.executeQuery("SELECT * FROM large").get();
+	
+		final ResultSet rs = connection.executeQuery("SELECT 1, 2, 3").get();
 		for (Row row : rs) {
 			System.out.println(row.get(0) + " " + row.get(1) + " " + row.get(2));
 		}

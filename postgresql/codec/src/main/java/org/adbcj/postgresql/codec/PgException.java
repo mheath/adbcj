@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.postgresql.mina;
+package org.adbcj.postgresql.codec;
 
 import java.util.Map;
 

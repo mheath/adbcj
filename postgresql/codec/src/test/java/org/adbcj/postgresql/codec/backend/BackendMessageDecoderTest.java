@@ -2,7 +2,7 @@ package org.adbcj.postgresql.codec.backend;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.adbcj.postgresql.codec.DefaultConnectionState;
+import org.adbcj.postgresql.codec.ConnectionState;
 import org.adbcj.postgresql.codec.ConfigurationVariable;
 import org.adbcj.postgresql.codec.PgField;
 import org.adbcj.support.DecoderInputStream;
@@ -157,7 +157,7 @@ public class BackendMessageDecoderTest {
 	}
 
 	private BackendMessageDecoder createDecoder() {
-		DefaultConnectionState state = new DefaultConnectionState("test");
+		ConnectionState state = new ConnectionState("test");
 		state.setBackendCharset(Charset.defaultCharset());
 		return new BackendMessageDecoder(state);
 	}

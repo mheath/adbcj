@@ -14,7 +14,7 @@
  *   limitations under the License.
  *
  */
-package org.adbcj.postgresql;
+package org.adbcj.postgresql.codec;
 
 import java.security.NoSuchAlgorithmException;
 

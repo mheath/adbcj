@@ -1,10 +1,14 @@
 package org.adbcj.postgresql.mina;
 
 import org.adbcj.postgresql.codec.AbstractConnectionManager;
-import org.adbcj.postgresql.codec.AbstractConnection;
-import org.adbcj.postgresql.mina.PgIoHandler;
+import org.adbcj.postgresql.codec.backend.BackendMessageDecoder;
+import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
+import org.adbcj.postgresql.codec.frontend.FrontendMessageEncoder;
+import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
+import org.adbcj.postgresql.mina.IoHandler;
 import org.adbcj.postgresql.mina.IoSessionUtil;
 import org.adbcj.support.DefaultDbFuture;
+import org.adbcj.support.DecoderInputStream;
 import org.adbcj.Connection;
 import org.adbcj.DbFuture;
 import org.adbcj.DbException;
@@ -12,16 +16,21 @@ import org.apache.mina.core.session.IoSession;
 import org.apache.mina.core.session.IoSessionInitializer;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.future.ConnectFuture;
+import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.filter.codec.ProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.codec.ProtocolEncoderOutput;
+import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 import java.net.InetSocketAddress;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * @author Mike Heath
@@ -33,26 +42,75 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 
 	private final NioSocketConnector socketConnector;
 
-	private final String username;
-	private final String password;
 	private DefaultDbFuture<Void> closeFuture = null;
 
 	private volatile boolean pipeliningEnabled = true;
 
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
 		public ProtocolDecoder getDecoder(IoSession session) throws Exception {
-			// TODO Determine if this should be a static instance
-			return null;//new BackendMessageDecoder();
+			final MinaConnection connection = IoSessionUtil.getConnection(session);
+			return new ProtocolDecoder() {
+
+				private final BackendMessageDecoder decoder = new BackendMessageDecoder(connection.getConnectionState());
+
+				@Override
+				public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
+					DecoderInputStream inputStream = new DecoderInputStream(in.asInputStream());
+					AbstractBackendMessage message;
+					do {
+						inputStream.setLimit(Integer.MAX_VALUE);
+						message = decoder.decode(inputStream, false);
+						if (message != null) {
+							out.write(message);
+						}
+					} while (message != null);
+				}
+
+				@Override
+				public void dispose(IoSession session) throws Exception {
+					// Do nothing
+				}
+
+				@Override
+				public void finishDecode(IoSession session, ProtocolDecoderOutput out) throws Exception {
+					// Do nothing
+				}
+			};
 		}
 		public ProtocolEncoder getEncoder(IoSession session) throws Exception {
-			// TODO Determine if this should be a static instance
-			return null; //new PgFrontendMessageEncoder();
+			final MinaConnection connection = IoSessionUtil.getConnection(session);
+			return new ProtocolEncoder() {
+
+				private final FrontendMessageEncoder encoder = new FrontendMessageEncoder(connection.getConnectionState());
+
+				@Override
+				public void dispose(IoSession ioSession) throws Exception {
+					// Do nothing.
+				}
+
+				@Override
+				public void encode(IoSession ioSession, Object o, ProtocolEncoderOutput protocolEncoderOutput) throws Exception {
+					IoBuffer buffer = IoBuffer.allocate(4096);
+					OutputStream out = buffer.asOutputStream();
+					if (o instanceof AbstractFrontendMessage) {
+						encoder.encode(out, (AbstractFrontendMessage)o);
+					} else if (o instanceof AbstractFrontendMessage[]) {
+						encoder.encode(out, (AbstractFrontendMessage[])o);
+					} else {
+						throw new IllegalStateException("Unkown message type for: " + o);
+					}
+					out.close();
+					buffer.flip();
+					protocolEncoderOutput.write(buffer);
+					protocolEncoderOutput.flush();
+				}
+			};
 		}
 	};
 
 	public MinaConnectionManager(String host, int port, String username, String password, String database,
 			Properties properties) {
-		super(database);
+		super(username, password, database);
 		logger.debug("Creating new Postgresql ConnectionManager");
 
 		socketConnector = new NioSocketConnector();
@@ -62,13 +120,10 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 
 		filterChain.addLast(CODEC_NAME, new ProtocolCodecFilter(CODEC_FACTORY));
 
-		socketConnector.setHandler(new PgIoHandler(this));
+		socketConnector.setHandler(new IoHandler(this));
 
 		InetSocketAddress address = new InetSocketAddress(host, port);
 		socketConnector.setDefaultRemoteAddress(address);
-
-		this.username = username;
-		this.password = password;
 	}
 
 	public DbFuture<Connection> connect() {
@@ -77,7 +132,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 		}
 		logger.debug("Starting connection");
 		PgConnectFuture future = new PgConnectFuture();
-		//socketConnector.connect(future);
+		socketConnector.connect(future);
 
 		logger.debug("Started connection");
 
@@ -92,7 +147,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 		@Override
 		public synchronized void initializeSession(IoSession session, ConnectFuture future) {
 			if (cancelled) {
-				session.close();
+				session.close(true);
 				return;
 			}
 			logger.debug("Creating AbstractConnection");
@@ -148,17 +203,9 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 	//
 	// ================================================================================================================
 
-	public String getUsername() {
-		return username;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
 	@Override
 	public String toString() {
-		return String.format("Postgresql Connection Manager (Db: '%s', User: '%s')", getDatabase(), username);
+		return String.format("Postgresql (MINA) Connection Manager (Db: '%s', User: '%s')", getDatabase(), getUsername());
 	}
 
 

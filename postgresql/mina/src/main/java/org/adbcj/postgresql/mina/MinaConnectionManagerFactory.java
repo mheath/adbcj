@@ -23,14 +23,13 @@ import java.util.Properties;
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerFactory;
 import org.adbcj.DbException;
-import org.adbcj.postgresql.codec.AbstractConnectionManager;
 
-public class PgConnectionManagerFactory implements ConnectionManagerFactory {
+public class MinaConnectionManagerFactory implements ConnectionManagerFactory {
 
-	public static final String PROTOCOL = "postgresql";
+	public static final String PROTOCOL = "postgresql-mina";
 	public static final int DEFAULT_PORT = 5432; 
 
-	private PgConnectionManagerFactory() {
+	public MinaConnectionManagerFactory() {
 		// Empty private constructor
 	}
 
