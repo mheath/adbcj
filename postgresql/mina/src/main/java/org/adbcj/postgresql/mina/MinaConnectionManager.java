@@ -23,6 +23,7 @@ import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,21 +50,21 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 	private static final ProtocolCodecFactory CODEC_FACTORY = new ProtocolCodecFactory() {
 		public ProtocolDecoder getDecoder(IoSession session) throws Exception {
 			final MinaConnection connection = IoSessionUtil.getConnection(session);
-			return new ProtocolDecoder() {
+			return new CumulativeProtocolDecoder() {
 
 				private final BackendMessageDecoder decoder = new BackendMessageDecoder(connection.getConnectionState());
 
 				@Override
-				public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
+				protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 					DecoderInputStream inputStream = new DecoderInputStream(in.asInputStream());
-					AbstractBackendMessage message;
-					do {
+					while (true) {
 						inputStream.setLimit(Integer.MAX_VALUE);
-						message = decoder.decode(inputStream, false);
-						if (message != null) {
-							out.write(message);
+						AbstractBackendMessage message = decoder.decode(inputStream, false);
+						if (message == null) {
+							return false;
 						}
-					} while (message != null);
+						out.write(message);
+					}
 				}
 
 				@Override
