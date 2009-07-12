@@ -46,6 +46,7 @@ public class ProtocolHandler {
 		connection.write(new StartupMessage(connectionManager.getUsername(), connectionManager.getDatabase(), parameters));
 	}
 
+	// TODO Rename to connectionClosed
 	public void closeConnection(AbstractConnection connection) {
 		AbstractDbSession.Request<Void> closeRequest = connection.getCloseRequest();
 		if (closeRequest != null) {
