@@ -13,7 +13,7 @@ import org.jboss.netty.channel.MessageEvent;
 @ChannelPipelineCoverage("one")
 class MessageQueuingHandler implements ChannelUpstreamHandler {
 
-	private final AtomicReference<ChannelHandlerContext> context = new AtomicReference<ChannelHandlerContext>();
+	private ChannelHandlerContext context;
 	// Access must be synchronized on this
 	private final List<MessageEvent> messageQueue = new LinkedList<MessageEvent>();
 
@@ -25,7 +25,9 @@ class MessageQueuingHandler implements ChannelUpstreamHandler {
 			throws Exception {
 		if (!flushed) {
 			if (e instanceof MessageEvent) {
-				context.compareAndSet(null, ctx);
+				if (context == null) {
+					context = ctx;
+				}
 				messageQueue.add((MessageEvent) e);
 			}
 		}
@@ -33,7 +35,7 @@ class MessageQueuingHandler implements ChannelUpstreamHandler {
 
 	public synchronized void flush() {
 		for (MessageEvent event : messageQueue) {
-			context.get().sendUpstream(event);
+			context.sendUpstream(event);
 		}
 		flushed = true;
 	}
