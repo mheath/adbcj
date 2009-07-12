@@ -29,10 +29,6 @@ public class MinaConnectionManagerFactory implements ConnectionManagerFactory {
 	public static final String PROTOCOL = "postgresql-mina";
 	public static final int DEFAULT_PORT = 5432; 
 
-	public MinaConnectionManagerFactory() {
-		// Empty private constructor
-	}
-
 	public ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
 		try {
 			/*

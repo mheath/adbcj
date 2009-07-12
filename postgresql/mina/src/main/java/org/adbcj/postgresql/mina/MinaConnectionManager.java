@@ -43,6 +43,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 
 	private final NioSocketConnector socketConnector;
 
+	// Access must be synchronized on 'this'
 	private DefaultDbFuture<Void> closeFuture = null;
 
 	private volatile boolean pipeliningEnabled = true;
@@ -66,16 +67,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 						out.write(message);
 					}
 				}
-
-				@Override
-				public void dispose(IoSession session) throws Exception {
-					// Do nothing
-				}
-
-				@Override
-				public void finishDecode(IoSession session, ProtocolDecoderOutput out) throws Exception {
-					// Do nothing
-				}
+				
 			};
 		}
 		public ProtocolEncoder getEncoder(IoSession session) throws Exception {
@@ -180,7 +172,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 			socketConnector.dispose();
 			closeFuture.setResult(null);
 		} else {
-			// TODO Implement PostgresqlConnectionManager.close(boolean)
+			// TODO Implement MinaConnectionManager.close(boolean)
 			throw new IllegalStateException("Non immediate close not yet implemented");
 		}
 		return closeFuture;
