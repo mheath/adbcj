@@ -1,12 +1,24 @@
 package org.adbcj.perf;
 
-import static org.adbcj.perf.Configuration.*;
+import static org.adbcj.perf.Configuration.MYSQL_ADBCJ;
+import static org.adbcj.perf.Configuration.MYSQL_ADBCJ_JDBC;
+import static org.adbcj.perf.Configuration.MYSQL_ADBCJ_NETTY;
+import static org.adbcj.perf.Configuration.MYSQL_ADBCJ_NETTY_NO_PIPELINING;
+import static org.adbcj.perf.Configuration.MYSQL_ADBCJ_NO_PIPELINING;
+import static org.adbcj.perf.Configuration.MYSQL_JDBC;
+import static org.adbcj.perf.Configuration.MYSQL_JDBC_BATCH;
+import static org.adbcj.perf.Configuration.POSTGRESQL_ADBCJ;
+import static org.adbcj.perf.Configuration.POSTGRESQL_ADBCJ_JDBC;
+import static org.adbcj.perf.Configuration.POSTGRESQL_ADBCJ_NETTY;
+import static org.adbcj.perf.Configuration.POSTGRESQL_ADBCJ_NETTY_NO_PIPELINING;
+import static org.adbcj.perf.Configuration.POSTGRESQL_ADBCJ_NO_PIPELINING;
+import static org.adbcj.perf.Configuration.POSTGRESQL_JDBC;
+import static org.adbcj.perf.Configuration.POSTGRESQL_JDBC_BATCH;
 
-import java.util.List;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.io.File;
-import java.io.PrintStream;
+import java.util.List;
 
 /**
  *
@@ -23,11 +35,7 @@ public class Benchmark {
 		}
 		System.out.println("Database Host: " + host);
 
-		// Load database drivers
-		org.adbcj.mysql.mina.Adbcj.init();
-		org.adbcj.mysql.netty.Adbcj.init();
-		org.adbcj.postgresql.Adbcj.init();
-		org.adbcj.jdbc.Adbcj.init();
+		// Load JDBC database drivers
 		Class.forName("com.mysql.jdbc.Driver");
 		Class.forName("org.postgresql.Driver");
 
@@ -37,7 +45,7 @@ public class Benchmark {
 		List<Group> groups = new ArrayList<Group>();
 		Group connect = new Group("Connect");
 //		groups.add(connect);
-		final int count = 50;
+		final int count = 200;
 		connect.addExperiment(new JDBCConnectExperiment(MYSQL_JDBC, host, count));
 		connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ_JDBC, host, count));
 		connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ, host, count));
@@ -47,11 +55,11 @@ public class Benchmark {
 		connect.addExperiment(new AdbcjConnectExperiment(POSTGRESQL_ADBCJ, host, count));
 
 		Group close = new Group("Close");
-//		groups.add(close);
+//		groups.add(finalizeClose);
 		close.addExperiment(new JDBCCloseExperiment(MYSQL_JDBC, host, count));
 		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_JDBC, host, count));
 		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ, host, count));
-		//close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_NETTY, host, count));
+		//finalizeClose.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_NETTY, host, count));
 		close.addExperiment(new JDBCCloseExperiment(POSTGRESQL_JDBC, host, count));
 		close.addExperiment(new AdbcjCloseExperiment(POSTGRESQL_ADBCJ_JDBC, host, count));
 		close.addExperiment(new AdbcjCloseExperiment(POSTGRESQL_ADBCJ, host, count));
@@ -68,8 +76,10 @@ public class Benchmark {
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, count));
 		selectsTiny.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, tinyQuery, count));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, tinyQuery, count));
 		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, tinyQuery, count));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, count));
 
 		final String smallQuery = "SELECT * FROM simple_values";
 		Group selectsSmall = new Group("Selects Small");
@@ -82,6 +92,7 @@ public class Benchmark {
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, count));
 		selectsSmall.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, smallQuery, count));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, smallQuery, count));
 		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, smallQuery, count));
 
@@ -96,6 +107,7 @@ public class Benchmark {
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, largeQuery, count));
 		selectsLarge.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, largeQuery, count));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, largeQuery, count));
 		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, largeQuery, count));
 

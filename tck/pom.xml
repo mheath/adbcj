@@ -51,7 +51,12 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<artifactId>adbcj-postgresql</artifactId>
+			<artifactId>postgresql-mina</artifactId>
+			<groupId>${project.groupId}</groupId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<artifactId>postgresql-netty</artifactId>
 			<groupId>${project.groupId}</groupId>
 			<scope>test</scope>
 		</dependency>

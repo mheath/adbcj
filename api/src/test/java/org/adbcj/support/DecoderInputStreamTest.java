@@ -1,13 +1,12 @@
 package org.adbcj.support;
 
-import org.testng.annotations.Test;
-import org.testng.Assert;
-
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.IOException;
-import java.nio.charset.CharsetDecoder;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Mike Heath
@@ -31,8 +30,10 @@ public class DecoderInputStreamTest {
 	public void readString() throws IOException {
 		final String charset = "UTF-8";
 		final String s = "Have a nice day!";
-		InputStream bais = new ByteArrayInputStream((s + "\0").getBytes(charset));
+		byte[] input = (s + "\0").getBytes(charset);
+		InputStream bais = new ByteArrayInputStream(input);
 		DecoderInputStream in = new DecoderInputStream(bais);
+		in.setLimit(input.length);
 		String i = in.readString(Charset.forName(charset));
 		Assert.assertEquals(s, i);
 	}

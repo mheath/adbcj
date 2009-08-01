@@ -3,7 +3,6 @@ package org.adbcj.postgresql.codec;
 import org.adbcj.postgresql.codec.frontend.StartupMessage;
 import org.adbcj.postgresql.codec.frontend.SimpleFrontendMessage;
 import org.adbcj.postgresql.codec.frontend.FrontendMessageType;
-import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
 import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
 import org.adbcj.postgresql.codec.backend.AuthenticationMessage;
 import org.adbcj.postgresql.codec.backend.CommandCompleteMessage;
@@ -15,10 +14,10 @@ import org.adbcj.postgresql.codec.backend.RowDescriptionMessage;
 import org.adbcj.support.AbstractDbSession;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultResult;
+import org.adbcj.Connection;
 import org.adbcj.DbException;
 import org.adbcj.Value;
 import org.adbcj.Field;
-import org.adbcj.DbFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +47,7 @@ public class ProtocolHandler {
 
 	// TODO Rename to connectionClosed
 	public void closeConnection(AbstractConnection connection) {
-		AbstractDbSession.Request<Void> closeRequest = connection.getCloseRequest();
-		if (closeRequest != null) {
-			closeRequest.setResult(null);
-		}
-		// TODO Make a DbSessionClosedException and use here
-		connection.errorPendingRequests(new DbException("Connection closed"));
+		connection.finalizeClose();
 	}
 
 	public void handleException(AbstractConnection connection, Throwable cause) {
@@ -218,7 +212,7 @@ public class ProtocolHandler {
 
 	private void doReadyForQuery(AbstractConnection connection, ReadyMessage backendMessage) {
 		// Check if we're doing connection
-		DefaultDbFuture future = connection.getConnectFuture();
+		DefaultDbFuture<Connection> future = connection.getConnectFuture();
 		if (!future.isDone()) {
 			logger.debug("Completed connection");
 			future.setResult(connection);

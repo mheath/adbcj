@@ -10,7 +10,6 @@ import org.adbcj.DbListener;
 import org.adbcj.DbSession;
 import org.adbcj.DbSessionPool;
 import org.adbcj.ResultSet;
-import org.adbcj.mysql.mina.Adbcj;
 
 /**
  *
@@ -44,8 +43,6 @@ public class SelectBenchMark {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-		Adbcj.init();
-
 		ConnectionManager mysqlConnectionManager = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
 		mysqlConnectionManager.setPipeliningEnabled(false);
 		DbSession session = mysqlConnectionManager.connect().get();

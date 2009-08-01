@@ -33,7 +33,11 @@
 			<groupId>${project.groupId}</groupId>
 		</dependency>
 		<dependency>
-			<artifactId>adbcj-postgresql</artifactId>
+			<artifactId>postgresql-mina</artifactId>
+			<groupId>${project.groupId}</groupId>
+		</dependency>
+		<dependency>
+			<artifactId>postgresql-netty</artifactId>
 			<groupId>${project.groupId}</groupId>
 		</dependency>
 		<dependency>

@@ -6,7 +6,6 @@ import java.util.Properties;
 
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerFactory;
-import org.adbcj.ConnectionManagerProvider;
 import org.adbcj.DbException;
 
 public class MySqlConnectionManagerFactory implements ConnectionManagerFactory {

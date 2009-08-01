@@ -19,11 +19,9 @@ package org.adbcj.mysql.mina;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
-import java.util.Arrays;
 
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerFactory;
-import org.adbcj.ConnectionManagerProvider;
 import org.adbcj.DbException;
 
 public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
@@ -31,9 +29,6 @@ public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 	public static final String PROTOCOL = "mysql";
 	private static final String PROTOCOL_MINA = "mysqlmina";
 	public static final int DEFAULT_PORT = 3306;
-
-	private MysqlConnectionManagerFactory() {
-	}
 
 	public ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
 		try {

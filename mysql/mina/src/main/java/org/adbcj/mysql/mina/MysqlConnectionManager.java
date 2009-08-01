@@ -87,7 +87,7 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 
 			// If cancelled, close session and return
 			if (cancelled) {
-				session.close();
+				session.close(true);
 				return;
 			}
 

@@ -142,7 +142,6 @@ public class BackendMessageDecoder {
 		// Get authentication type
 		AuthenticationType authenticationType = AuthenticationType.values()[input.readInt()];
 
-		AuthenticationMessage message;
 		switch(authenticationType) {
 		// Authentication types that don't have a payload
 		case OK:

@@ -16,17 +16,7 @@
  */
 package org.adbcj.postgresql.codec;
 
-import java.net.InetSocketAddress;
-import java.util.Properties;
-
-import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
-import org.adbcj.DbException;
-import org.adbcj.DbFuture;
-import org.adbcj.postgresql.codec.AbstractConnection;
-import org.adbcj.support.DefaultDbFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class AbstractConnectionManager implements ConnectionManager {
 

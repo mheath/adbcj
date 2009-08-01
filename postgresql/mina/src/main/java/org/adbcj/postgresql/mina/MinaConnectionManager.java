@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 import java.net.InetSocketAddress;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
@@ -172,8 +171,8 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 			socketConnector.dispose();
 			closeFuture.setResult(null);
 		} else {
-			// TODO Implement MinaConnectionManager.close(boolean)
-			throw new IllegalStateException("Non immediate close not yet implemented");
+			// TODO Implement MinaConnectionManager.finalizeClose(boolean)
+			throw new IllegalStateException("Non immediate finalizeClose not yet implemented");
 		}
 		return closeFuture;
 	}

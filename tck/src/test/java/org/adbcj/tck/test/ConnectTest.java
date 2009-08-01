@@ -84,7 +84,7 @@ public class ConnectTest {
 		assertTrue(connection.isClosed());
 		latch.await(1, TimeUnit.SECONDS);
 		assertTrue(callbacks[0], "Callback on connection future was not invoked");
-		assertTrue(callbacks[1], "Callback on close future was not invoked");
+		assertTrue(callbacks[1], "Callback on finalizeClose future was not invoked");
 	}
 
 	public void testConnectNonImmediateClose() throws DbException, InterruptedException {
@@ -95,14 +95,14 @@ public class ConnectTest {
 		assertTrue(!connection.isClosed());
 		connection.close(true).addListener(new DbListener<Void>() {
 			public void onCompletion(DbFuture<Void> future) throws Exception {
-				// Indicate that close callback has been invoked
+				// Indicate that finalizeClose callback has been invoked
 				callbacks[0] = true;
 				latch.countDown();
 			}
 		}).get();
 		assertTrue(connection.isClosed());
 		latch.await(1, TimeUnit.SECONDS);
-		assertTrue(callbacks[0], "Callback on close future was not invoked");
+		assertTrue(callbacks[0], "Callback on finalizeClose future was not invoked");
 	}
 
 	public void testCancelClose() throws DbException, InterruptedException {
@@ -117,20 +117,20 @@ public class ConnectTest {
 			lockConnection.beginTransaction();
 			TestUtils.selectForUpdate(lockConnection).get();
 
-			// Do select for update on second connection so we can close it and then cancel the close
+			// Do select for update on second connection so we can finalizeClose it and then cancel the finalizeClose
 			connectionToClose.beginTransaction();
 			DbFuture<ResultSet> future = TestUtils.selectForUpdate(connectionToClose);
 
 			DbSessionFuture<Void> closeFuture = connectionToClose.close(false).addListener(new DbListener<Void>() {
 				public void onCompletion(DbFuture<Void> future) throws Exception {
-					logger.debug("testCancelClose: In close callback for connectionManager {}", connectionManager);
+					logger.debug("testCancelClose: In finalizeClose callback for connectionManager {}", connectionManager);
 					closeCallback[0] = true;
 					closeCallback[1] = future.isCancelled();
 				}
 			});
 			assertTrue(connectionToClose.isClosed(), "This connection should be flagged as closed now");
-			assertTrue(closeFuture.cancel(false), "The connection close should have cancelled properly");
-			assertFalse(connectionToClose.isClosed(), "This connection should not be closed because we canceled the close");
+			assertTrue(closeFuture.cancel(false), "The connection finalizeClose should have cancelled properly");
+			assertFalse(connectionToClose.isClosed(), "This connection should not be closed because we canceled the finalizeClose");
 
 			// Release lock
 			lockConnection.rollback().get();
@@ -149,9 +149,9 @@ public class ConnectTest {
 			lockConnection.close(true);
 			connectionToClose.close(true);
 		}
-		// Make sure the close's callback was invoked properly
-		assertTrue(closeCallback[0], "The close callback was not invoked when cancelled");
-		assertTrue(closeCallback[1], "The close future did not indicate the close was cancelled");
+		// Make sure the finalizeClose's callback was invoked properly
+		assertTrue(closeCallback[0], "The finalizeClose callback was not invoked when cancelled");
+		assertTrue(closeCallback[1], "The finalizeClose future did not indicate the finalizeClose was cancelled");
 	}
 	
 	public void testNonImmediateClose() throws Exception {
@@ -172,7 +172,7 @@ public class ConnectTest {
 					throw new AssertionError("future " + future + " did not complete in time");
 				}
 			}
-			throw new AssertionError("close future failed to complete");
+			throw new AssertionError("finalizeClose future failed to complete");
 		}
 		assertTrue(connection.isClosed(), "Connection should be closed");
 		for (DbSessionFuture<ResultSet> future : futures) {

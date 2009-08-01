@@ -92,6 +92,8 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 			channelFuture.addListener(new ChannelFutureListener() {
 				@Override
 				public void operationComplete(ChannelFuture future) throws Exception {
+					logger.debug("Connect completed");
+					
 					Channel channel = future.getChannel();
 					MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, getCredentials(), channel, MysqlConnectFuture.this);
 					channel.getPipeline().addLast("handler", new Handler(connection));

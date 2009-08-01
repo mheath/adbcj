@@ -90,7 +90,7 @@ public class ConnectSpecialCaseTest {
 //			assertTrue(latch.await(1, TimeUnit.SECONDS), "Callback was not invoked in time");
 //			assertTrue(callbacks[0], "Connect future callback was not invoked with connect cancellation");
 //		} finally {
-//			connectionManager.close(true);
+//			connectionManager.finalizeClose(true);
 //		}
 //	}
 
@@ -122,11 +122,11 @@ public class ConnectSpecialCaseTest {
 			logger.debug("Closing locking connection");
 			lockingConnection.rollback().get();
 			lockingConnection.close(true).get();
-			logger.debug("Locking connection close");
+			logger.debug("Locking connection finalizeClose");
 
 			assertTrue(connection.isClosed(), "Connection should be closed");
 			for (DbSessionFuture<ResultSet> future : futures) {
-				assertTrue(future.isCancelled(), "Future should have been cancelled at close: " + future);
+				assertTrue(future.isCancelled(), "Future should have been cancelled at finalizeClose: " + future);
 				assertTrue(future.isDone(), "Request did not finish before connection was closed: " + future);
 			}
 		} finally {

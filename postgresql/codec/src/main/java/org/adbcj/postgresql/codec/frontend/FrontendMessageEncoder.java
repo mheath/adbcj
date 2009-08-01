@@ -240,7 +240,7 @@ public class FrontendMessageEncoder {
 	}
 
 	private void encodeCloseMessage(EncoderOutputStream out, CloseMessage message) throws IOException {
-		logger.trace("Encoding close");
+		logger.trace("Encoding finalizeClose");
 
 		encodeCloseAndDescribe(out, FrontendMessageType.CLOSE, message.getTarget(), message.getName());
 	}

@@ -2,7 +2,6 @@ package org.adbcj.postgresql.mina;
 
 import org.adbcj.postgresql.codec.AbstractConnection;
 import org.adbcj.postgresql.codec.AbstractConnectionManager;
-import org.adbcj.postgresql.codec.ConnectionState;
 import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
 import org.apache.mina.core.session.IoSession;
 

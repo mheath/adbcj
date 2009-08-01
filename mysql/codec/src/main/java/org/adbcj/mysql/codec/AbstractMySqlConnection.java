@@ -14,7 +14,6 @@ import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
 import org.adbcj.support.AbstractDbSession;
 import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.support.AbstractDbSession.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +27,7 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 
 	private final LoginCredentials credentials;
 
-	private Request<Void> closeRequest;
+	private Request<Void> closeRequest; // Access must by synchronized on 'this'
 
 	private MysqlCharacterSet charset = MysqlCharacterSet.LATIN1_SWEDISH_CI;
 
@@ -196,10 +195,6 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 
 	// ************* Non-API methods *************************************************************
 
-	public synchronized Request<Void> getCloseRequest() {
-		return closeRequest;
-	}
-
 	public LoginCredentials getCredentials() {
 		return credentials;
 	}
@@ -280,17 +275,17 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 	public void doClose() {
 		connectionManager.removeConnection(this);
 
-		Request<Void> closeRequest = getCloseRequest();
-		if (closeRequest != null) {
-			closeRequest.complete(null);
-		}
-
 		// TODO Make a DbSessionClosedException and use here
 		DbException closedException = new DbException("Connection closed");
 		if (!getConnectFuture().isDone() ) {
 			getConnectFuture().setException(closedException);
 		}
 		errorPendingRequests(closedException);
+		synchronized (this) {
+			if (closeRequest != null) {
+				closeRequest.complete(null);
+			}
+		}
 	}
 
 

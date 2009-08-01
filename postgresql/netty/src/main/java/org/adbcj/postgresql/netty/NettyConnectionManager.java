@@ -94,11 +94,12 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 		synchronized (this) {
 			closeFuture = new DefaultDbFuture<Void>();
 			if (immediate) {
+				// TODO Shut down all connections managed by this ConnectionManager
 				executorService.shutdownNow();
 				closeFuture.setResult(null);
 			} else {
-				// TODO Implement NettyConnectionManager.close(boolean)
-				throw new Error("Non immediate close not yet implemented");
+				// TODO Implement NettyConnectionManager.finalizeClose(boolean)
+				throw new Error("Non immediate finalizeClose not yet implemented");
 			}
 			return closeFuture;
 
@@ -137,9 +138,9 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 					ProtocolHandler protocolHandler = new ProtocolHandler(NettyConnectionManager.this);
 
 					ChannelPipeline pipeline = channel.getPipeline();
-					pipeline.addLast("encoder", new Encoder(state));
-					pipeline.addLast("decoder", new Decoder(state));
-					pipeline.addLast("handler", new Handler(connection, protocolHandler));
+					pipeline.addLast(ENCODER, new Encoder(state));
+					pipeline.addLast(DECODER, new Decoder(state));
+					pipeline.addLast(QUEUE_HANDLER, new Handler(connection, protocolHandler));
 
 					protocolHandler.connectionOpened(connection);
 				}
@@ -187,6 +188,7 @@ class Connection extends AbstractConnection {
 	}
 }
 
+@ChannelPipelineCoverage("one")
 class Handler extends SimpleChannelHandler {
 	private final Connection connection;
 	private final ProtocolHandler protocolHandler;

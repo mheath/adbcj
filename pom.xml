@@ -19,7 +19,7 @@
 	<inceptionYear>2007</inceptionYear>
 
 	<properties>
-		<slf4j.version>1.5.2</slf4j.version>
+		<slf4j.version>1.5.8</slf4j.version>
 		<mina.version>2.0.0-M6</mina.version>
 		<netty.version>3.0.2.GA</netty.version>
 	</properties>
@@ -30,7 +30,7 @@
 		<module>mysql</module>
 		<module>postgresql</module>
 		<module>tck</module>
-		<!--<module>perf</module>-->
+		<module>perf</module>
 	</modules>
 
 	<scm>
@@ -216,7 +216,12 @@
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<artifactId>adbcj-postgresql</artifactId>
+				<artifactId>postgresql-mina</artifactId>
+				<groupId>${project.groupId}</groupId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<artifactId>postgresql-netty</artifactId>
 				<groupId>${project.groupId}</groupId>
 				<version>${project.version}</version>
 			</dependency>

@@ -1,5 +1,3 @@
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
@@ -10,10 +8,6 @@ import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerProvider;
 import org.adbcj.DbFuture;
 import org.adbcj.DbListener;
-import org.adbcj.DbSession;
-import org.adbcj.Result;
-import org.adbcj.ResultSet;
-import org.adbcj.Value;
 
 public class Test {
 

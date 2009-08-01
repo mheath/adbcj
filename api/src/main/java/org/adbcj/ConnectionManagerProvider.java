@@ -18,8 +18,6 @@ package org.adbcj;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 

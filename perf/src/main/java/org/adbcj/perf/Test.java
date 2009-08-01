@@ -2,8 +2,6 @@ package org.adbcj.perf;
 
 import static org.adbcj.perf.Configuration.*;
 
-import org.adbcj.mysql.netty.Adbcj;
-
 public class Test {
 
 	/**
@@ -11,8 +9,6 @@ public class Test {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		Adbcj.init();
-		org.adbcj.mysql.mina.Adbcj.init();
 		String host = "localhost";
 		final String tinyQuery = "SELECT 1";
 		final int count = 500000;
