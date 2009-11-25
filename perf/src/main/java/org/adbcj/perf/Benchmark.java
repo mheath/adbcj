@@ -16,6 +16,7 @@ import static org.adbcj.perf.Configuration.POSTGRESQL_JDBC;
 import static org.adbcj.perf.Configuration.POSTGRESQL_JDBC_BATCH;
 
 import java.io.PrintStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,10 +31,12 @@ public class Benchmark {
 		if (args.length > 0) {
 			host = args[0];
 		} else {
-			host = "localhost";
+			//host = "localhost";
 			//host = "10.108.37.24";  // rldb
+			host = "192.168.0.15";
 		}
 		System.out.println("Database Host: " + host);
+		System.out.println(System.getProperty("java.class.path"));
 
 		// Load JDBC database drivers
 		Class.forName("com.mysql.jdbc.Driver");
@@ -150,7 +153,7 @@ public class Benchmark {
 //		for (int i = 1; i <= MAX_CONNECTIONS; i++) {
 //			Group mxSelectTiny = new Group("Multiplex Select Tiny " + i);
 //			groups.add(mxSelectTiny);
-//			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, tinyQuery, multiplexCount, i));
+//			mxSelectTiny.addExperiment(new Multipen to lexedAdbcjQueryExperiment(MYSQL_ADBCJ, host, tinyQuery, multiplexCount, i));
 //			//mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, tinyQuery, multiplexCount, i));
 //			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, tinyQuery, multiplexCount, i));
 //			mxSelectTiny.addExperiment(new MultiplexedAdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, tinyQuery, multiplexCount, i));
@@ -187,8 +190,12 @@ public class Benchmark {
 //			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, largeQuery, multiplexCount, i));
 //			mxSelectLarge.addExperiment(new MultiplexedAdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, largeQuery, multiplexCount, i));
 //		}
+		runExperiments(groups);
 
 
+	}
+
+	public static void runExperiments(List<Group> groups) throws FileNotFoundException {
 		// Run experiments
 		List<Experiment> experiments = new ArrayList<Experiment>();
 		for (Group group: groups) {
@@ -207,8 +214,8 @@ public class Benchmark {
 
 		// Run all experiments
 		System.out.println("Run all");
-		//final int runCount = 25;
-		final int runCount = 10;
+		final int runCount = 25;
+		//final int runCount = 10;
 		for (int i = 0; i < runCount; i++) {
 			Collections.shuffle(experiments);
 			runAll(experiments);
@@ -223,7 +230,7 @@ public class Benchmark {
 		}
 	}
 
-	private static void runAll(List<Experiment> experiments) {
+	public static void runAll(List<Experiment> experiments) {
 		for (Experiment experiment : experiments) {
 			System.out.println("Running: " + experiment.getConfiguration() + " " + experiment.getGroup().getName());
 			experiment.run();
