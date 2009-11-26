@@ -97,8 +97,11 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 					Channel channel = future.getChannel();
 					MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, getCredentials(), channel, MysqlConnectFuture.this);
 					channel.getPipeline().addLast("handler", new Handler(connection));
-					channel.getPipeline().get(MessageQueuingHandler.class).flush();
-					channel.getPipeline().remove(MessageQueuingHandler.class);
+					MessageQueuingHandler queuingHandler = channel.getPipeline().get(MessageQueuingHandler.class);
+					synchronized (queuingHandler) {
+						queuingHandler.flush();
+						channel.getPipeline().remove(queuingHandler);
+					}
 
 				}
 			});
