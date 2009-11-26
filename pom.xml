@@ -21,7 +21,7 @@
 	<properties>
 		<slf4j.version>1.5.8</slf4j.version>
 		<mina.version>2.0.0-M6</mina.version>
-		<netty.version>3.0.2.GA</netty.version>
+		<netty.version>3.1.5.GA</netty.version>
 	</properties>
 
 	<modules>
