@@ -29,7 +29,7 @@
 		<module>jdbc</module>
 		<module>mysql</module>
 		<module>postgresql</module>
-		<module>tck</module>
+		<!--<module>tck</module>-->
 		<module>perf</module>
 	</modules>
 
