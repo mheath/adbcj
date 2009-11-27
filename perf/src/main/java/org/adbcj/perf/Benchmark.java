@@ -214,7 +214,7 @@ public class Benchmark {
 
 		// Run all experiments
 		System.out.println("Run all");
-		final int runCount = 25;
+		final int runCount = 300;
 		//final int runCount = 10;
 		for (int i = 0; i < runCount; i++) {
 			Collections.shuffle(experiments);
