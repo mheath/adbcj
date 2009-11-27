@@ -35,6 +35,7 @@ public abstract class AbstractJDBCExperiment extends Experiment {
 				connection.close();
 			}
 		}
+		managedConnections.clear();
 	}
 
 }

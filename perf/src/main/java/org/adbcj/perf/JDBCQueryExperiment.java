@@ -3,6 +3,7 @@ package org.adbcj.perf;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  *
@@ -21,6 +22,12 @@ public class JDBCQueryExperiment extends AbstractJDBCExperiment {
 
 	public void init() throws Exception {
 		connection = connect();
+	}
+
+	@Override
+	public void cleanup() throws SQLException {
+		super.cleanup();
+		connection = null;
 	}
 
 	public void execute() throws Exception {

@@ -35,6 +35,7 @@ public class AdbcjQueryExperiment extends AbstractAdbcjExperiment {
 	public void cleanup() throws Exception {
 		connection.close(true).get();
 		super.cleanup();
+		connection = null;
 	}
 	protected DbSession getDbSession() {
 		return getConnectionManager().connect().getUninterruptably();
