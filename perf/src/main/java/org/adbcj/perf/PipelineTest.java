@@ -41,7 +41,7 @@ public class PipelineTest {
 			group.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, smallQuery, i));
 			group.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, i));
 			group.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, smallQuery, i));
-			group.addExperiment(new JDBCQueryExperiment(Configuration.POSTGRESQL_ADBCJ_JDBC, host, smallQuery, i));
+			group.addExperiment(new AdbcjQueryExperiment(Configuration.POSTGRESQL_ADBCJ_JDBC, host, smallQuery, i));
 			group.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, host, smallQuery, i));
 			group.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, i));
 		}
