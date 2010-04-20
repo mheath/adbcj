@@ -2,22 +2,28 @@ package org.adbcj.perf;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  *
  */
 public class JDBCCloseExperiment extends AbstractJDBCExperiment {
 
-	private final Connection[] connections;
+	private final int count;
+	private final List<Connection> connections;
 
-	public JDBCCloseExperiment(Configuration configuration, String host, int count) {
-		super(configuration, host);
-		this.connections = new Connection[count];
+	public JDBCCloseExperiment(Configuration configuration, int count, String... hosts) {
+		super(configuration, hosts);
+		this.count = count;
+		this.connections = new ArrayList<Connection>(count * hosts.length);
 	}
 
 	public void init() throws SQLException {
-		for (int i = 0; i < connections.length; i++) {
-			connections[i] = connect();
+		for (int i = 0; i < count; i++) {
+			for (Connection connection : connect()) {
+				connections.add(connection);
+			}
 		}
 	}
 	

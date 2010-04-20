@@ -54,10 +54,14 @@ public class JdbcConnectionManager implements ConnectionManager {
 
 	public JdbcConnectionManager(String jdbcUrl, String username,
 			String password, Properties properties) {
+		this(jdbcUrl, username, password, Executors.newCachedThreadPool(), properties);
+	}
+
+	public JdbcConnectionManager(String jdbcUrl, String username,
+			String password, ExecutorService executorService, Properties properties) {
 		this.jdbcUrl = jdbcUrl;
 		this.properties = new Properties(properties);
-		// TODO Make it so we can configure the parameters to the thread pool
-		this.executorService = Executors.newCachedThreadPool();
+		this.executorService = executorService;
 
 		this.properties.put(USER, username);
 		this.properties.put(PASSWORD, password);

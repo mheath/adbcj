@@ -33,6 +33,14 @@ public class DbSessionPool implements DbSessionProvider {
 
 	private final Object lock = this;
 
+	public DbSessionPool() {
+		// Empty default constructor
+	}
+
+	public DbSessionPool(int connectionCount, ConnectionManager connectionManager) {
+		addConnectionManager(connectionManager, connectionCount);
+	}
+
 	public void addConnectionManager(ConnectionManager connectionManager, int connectionCount) {
 		ConnectionManagerEntry entry = new ConnectionManagerEntry(connectionManager, connectionCount);
 		synchronized (lock) {
@@ -48,7 +56,7 @@ public class DbSessionPool implements DbSessionProvider {
 		}
 	}
 
-	public DbFuture<? extends DbSession> connect() {
+	public DbFuture<DbSession> connect() {
 		final DefaultDbFuture<DbSession> future = new DefaultDbFuture<DbSession>();
 		future.setResult(new DbSession() {
 
@@ -143,6 +151,7 @@ public class DbSessionPool implements DbSessionProvider {
 			// Start all the connections
 			// TODO This is not at all efficient, develop a better solution for this
 			for (int i = 0; i < connectionCount; i++) {
+				System.out.println(i);
 				connectionManager.connect().addListener(connectionListener).getUninterruptably();
 			}
 

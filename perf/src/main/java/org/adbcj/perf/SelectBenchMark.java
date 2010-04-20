@@ -20,7 +20,7 @@ public class SelectBenchMark {
 		final long totalStart = System.nanoTime();
 //		final Queue<Long> timings = new ConcurrentLinkedQueue<Long>();
 		final CountDownLatch latch = new CountDownLatch(count);
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < count; i++) {
 			session.executeQuery(query).addListener(new DbListener<ResultSet>() {
 				//private final long start = System.nanoTime();
 				public void onCompletion(DbFuture<ResultSet> resultSetDbFuture) throws Exception {

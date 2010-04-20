@@ -31,6 +31,7 @@
 		<module>postgresql</module>
 		<!--<module>tck</module>-->
 		<module>perf</module>
+		<module>web</module>
 	</modules>
 
 	<scm>
@@ -238,6 +239,12 @@
 			</dependency>
 			<dependency>
 				<artifactId>slf4j-nop</artifactId>
+				<groupId>org.slf4j</groupId>
+				<version>${slf4j.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<artifactId>slf4j-jdk14</artifactId>
 				<groupId>org.slf4j</groupId>
 				<version>${slf4j.version}</version>
 				<scope>test</scope>

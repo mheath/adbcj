@@ -3,6 +3,9 @@ package org.adbcj.perf;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Arrays;
 
 /**
  *
@@ -13,31 +16,27 @@ public abstract class Experiment implements Runnable {
 	public static final String PASSWORD = "adbcjtck";
 
 	private final Configuration configuration;
-	private final String host;
+	private final List<String> hosts;
 
 	private final DescriptiveStatistics timings = new DescriptiveStatistics();
 
 	private Group group;
 
-	public Group getGroup() {
-		return group;
-	}
-
-	public void setGroup(Group group) {
-		this.group = group;
-	}
-
-	public Experiment(Configuration configuration, String host) {
+	public Experiment(Configuration configuration, String... hosts) {
 		this.configuration = configuration;
-		this.host = host;
+		this.hosts = Arrays.asList(hosts);
 	}
 
 	public Configuration getConfiguration() {
 		return configuration;
 	}
 
-	protected String getUrl() {
-		return configuration.getUrl(host);
+	protected List<String> getUrls() {
+		List<String> urls = new ArrayList<String>(hosts.size());
+		for (String host : hosts) {
+			urls.add(configuration.getUrl(host));
+		}
+		return urls;
 	}
 
 	public double getAverage() {
@@ -54,6 +53,14 @@ public abstract class Experiment implements Runnable {
 
 	public double getMin() {
 		return timings.getMin();
+	}
+
+	public Group getGroup() {
+		return group;
+	}
+
+	public void setGroup(Group group) {
+		this.group = group;
 	}
 
 	public void run() {

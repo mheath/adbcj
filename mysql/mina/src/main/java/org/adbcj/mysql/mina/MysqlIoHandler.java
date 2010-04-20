@@ -47,7 +47,7 @@ public class MysqlIoHandler extends IoHandlerAdapter {
 
 		Throwable e = handler.handleException(connection, cause);
 		if (e != null) {
-			// TODO: Pass exception on to connectionManager
+			// TODO: Pass exception on to connectionManager for handling
 			e.printStackTrace();
 		}
 	}

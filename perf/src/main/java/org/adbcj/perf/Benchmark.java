@@ -27,15 +27,15 @@ import java.util.List;
 public class Benchmark {
 
 	public static void main(String[] args) throws Exception {
-		final String host;
+		final String[] hosts;
 		if (args.length > 0) {
-			host = args[0];
+			hosts = args;
 		} else {
 			//host = "localhost";
 			//host = "10.108.37.24";  // rldb
-			host = "192.168.0.15";
+			hosts = new String[] { "192.168.0.15" };
 		}
-		System.out.println("Database Host: " + host);
+		System.out.println("Database Hosts: " + hosts);
 		System.out.println(System.getProperty("java.class.path"));
 
 		// Load JDBC database drivers
@@ -49,100 +49,100 @@ public class Benchmark {
 		Group connect = new Group("Connect");
 //		groups.add(connect);
 		final int count = 200;
-		connect.addExperiment(new JDBCConnectExperiment(MYSQL_JDBC, host, count));
-		connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ_JDBC, host, count));
-		connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ, host, count));
-		//connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ_NETTY, host, count));
-		connect.addExperiment(new JDBCConnectExperiment(POSTGRESQL_JDBC, host, count));
-		connect.addExperiment(new AdbcjConnectExperiment(POSTGRESQL_ADBCJ_JDBC, host, count));
-		connect.addExperiment(new AdbcjConnectExperiment(POSTGRESQL_ADBCJ, host, count));
+		connect.addExperiment(new JDBCConnectExperiment(MYSQL_JDBC, count, hosts));
+		connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ_JDBC, count, hosts));
+		connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ, count, hosts));
+		//connect.addExperiment(new AdbcjConnectExperiment(MYSQL_ADBCJ_NETTY, count, host));
+		connect.addExperiment(new JDBCConnectExperiment(POSTGRESQL_JDBC, count, hosts));
+		connect.addExperiment(new AdbcjConnectExperiment(POSTGRESQL_ADBCJ_JDBC, count, hosts));
+		connect.addExperiment(new AdbcjConnectExperiment(POSTGRESQL_ADBCJ, count, hosts));
 
 		Group close = new Group("Close");
 //		groups.add(finalizeClose);
-		close.addExperiment(new JDBCCloseExperiment(MYSQL_JDBC, host, count));
-		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_JDBC, host, count));
-		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ, host, count));
-		//finalizeClose.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_NETTY, host, count));
-		close.addExperiment(new JDBCCloseExperiment(POSTGRESQL_JDBC, host, count));
-		close.addExperiment(new AdbcjCloseExperiment(POSTGRESQL_ADBCJ_JDBC, host, count));
-		close.addExperiment(new AdbcjCloseExperiment(POSTGRESQL_ADBCJ, host, count));
+		close.addExperiment(new JDBCCloseExperiment(MYSQL_JDBC, count, hosts));
+		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_JDBC, count, hosts));
+		close.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ, count, hosts));
+		//finalizeClose.addExperiment(new AdbcjCloseExperiment(MYSQL_ADBCJ_NETTY, host, count, hosts));
+		close.addExperiment(new JDBCCloseExperiment(POSTGRESQL_JDBC, count, hosts));
+		close.addExperiment(new AdbcjCloseExperiment(POSTGRESQL_ADBCJ_JDBC, count, hosts));
+		close.addExperiment(new AdbcjCloseExperiment(POSTGRESQL_ADBCJ, count, hosts));
 
 
 		final String tinyQuery = "SELECT 1";
 		Group selectsTiny = new Group("Selects Tiny");
 		groups.add(selectsTiny);
-		selectsTiny.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, count));
-		selectsTiny.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, tinyQuery, count));
-		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY_NO_PIPELINING, host, tinyQuery, count));
+		selectsTiny.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, tinyQuery, count, hosts));
+		selectsTiny.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY_NO_PIPELINING, tinyQuery, count, hosts));
 
 		final String smallQuery = "SELECT * FROM simple_values";
 		Group selectsSmall = new Group("Selects Small");
 		groups.add(selectsSmall);
-		selectsSmall.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, smallQuery, count));
-		selectsSmall.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, smallQuery, count));
-		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, smallQuery, count));
+		selectsSmall.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, smallQuery, count, hosts));
+		selectsSmall.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, smallQuery, count, hosts));
 
 		final String largeQuery = "SELECT * FROM large";
 		Group selectsLarge = new Group("Selects Large");
 		groups.add(selectsLarge);
-		selectsLarge.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, host, largeQuery, count));
-		selectsLarge.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, host, largeQuery, count));
-		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, host, largeQuery, count));
+		selectsLarge.addExperiment(new JDBCQueryExperiment(MYSQL_JDBC, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_JDBC, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NO_PIPELINING, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new JDBCQueryExperiment(POSTGRESQL_JDBC, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NETTY, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_JDBC, largeQuery, count, hosts));
+		selectsLarge.addExperiment(new AdbcjQueryExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING, largeQuery, count, hosts));
 
 		Group updates = new Group("Updates");
 //		groups.add(updates);
-		updates.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC, host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC_BATCH, host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ,  host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_JDBC,  host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NO_PIPELINING,  host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC, host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC_BATCH, host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ,  host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_JDBC,  host, "UPDATE updates SET id=%d", count));
-		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING,  host, "UPDATE updates SET id=%d", count));
+		updates.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC, "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC_BATCH, "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ,  "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_JDBC,  "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NO_PIPELINING,  "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC, "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC_BATCH, "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ,  "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_JDBC,  "UPDATE updates SET id=%d", count, hosts));
+		updates.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING,  "UPDATE updates SET id=%d", count, hosts));
 
 		Group inserts = new Group("Inserts");
 //		groups.add(inserts);
-		inserts.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC, host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC_BATCH, host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_JDBC,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NO_PIPELINING,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC, host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC_BATCH, host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_JDBC,  host, "INSERT INTO updates (id) VALUES (%d)", count));
-		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING,  host, "INSERT INTO updates (id) VALUES (%d)", count));
+		inserts.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC, "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new JdbcUpdateExperiment(MYSQL_JDBC_BATCH, "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_JDBC,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NO_PIPELINING,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(MYSQL_ADBCJ_NETTY_NO_PIPELINING,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC, "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new JdbcUpdateExperiment(POSTGRESQL_JDBC_BATCH, "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_JDBC,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
+		inserts.addExperiment(new AdbcjUpdateExperiment(POSTGRESQL_ADBCJ_NO_PIPELINING,  "INSERT INTO updates (id) VALUES (%d)", count, hosts));
 
 		// === Multiplexing benchmarks ===
 
@@ -214,8 +214,8 @@ public class Benchmark {
 
 		// Run all experiments
 		System.out.println("Run all");
-		final int runCount = 300;
-		//final int runCount = 10;
+		//final int runCount = 300;
+		final int runCount = 30;
 		for (int i = 0; i < runCount; i++) {
 			Collections.shuffle(experiments);
 			runAll(experiments);

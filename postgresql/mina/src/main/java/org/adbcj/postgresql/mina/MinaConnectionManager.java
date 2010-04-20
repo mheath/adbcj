@@ -171,7 +171,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 			socketConnector.dispose();
 			closeFuture.setResult(null);
 		} else {
-			// TODO Implement MinaConnectionManager.finalizeClose(boolean)
+			// TODO Implement MinaConnectionManager.close(boolean)
 			throw new IllegalStateException("Non immediate finalizeClose not yet implemented");
 		}
 		return closeFuture;

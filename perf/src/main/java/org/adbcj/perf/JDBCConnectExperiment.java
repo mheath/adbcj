@@ -9,8 +9,8 @@ public class JDBCConnectExperiment extends AbstractJDBCExperiment {
 
 	private final int count;
 
-	public JDBCConnectExperiment(Configuration configuration, String host, int count) {
-		super(configuration, host);
+	public JDBCConnectExperiment(Configuration configuration, int count, String... hosts) {
+		super(configuration, hosts);
 		this.count = count;
 	}
 

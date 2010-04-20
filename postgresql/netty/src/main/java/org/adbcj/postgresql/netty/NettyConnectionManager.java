@@ -53,7 +53,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 	private static final String ENCODER = NettyConnectionManager.class.getName() + ".encoder";
 	private static final String DECODER = NettyConnectionManager.class.getName() + ".decoder";
 
-	private final ExecutorService executorService = Executors.newCachedThreadPool();
+	private final ExecutorService executorService;
 	private final ClientBootstrap bootstrap;
 
 	// Access must be synchronized on 'this'
@@ -61,19 +61,28 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 
 	private volatile boolean pipeliningEnabled = true;
 
+	public NettyConnectionManager(String host, int port, String username, String password, String database, Properties properties, ChannelFactory channelFactory) {
+		super(username, password, database);
+		executorService = null;
+		bootstrap = initBootstrap(channelFactory, host, port);
+	}
 
 	public NettyConnectionManager(String host, int port, String username, String password, String database, Properties properties) {
 		super(username, password, database);
-		logger.debug("Creating new Postgresql ConnectionManager");
+		executorService = Executors.newCachedThreadPool();
+		ChannelFactory channelFactory = new NioClientSocketChannelFactory(executorService, executorService);
+		bootstrap = initBootstrap(channelFactory, host, port);
+	}
 
-		ChannelFactory factory = new NioClientSocketChannelFactory(executorService, executorService);
-		bootstrap = new ClientBootstrap(factory);
+	private ClientBootstrap initBootstrap(ChannelFactory channelFactory, String host, int port) {
+		ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
 
 		bootstrap.setPipelineFactory(Channels.pipelineFactory(Channels.pipeline()));
 		bootstrap.setOption("tcpNoDelay", true);
 		bootstrap.setOption("keepAlive", true);
 		bootstrap.setOption("remoteAddress", new InetSocketAddress(host, port));
 
+		return bootstrap;
 	}
 
 
@@ -95,11 +104,13 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 			closeFuture = new DefaultDbFuture<Void>();
 			if (immediate) {
 				// TODO Shut down all connections managed by this ConnectionManager
-				executorService.shutdownNow();
+				if (executorService != null) {
+					executorService.shutdownNow();
+				}
 				closeFuture.setResult(null);
 			} else {
-				// TODO Implement NettyConnectionManager.finalizeClose(boolean)
-				throw new Error("Non immediate finalizeClose not yet implemented");
+				// TODO Implement NettyConnectionManager.close(boolean)
+				throw new Error("Non immediate close not yet implemented");
 			}
 			return closeFuture;
 
@@ -269,7 +280,7 @@ class Encoder implements ChannelDownstreamHandler {
 		} else {
 			encoder.encode(out, (AbstractFrontendMessage[]) e.getMessage());
 		}
-    	Channels.write(context, e.getChannel(), e.getFuture(), buffer);
+    	Channels.write(context, e.getFuture(), buffer);
 	}
 }
 

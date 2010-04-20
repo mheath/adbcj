@@ -12,7 +12,7 @@ public class Test {
 		String host = "localhost";
 		final String tinyQuery = "SELECT 1";
 		final int count = 500000;
-		AdbcjQueryExperiment experiment = new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, host, tinyQuery, count);
+		AdbcjQueryExperiment experiment = new AdbcjQueryExperiment(MYSQL_ADBCJ_NETTY, tinyQuery, count, host);
 
 		experiment.init();
 		experiment.execute();

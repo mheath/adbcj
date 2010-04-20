@@ -14,14 +14,18 @@ public abstract class AbstractJDBCExperiment extends Experiment {
 
 	private final List<Connection> managedConnections = new ArrayList<Connection>();
 
-	protected AbstractJDBCExperiment(Configuration configuration, String host) {
-		super(configuration, host);
+	protected AbstractJDBCExperiment(Configuration configuration, String... hosts) {
+		super(configuration, hosts);
 	}
 
-	protected Connection connect() throws SQLException {
-		final Connection connection = DriverManager.getConnection(getUrl(), USER_NAME, PASSWORD);
-		managedConnections.add(connection);
-		return connection;
+	protected List<Connection> connect() throws SQLException {
+		List<String> urls = getUrls();
+		List<Connection> connections = new ArrayList<Connection>(urls.size());
+		for (String url : urls) {
+			Connection connection = DriverManager.getConnection(url, USER_NAME, PASSWORD);
+			managedConnections.add(connection);
+		}
+		return connections;
 	}
 
 	/**

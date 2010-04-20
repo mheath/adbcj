@@ -46,15 +46,26 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 	private static final String ENCODER = MysqlConnectionManager.class.getName() + ".encoder";
 	private static final String DECODER = MysqlConnectionManager.class.getName() + ".decoder";
 
-	private final ExecutorService executorService = Executors.newCachedThreadPool();
+	private final ExecutorService executorService;
 	private final ClientBootstrap bootstrap;
 
 	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties) {
 		super(username, password, schema, properties);
+		executorService = Executors.newCachedThreadPool();
 
 		ChannelFactory factory = new NioClientSocketChannelFactory(executorService, executorService);
 		bootstrap = new ClientBootstrap(factory);
+		init(host, port);
+	}
 
+	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties, ChannelFactory factory) {
+		super(username, password, schema, properties);
+		executorService = null;
+		bootstrap = new ClientBootstrap(factory);
+		init(host, port);
+	}
+
+	private void init(String host, int port) {
 		bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 			@Override
 			public ChannelPipeline getPipeline() throws Exception {
@@ -75,7 +86,9 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 
 	@Override
 	protected void dispose() {
-		executorService.shutdownNow();
+		if (executorService != null) {
+			executorService.shutdownNow();
+		}
 	}
 
 	@Override
@@ -151,7 +164,7 @@ class Encoder implements ChannelDownstreamHandler {
         ChannelBuffer buffer = ChannelBuffers.buffer(1024);
         ChannelBufferOutputStream out = new ChannelBufferOutputStream(buffer);
     	encoder.encode((ClientRequest) e.getMessage(), out);
-    	Channels.write(context, e.getChannel(), e.getFuture(), buffer);
+    	Channels.write(context, e.getFuture(), buffer);
 	}
 }
 

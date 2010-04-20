@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  *
@@ -12,33 +13,35 @@ public class JDBCQueryExperiment extends AbstractJDBCExperiment {
 
 	private final String query;
 	private final int count;
-	private Connection connection;
+	private List<Connection> connections;
 
-	public JDBCQueryExperiment(Configuration configuration, String host, String query, int count) {
-		super(configuration, host);
+	public JDBCQueryExperiment(Configuration configuration, String query, int count, String... hosts) {
+		super(configuration, hosts);
 		this.query = query;
 		this.count = count;
 	}
 
 	public void init() throws Exception {
-		connection = connect();
+		connections = connect();
 	}
 
 	@Override
 	public void cleanup() throws SQLException {
 		super.cleanup();
-		connection = null;
+		connections = null;
 	}
 
 	public void execute() throws Exception {
-		for (int i = 0; i < count; i++) {
-			final Statement statement = connection.createStatement();
-			final ResultSet resultSet = statement.executeQuery(query);
-			while (resultSet.next()) {
-				resultSet.getObject(1);
+		for (Connection connection : connections) {
+			for (int i = 0; i < count; i++) {
+				final Statement statement = connection.createStatement();
+				final ResultSet resultSet = statement.executeQuery(query);
+				while (resultSet.next()) {
+					resultSet.getObject(1);
+				}
+				resultSet.close();
+				statement.close();
 			}
-			resultSet.close();
-			statement.close();
 		}
 	}
 }

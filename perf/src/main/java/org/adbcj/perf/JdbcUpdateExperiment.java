@@ -12,33 +12,36 @@ public class JdbcUpdateExperiment extends AbstractJDBCExperiment {
 	private String template;
 	private final Random rand = new Random();
 
-	public JdbcUpdateExperiment(Configuration configuration, String host, String template, int count) {
-		super(configuration, host);
+	public JdbcUpdateExperiment(Configuration configuration, String template, int count, String... hosts) {
+		super(configuration, hosts);
 		this.count = count;
 		this.template = template;
 	}
 
 	public void init() throws Exception {
-		final Connection connection = connect();
-		final Statement statement = connection.createStatement();
-		statement.executeUpdate("DELETE FROM updates");
-		statement.executeUpdate("INSERT INTO updates (id) VALUES (1)");
+		for (Connection connection : connect()) {
+			final Statement statement = connection.createStatement();
+			statement.executeUpdate("DELETE FROM updates");
+			statement.executeUpdate("INSERT INTO updates (id) VALUES (1)");
+			connection.close();
+		}
 	}
 
 	public void execute() throws Exception {
-		final Connection connection = connect();
-		final Statement statement = connection.createStatement();
-		for (int i = 0; i < count; i++) {
-			final String sql = String.format(template, rand.nextInt());
-			if (getConfiguration().isBatched()) {
-				statement.addBatch(sql);
-			} else {
-				statement.executeUpdate(sql);
+		for (Connection connection : connect()) {
+			final Statement statement = connection.createStatement();
+			for (int i = 0; i < count; i++) {
+				final String sql = String.format(template, rand.nextInt());
+				if (getConfiguration().isBatched()) {
+					statement.addBatch(sql);
+				} else {
+					statement.executeUpdate(sql);
+				}
 			}
+			if (getConfiguration().isBatched()) {
+				statement.executeBatch();
+			}
+			statement.close();
 		}
-		if (getConfiguration().isBatched()) {
-			statement.executeBatch();
-		}
-		statement.close();
 	}
 }
