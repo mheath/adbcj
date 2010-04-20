@@ -1,0 +1,94 @@
+<project
+		xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.adbcj</groupId>
+		<artifactId>adbcj</artifactId>
+		<version>0.2-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>adbcj-web</artifactId>
+	<packaging>war</packaging>
+	<name>ADBCJ - Web Performance Test</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.adbcj</groupId>
+			<artifactId>mysql-netty</artifactId>
+		</dependency>
+		<dependency>
+			<artifactId>mysql-connector-java</artifactId>
+			<groupId>mysql</groupId>
+			<version>5.1.6</version>
+		</dependency>
+		<dependency>
+			<artifactId>postgresql</artifactId>
+			<groupId>postgresql</groupId>
+			<version>8.2-504.jdbc4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.adbcj</groupId>
+			<artifactId>postgresql-netty</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.adbcj</groupId>
+			<artifactId>adbcj-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.freemarker</groupId> 
+			<artifactId>freemarker</artifactId>
+			<version>2.3.16</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>3.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>3.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>3.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>3.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>3.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>3.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-dbcp</groupId>
+			<artifactId>commons-dbcp</artifactId>
+			<version>1.4</version>
+		</dependency>
+	</dependencies>
+
+</project>
