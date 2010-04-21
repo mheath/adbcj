@@ -1,25 +1,17 @@
 package org.adbcj.perf;
 
 import org.adbcj.ConnectionManager;
-import org.adbcj.ConnectionManagerFactory;
 import org.adbcj.ConnectionManagerProvider;
 import org.adbcj.DbFuture;
 import org.adbcj.DbSession;
 import org.adbcj.ResultSet;
-import org.adbcj.jdbc.JdbcConnectionManager;
-import org.adbcj.mysql.netty.MysqlConnectionManager;
-import org.adbcj.postgresql.netty.NettyConnectionManager;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * If you have lots of connections to a single host, how long does it take to run a bunch of queries.
@@ -40,12 +32,9 @@ public class VerticalBenchmark {
 			throw new IllegalStateException("You must pass 2 arguments: count url");
 		}
 
-		final int count = Integer.parseInt(args[0]);
+		final int count = Math.max(1, Integer.parseInt(args[0]));
 		final String url = args[1];
 
-		ExecutorService executor = Executors.newCachedThreadPool();
-		ChannelFactory channelFactory = new NioClientSocketChannelFactory(executor, executor);
-		
 		System.out.println("Creating connection manager to " + url);
 		final ConnectionManager connectionManager = ConnectionManagerProvider.createConnectionManager(url, USER, PASSWORD);
 
@@ -57,12 +46,12 @@ public class VerticalBenchmark {
 		}
 
 		System.err.println("Warming up the JIT");
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 1000; i++) {
 			run(sessions);
 		}
 
 		final DescriptiveStatistics timings = new DescriptiveStatistics();
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < 50000; i++) {
 			timings.addValue(run(sessions));
 		}
 		OutputStream out = new FileOutputStream("verticalresults.txt", true);
