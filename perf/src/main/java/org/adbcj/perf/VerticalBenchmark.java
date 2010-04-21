@@ -49,6 +49,7 @@ public class VerticalBenchmark {
 		for (int i = 0; i < 1000; i++) {
 			run(sessions);
 		}
+		System.err.println("Running");
 
 		final DescriptiveStatistics timings = new DescriptiveStatistics();
 		for (int i = 0; i < 50000; i++) {
