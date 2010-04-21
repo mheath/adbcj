@@ -46,13 +46,13 @@ public class VerticalBenchmark {
 		}
 
 		System.err.println("Warming up the JIT");
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 500; i++) {
 			run(sessions);
 		}
 		System.err.println("Running");
 
 		final DescriptiveStatistics timings = new DescriptiveStatistics();
-		for (int i = 0; i < 50000; i++) {
+		for (int i = 0; i < 10000; i++) {
 			timings.addValue(run(sessions));
 		}
 		OutputStream out = new FileOutputStream("verticalresults.txt", true);
