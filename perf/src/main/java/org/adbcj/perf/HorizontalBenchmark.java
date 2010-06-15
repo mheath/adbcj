@@ -83,7 +83,7 @@ public class HorizontalBenchmark {
 		for (int i = 0; i < 1000; i++) {
 			run(sessions);
 		}
-
+		System.err.println("Running Experiments");
 		final DescriptiveStatistics timings = new DescriptiveStatistics();
 		for (int i = 0; i < count; i++) {
 			timings.addValue(run(sessions));
@@ -92,6 +92,7 @@ public class HorizontalBenchmark {
 		PrintWriter writer = new PrintWriter(out);
 		writer.printf("%s %d %f %f %d\n", database, hosts.length, timings.getMean(), timings.getStandardDeviation(), count);
 		writer.flush();
+		System.err.println("Done!");
 		System.exit(0);
 	}
 
