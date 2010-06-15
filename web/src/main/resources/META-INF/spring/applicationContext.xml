@@ -22,31 +22,46 @@
 	<bean id="query" class="java.lang.String"><constructor-arg value="SELECT * FROM large" /></bean>
 	<bean id="count" class="java.lang.Integer"><constructor-arg value="50"/></bean>
 
+	<bean class="org.adbcj.web.Monitor" lazy-init="false">
+		<constructor-arg>
+			<bean class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+				<property name="maxPoolSize" value="1" />
+			</bean>
+		</constructor-arg>
+		<constructor-arg ref="count" />
+		<constructor-arg>
+			<bean class="java.io.FileWriter">
+				<constructor-arg value="/tmp/memusage.txt" />
+				<constructor-arg value="true" />
+			</bean>
+		</constructor-arg>
+	</bean>
+
 	<bean id="adbcj" class="org.adbcj.web.Adbcj">
 		<property name="query" ref="query" />
 		<property name="freeMarkerConfig" ref="freemarkerConfig" />
 		<property name="pools">
 			<util:list>
-				<bean class="org.adbcj.DbSessionPool">
-					<constructor-arg ref="count" />
-					<constructor-arg>
-						<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-							<constructor-arg value="adbcj:mysqlnetty://localhost/adbcjtck" />
-							<constructor-arg value="adbcjtck" />
-							<constructor-arg value="adbcjtck" />
-						</bean>
-					</constructor-arg>
-				</bean>
-				<bean class="org.adbcj.DbSessionPool">
-					<constructor-arg ref="count" />
-					<constructor-arg>
-						<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-							<constructor-arg value="adbcj:postgresql-netty://localhost/adbcjtck" />
-							<constructor-arg value="adbcjtck" />
-							<constructor-arg value="adbcjtck" />
-						</bean>
-					</constructor-arg>
-				</bean>
+				<!--<bean class="org.adbcj.DbSessionPool">-->
+					<!--<constructor-arg ref="count" />-->
+					<!--<constructor-arg>-->
+						<!--<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">-->
+							<!--<constructor-arg value="adbcj:mysqlnetty://localhost/adbcjtck" />-->
+							<!--<constructor-arg value="adbcjtck" />-->
+							<!--<constructor-arg value="adbcjtck" />-->
+						<!--</bean>-->
+					<!--</constructor-arg>-->
+				<!--</bean>-->
+				<!--<bean class="org.adbcj.DbSessionPool">-->
+					<!--<constructor-arg ref="count" />-->
+					<!--<constructor-arg>-->
+						<!--<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">-->
+							<!--<constructor-arg value="adbcj:postgresql-netty://localhost/adbcjtck" />-->
+							<!--<constructor-arg value="adbcjtck" />-->
+							<!--<constructor-arg value="adbcjtck" />-->
+						<!--</bean>-->
+					<!--</constructor-arg>-->
+				<!--</bean>-->
 
 
 				<!--<bean class="org.adbcj.DbSessionPool">-->
@@ -80,52 +95,52 @@
 		<property name="freeMarkerConfig" ref="freemarkerConfig" />
 		<property name="templates">
 			<util:list>
-				<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-					<constructor-arg>
-						<bean class="org.apache.commons.dbcp.BasicDataSource">
-							<property name="driverClassName" value="com.mysql.jdbc.Driver" />
-							<property name="url" value="jdbc:mysql://localhost/adbcjtck" />
-							<property name="username" value="adbcjtck" />
-							<property name="password" value="adbcjtck" />
-							<property name="maxActive" ref="count" />
-						</bean>
-					</constructor-arg>
-				</bean>
-				<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-					<constructor-arg>
-						<bean class="org.apache.commons.dbcp.BasicDataSource">
-							<property name="driverClassName" value="com.mysql.jdbc.Driver" />
-							<property name="url" value="jdbc:mysql://localhost/adbcjtck" />
-							<property name="username" value="adbcjtck" />
-							<property name="password" value="adbcjtck" />
-							<property name="maxActive" ref="count" />
-						</bean>
-					</constructor-arg>
-				</bean>
-				<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-					<constructor-arg>
-						<bean class="org.apache.commons.dbcp.BasicDataSource">
-							<property name="driverClassName" value="org.postgresql.Driver" />
-							<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />
-							<property name="username" value="adbcjtck" />
-							<property name="password" value="adbcjtck" />
-							<property name="maxActive" ref="count" />
-						</bean>
-					</constructor-arg>
-				</bean>
-				<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-					<constructor-arg>
-						<bean class="org.apache.commons.dbcp.BasicDataSource">
-							<property name="driverClassName" value="org.postgresql.Driver" />
-							<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />
-							<property name="username" value="adbcjtck" />
-							<property name="password" value="adbcjtck" />
-							<property name="maxActive" ref="count" />
-						</bean>
-					</constructor-arg>
-				</bean>
+				<!--<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">-->
+					<!--<constructor-arg>-->
+						<!--<bean class="org.apache.commons.dbcp.BasicDataSource">-->
+							<!--<property name="driverClassName" value="com.mysql.jdbc.Driver" />-->
+							<!--<property name="url" value="jdbc:mysql://localhost/adbcjtck" />-->
+							<!--<property name="username" value="adbcjtck" />-->
+							<!--<property name="password" value="adbcjtck" />-->
+							<!--<property name="maxActive" ref="count" />-->
+						<!--</bean>-->
+					<!--</constructor-arg>-->
+				<!--</bean>-->
+				<!--<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">-->
+					<!--<constructor-arg>-->
+						<!--<bean class="org.apache.commons.dbcp.BasicDataSource">-->
+							<!--<property name="driverClassName" value="com.mysql.jdbc.Driver" />-->
+							<!--<property name="url" value="jdbc:mysql://localhost/adbcjtck" />-->
+							<!--<property name="username" value="adbcjtck" />-->
+							<!--<property name="password" value="adbcjtck" />-->
+							<!--<property name="maxActive" ref="count" />-->
+						<!--</bean>-->
+					<!--</constructor-arg>-->
+				<!--</bean>-->
+				<!--<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">-->
+					<!--<constructor-arg>-->
+						<!--<bean class="org.apache.commons.dbcp.BasicDataSource">-->
+							<!--<property name="driverClassName" value="org.postgresql.Driver" />-->
+							<!--<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />-->
+							<!--<property name="username" value="adbcjtck" />-->
+							<!--<property name="password" value="adbcjtck" />-->
+							<!--<property name="maxActive" ref="count" />-->
+						<!--</bean>-->
+					<!--</constructor-arg>-->
+				<!--</bean>-->
+				<!--<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">-->
+					<!--<constructor-arg>-->
+						<!--<bean class="org.apache.commons.dbcp.BasicDataSource">-->
+							<!--<property name="driverClassName" value="org.postgresql.Driver" />-->
+							<!--<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />-->
+							<!--<property name="username" value="adbcjtck" />-->
+							<!--<property name="password" value="adbcjtck" />-->
+							<!--<property name="maxActive" ref="count" />-->
+						<!--</bean>-->
+					<!--</constructor-arg>-->
+				<!--</bean>-->
 			</util:list>
 		</property>
 	</bean>
-	
+
 </beans>
