@@ -12,8 +12,8 @@ import java.util.Random;
 public class PopulateLarge {
 
 	public static void main(String[] args) throws Exception {
-		ConnectionManager mysqlCM = ConnectionManagerProvider.createConnectionManager("adbcj:mysql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
-		ConnectionManager pgCM = ConnectionManagerProvider.createConnectionManager("adbcj:postgresql://localhost/adbcjtck", "adbcjtck", "adbcjtck");
+		ConnectionManager mysqlCM = ConnectionManagerProvider.createConnectionManager("adbcj:mysqlnetty://localhost/adbcjtck", "adbcjtck", "adbcjtck");
+		ConnectionManager pgCM = ConnectionManagerProvider.createConnectionManager("adbcj:postgresql-netty://localhost/adbcjtck", "adbcjtck", "adbcjtck");
 
 		Connection mysql = mysqlCM.connect().getUninterruptably();
 		Connection pg = pgCM.connect().getUninterruptably();
@@ -24,13 +24,13 @@ public class PopulateLarge {
 			String b = randString();
 			String c = randString();
 			final String insert = String.format(insertTemplate, a, b, c);
-			mysql.executeUpdate(insert);
-			pg.executeUpdate(insert);
+			mysql.executeUpdate(insert).get();
+			pg.executeUpdate(insert).get();
 		}
-		mysql.close(false).get();
-		pg.close(false).get();
-		mysqlCM.close(true);
-		pgCM.close(true);
+//		mysql.close(false).get();
+//		pg.close(false).get();
+//		mysqlCM.close(true);
+//		pgCM.close(true);
 	}
 
 	private static String randString() {
