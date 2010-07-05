@@ -4,13 +4,32 @@
 </head>
 <body>
 <h1>Results</h1>
-<#list results as resultSet>
-	<#list resultSet as result>
-		<p>${result.a}</p>
-		<p>${result.b}</p>
-		<p>${result.c}</p>
-	</#list>
-	<hr/>
-</#list>
+<p>
+	MySQL count: ${count1}
+</p>
+<p>
+	Postgresql count: ${count2}
+</p>
+<p>
+	MySQL contacts:
+	<ul>
+		<#list contacts1 as contacts>
+			<#list contacts as contact>
+				${contact.name} - ${contact.phone}
+			</#list>
+		</#list>
+	</ul>
+</p>
+<p>
+	Postgresql contacts:
+	<ul>
+		<#list contacts2 as contacts>
+			<#list contacts as contact>
+				${contact.name} - ${contact.phone}
+			</#list>
+		</#list>
+	</ul>
+</p>
+
 </body>
 </html>

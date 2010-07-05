@@ -4,8 +4,6 @@ import freemarker.template.Configuration;
 import freemarker.template.ObjectWrapper;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import org.adbcj.DbException;
-import org.adbcj.DbFuture;
 import org.adbcj.DbSession;
 import org.adbcj.DbSessionFuture;
 import org.adbcj.DbSessionPool;
@@ -22,7 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.Random;
 
 /**
  * @author Mike Heath
@@ -31,9 +29,7 @@ public class Adbcj implements HttpRequestHandler {
 
 	private FreeMarkerConfig freeMarkerConfig;
 
-	private List<DbSessionPool> pools;
-
-	private String query;
+	private Map<String, DbSessionPool> pools;
 
 	@Override
 	public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -44,35 +40,41 @@ public class Adbcj implements HttpRequestHandler {
 
 			final Writer writer = response.getWriter();
 
-			final CountDownLatch latch = new CountDownLatch(1);
+			final Random random = new Random();
 
-			// Fork out requests
-			List<DbFuture<ResultSet>> futures = new ArrayList<DbFuture<ResultSet>>();
-			for (DbSessionPool sessionPool : pools) {
-				// We know this will return immediately without blocking
-				DbSession session = sessionPool.connect().getUninterruptably();
-				DbSessionFuture<ResultSet> future = session.executeQuery(query);
-				futures.add(future);
+			DbSession mysqlContactsSession = pools.get("mysql_contacts").connect().getUninterruptably();
+			DbSession mysqlLogsSession = pools.get("mysql_logs").connect().getUninterruptably();
+			DbSession pgContactsSession = pools.get("pg_contacts").connect().getUninterruptably();
+			DbSession pgLogsSession = pools.get("pg_logs").connect().getUninterruptably();
 
+			// Fetch contacts
+			List<DbSessionFuture<ResultSet>> contacts1 = new ArrayList<DbSessionFuture<ResultSet>>();
+			List<DbSessionFuture<ResultSet>> contacts2 = new ArrayList<DbSessionFuture<ResultSet>>();
+			for (int i = 0; i < 5; i++) {
+				String query = "select name, phone from contacts where id = " + random.nextInt(40000) + ";";
+				contacts1.add(mysqlContactsSession.executeQuery(query));
+				contacts2.add(pgContactsSession.executeQuery(query));
 			}
 
-			// Join results
-			List<ResultSet> results = null;
-			try {
-				results = new ArrayList<ResultSet>();
-				for (DbFuture<ResultSet> future : futures) {
-					results.add(future.get());
-				}
-			} catch (InterruptedException e) {
-				throw new ServletException(e);
-			}
+			// Fetch log counts
+			final int maxTime = 1247052675;
+			int time = random.nextInt(maxTime);
+			String query = "select count(*) from access_log where time > " + time + " and time < " + (time + 10000) + ";";
+			DbSessionFuture<ResultSet> log1Future = mysqlLogsSession.executeQuery(query);
+			DbSessionFuture<ResultSet> log2Future = pgLogsSession.executeQuery(query);
 
+			// Add contacts to freemarker context
 			Map<String, Object> root = new HashMap<String, Object>();
-			root.put("results", results);
+			root.put("contacts1", compileContacts(contacts1));
+			root.put("contacts2", compileContacts(contacts2));
+
+			// Add log counts to freemarker context
+			root.put("count1", log1Future.getUninterruptably().get(0).get(0));
+			root.put("count2", log2Future.getUninterruptably().get(0).get(0));
 
 			response.setContentType("text/html");
 			try {
-				template.process(root, response.getWriter());
+				template.process(root, writer);
 			} catch (TemplateException e) {
 				throw new ServletException(e);
 			}
@@ -82,15 +84,19 @@ public class Adbcj implements HttpRequestHandler {
 		}
 	}
 
+	private List<ResultSet> compileContacts(List<DbSessionFuture<ResultSet>> contacts) {
+		List<ResultSet> results = new ArrayList<ResultSet>();
+		for (DbSessionFuture<ResultSet> future : contacts) {
+			results.add(future.getUninterruptably());
+		}
+		return results;
+	}
+
 	public void setFreeMarkerConfig(FreeMarkerConfig freeMarkerConfig) {
 		this.freeMarkerConfig = freeMarkerConfig;
 	}
 
-	public void setPools(List<DbSessionPool> pools) {
+	public void setPools(Map<String, DbSessionPool> pools) {
 		this.pools = pools;
-	}
-
-	public void setQuery(String query) {
-		this.query = query;
 	}
 }
