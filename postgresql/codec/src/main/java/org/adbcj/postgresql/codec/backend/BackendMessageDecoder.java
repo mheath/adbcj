@@ -131,7 +131,7 @@ public class BackendMessageDecoder {
 			// TODO Implement decoder for these backend message types
 			throw new IllegalStateException("No decoder implemented for message of type " + type);
 		default:
-			throw new IllegalStateException(String.format("Messages of type %c are not implemented", typeValue));
+			throw new IllegalStateException(String.format("Messages of type %s are not implemented", typeValue));
 		}
 
 
@@ -221,6 +221,19 @@ public class BackendMessageDecoder {
 					case TEXT:
 						strVal = input.readString(valueLength, charset);
 						value = new DefaultValue(field, Integer.valueOf(strVal));
+						break;
+					default:
+						throw new IllegalStateException("Unable to decode format of " + field.getFormatCode());
+					}
+					break;
+				case BIGINT:
+					switch (field.getFormatCode()) {
+					case BINARY:
+						value = new DefaultValue(field, (long)input.readInt() << 32 | input.readInt());
+						break;
+					case TEXT:
+						strVal = input.readString(valueLength, charset);
+						value = new DefaultValue(field, Long.valueOf(strVal));
 						break;
 					default:
 						throw new IllegalStateException("Unable to decode format of " + field.getFormatCode());
