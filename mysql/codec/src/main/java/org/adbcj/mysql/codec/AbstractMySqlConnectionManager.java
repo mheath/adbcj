@@ -92,4 +92,8 @@ public abstract class AbstractMySqlConnectionManager implements
 		return credentials;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getName() + ": " + credentials.getDatabase();
+	}
 }

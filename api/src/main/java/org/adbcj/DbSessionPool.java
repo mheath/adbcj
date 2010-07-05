@@ -151,7 +151,7 @@ public class DbSessionPool implements DbSessionProvider {
 			// Start all the connections
 			// TODO This is not at all efficient, develop a better solution for this
 			for (int i = 0; i < connectionCount; i++) {
-				System.out.println(i);
+				System.out.printf("%d %s\n", i, connectionManager.toString());
 				connectionManager.connect().addListener(connectionListener).getUninterruptably();
 			}
 

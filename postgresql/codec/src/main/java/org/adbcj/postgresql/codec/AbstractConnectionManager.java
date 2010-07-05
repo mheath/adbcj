@@ -42,4 +42,10 @@ public abstract class AbstractConnectionManager implements ConnectionManager {
 		return database;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getName() + "{" +
+				"database='" + database + '\'' +
+				'}';
+	}
 }
