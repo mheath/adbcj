@@ -15,7 +15,7 @@ public class Test {
 		int i = 0;
 		while (true) {
 			System.out.println(i++);
-			new Socket("ip-10-244-203-49.ec2.internal", 3060);
+			new Socket("ip-10-244-203-49.ec2.internal", 3306);
 		}
 	}
 
