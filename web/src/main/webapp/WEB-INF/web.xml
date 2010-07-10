@@ -66,4 +66,13 @@
 		<url-pattern>/jdbc</url-pattern>
 	</servlet-mapping>
 
+	<servlet>
+		<servlet-class>org.springframework.web.context.support.HttpRequestHandlerServlet</servlet-class>
+		<servlet-name>remotePoolSizeManager</servlet-name>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>remotePoolSizeManager</servlet-name>
+		<url-pattern>/poolsize</url-pattern>
+	</servlet-mapping>
+
 </web-app>

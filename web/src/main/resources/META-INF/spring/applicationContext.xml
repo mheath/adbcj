@@ -19,130 +19,133 @@
 	<bean class="com.mysql.jdbc.Driver" />
 	<bean class="org.postgresql.Driver" />
 
-	<bean id="count" class="java.lang.Integer"><constructor-arg value="5"/></bean>
+	<bean id="count" class="java.lang.Integer"><constructor-arg value="1500"/></bean>
 
-	<bean class="org.adbcj.web.Monitor" lazy-init="false">
+	<bean id="monitor" class="org.adbcj.web.Monitor" lazy-init="false">
 		<constructor-arg>
 			<bean class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-				<property name="maxPoolSize" value="1" />
+				<property name="maxPoolSize" value="2" />
+				<property name="queueCapacity" value="0" />
 			</bean>
 		</constructor-arg>
-		<constructor-arg ref="count" />
 		<constructor-arg>
 			<bean class="java.io.FileWriter">
 				<constructor-arg value="/tmp/memusage.txt" />
 				<constructor-arg value="true" />
 			</bean>
 		</constructor-arg>
+		<constructor-arg>
+			<bean class="java.io.FileWriter">
+				<constructor-arg value="/tmp/vmstat.txt" />
+				<constructor-arg value="true" />
+			</bean>
+		</constructor-arg>
 	</bean>
+
+	<bean id="remotePoolSizeManager" class="org.adbcj.web.RemotePoolSizeManager">
+		<property name="monitor" ref="monitor" />
+		<property name="pools" ref="pools" />
+	</bean>
+
+	<util:map id="pools">
+		<!-- ADBCJ Netty -->
+		<!--
+		<entry key="mysql_contacts">
+			<bean class="org.adbcj.web.ConnectionPool">
+				<constructor-arg>
+					<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
+						<constructor-arg value="adbcj:mysqlnetty://localhost/adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		<entry key="mysql_logs">
+			<bean class="org.adbcj.web.ConnectionPool">
+				<constructor-arg>
+					<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
+						<constructor-arg value="adbcj:mysqlnetty://localhost/adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		<entry key="pg_contacts">
+			<bean class="org.adbcj.web.ConnectionPool">
+				<constructor-arg>
+					<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
+						<constructor-arg value="adbcj:postgresql-netty://localhost/adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		<entry key="pg_logs">
+			<bean class="org.adbcj.web.ConnectionPool">
+				<constructor-arg>
+					<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
+						<constructor-arg value="adbcj:postgresql-netty://localhost/adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		-->
+
+		<!-- ADBCJ JDBC -->
+		<entry key="mysql_contacts">
+			<bean class="org.adbcj.web.ConnectionPool">
+				<constructor-arg>
+					<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
+						<constructor-arg value="adbcj:jdbc:mysql://localhost/adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+						<constructor-arg value="adbcjtck" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		<!--<entry key="mysql_logs">-->
+		<!--<bean class="org.adbcj.web.ConnectionPool">-->
+				<!--<constructor-arg>-->
+					<!--<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">-->
+						<!--<constructor-arg value="adbcj:jdbc:mysql://localhost/adbcjtck" />-->
+						<!--<constructor-arg value="adbcjtck" />-->
+						<!--<constructor-arg value="adbcjtck" />-->
+					<!--</bean>-->
+				<!--</constructor-arg>-->
+			<!--</bean>-->
+		<!--</entry>-->
+		<!--<entry key="pg_contacts">-->
+		<!--<bean class="org.adbcj.web.ConnectionPool">-->
+				<!--<constructor-arg>-->
+					<!--<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">-->
+						<!--<constructor-arg value="adbcj:jdbc:postgresql://localhost/adbcjtck" />-->
+						<!--<constructor-arg value="adbcjtck" />-->
+						<!--<constructor-arg value="adbcjtck" />-->
+					<!--</bean>-->
+				<!--</constructor-arg>-->
+			<!--</bean>-->
+		<!--</entry>-->
+		<!--<entry key="pg_logs">-->
+		<!--<bean class="org.adbcj.web.ConnectionPool">-->
+				<!--<constructor-arg>-->
+					<!--<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">-->
+						<!--<constructor-arg value="adbcj:jdbc:postgresql://localhost/adbcjtck" />-->
+						<!--<constructor-arg value="adbcjtck" />-->
+						<!--<constructor-arg value="adbcjtck" />-->
+					<!--</bean>-->
+				<!--</constructor-arg>-->
+			<!--</bean>-->
+		<!--</entry>-->
+	</util:map>
 
 	<bean id="adbcj" class="org.adbcj.web.Adbcj">
 		<property name="freeMarkerConfig" ref="freemarkerConfig" />
-		<property name="pools">
-			<util:map>
-				<!-- ADBCJ Netty -->
-				<!--
-				<entry key="mysql_contacts">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:mysqlnetty://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="mysql_logs">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:mysqlnetty://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="pg_contacts">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:postgresql-netty://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="pg_logs">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:postgresql-netty://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				-->
-
-				<!-- ADBCJ JDBC -->
-				<entry key="mysql_contacts">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:jdbc:mysql://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="mysql_logs">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:jdbc:mysql://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="pg_contacts">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:jdbc:postgresql://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="pg_logs">
-					<bean class="org.adbcj.DbSessionPool">
-						<constructor-arg ref="count" />
-						<constructor-arg>
-							<bean class="org.adbcj.ConnectionManagerProvider" factory-method="createConnectionManager">
-								<constructor-arg value="adbcj:jdbc:postgresql://localhost/adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-								<constructor-arg value="adbcjtck" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-			</util:map>
-		</property>
+		<property name="pools" ref="pools" />
 	</bean>
 
 	<bean id="jdbc" class="org.adbcj.web.Jdbc">

@@ -6,7 +6,6 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.adbcj.DbSession;
 import org.adbcj.DbSessionFuture;
-import org.adbcj.DbSessionPool;
 import org.adbcj.ResultSet;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
@@ -29,7 +28,7 @@ public class Adbcj implements HttpRequestHandler {
 
 	private FreeMarkerConfig freeMarkerConfig;
 
-	private Map<String, DbSessionPool> pools;
+	private Map<String, ConnectionPool> pools;
 
 	@Override
 	public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -63,6 +62,11 @@ public class Adbcj implements HttpRequestHandler {
 			DbSessionFuture<ResultSet> log1Future = mysqlLogsSession.executeQuery(query);
 			DbSessionFuture<ResultSet> log2Future = pgLogsSession.executeQuery(query);
 
+			mysqlContactsSession.close(true);
+			mysqlLogsSession.close(true);
+			pgContactsSession.close(true);
+			pgLogsSession.close(true);
+			
 			// Add contacts to freemarker context
 			Map<String, Object> root = new HashMap<String, Object>();
 			root.put("contacts1", compileContacts(contacts1));
@@ -96,7 +100,7 @@ public class Adbcj implements HttpRequestHandler {
 		this.freeMarkerConfig = freeMarkerConfig;
 	}
 
-	public void setPools(Map<String, DbSessionPool> pools) {
+	public void setPools(Map<String, ConnectionPool> pools) {
 		this.pools = pools;
 	}
 }
