@@ -2,18 +2,8 @@
 //Copyright 2010 Intellectual Reserve, Inc. All rights reserved.
 //This notice may not be removed.
 //*********************************************************************
-package org.adbcj.web;
+package org.adbcj;
 
-import org.adbcj.ConnectionManager;
-import org.adbcj.DbException;
-import org.adbcj.DbFuture;
-import org.adbcj.DbSession;
-import org.adbcj.DbSessionFuture;
-import org.adbcj.DbSessionProvider;
-import org.adbcj.PreparedStatement;
-import org.adbcj.Result;
-import org.adbcj.ResultEventHandler;
-import org.adbcj.ResultSet;
 import org.adbcj.support.DefaultDbFuture;
 import org.adbcj.support.DefaultDbSessionFuture;
 

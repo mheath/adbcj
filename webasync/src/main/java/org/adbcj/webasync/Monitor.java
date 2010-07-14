@@ -2,7 +2,7 @@
 //Copyright 2010 Intellectual Reserve, Inc. All rights reserved.
 //This notice may not be removed.
 //*********************************************************************
-package org.adbcj.web;
+package org.adbcj.webasync;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.DisposableBean;

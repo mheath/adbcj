@@ -89,6 +89,7 @@ public class JdbcConnectionManager implements ConnectionManager {
 					return connection;
 				} catch (SQLException e) {
 					future.setException(new DbException(e));
+					e.printStackTrace();
 					throw e;
 				} finally {
 					future.setDone();

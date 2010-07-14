@@ -4,6 +4,8 @@
 //*********************************************************************
 package org.adbcj.web;
 
+import org.adbcj.ConnectionPool;
+
 import org.springframework.web.HttpRequestHandler;
 
 import javax.servlet.ServletException;
@@ -32,7 +34,7 @@ public class RemotePoolSizeManager implements HttpRequestHandler {
 		monitor.setCount(poolSize);
 
 		response.setContentType("text/plain");
-		response.getWriter().write("Pool size set to " + poolSize + " for " + count + " pools.");
+		response.getWriter().write("Pool size set to " + poolSize + " for " + count + " pools.\n");
 	}
 
 	public void setPools(Map<String, ConnectionPool> pools) {

@@ -21,7 +21,7 @@
 	<properties>
 		<slf4j.version>1.5.8</slf4j.version>
 		<mina.version>2.0.0-M6</mina.version>
-		<netty.version>3.1.5.GA</netty.version>
+		<netty.version>3.2.1.Final</netty.version>
 	</properties>
 
 	<modules>
@@ -32,6 +32,7 @@
 		<!--<module>tck</module>-->
 		<module>perf</module>
 		<module>web</module>
+		<module>webasync</module>
 	</modules>
 
 	<scm>
@@ -75,12 +76,11 @@
 	<repositories>
 		<repository>
 			<id>repository.jboss.org</id>
-			<url>http://repository.jboss.org/maven2</url>
+			<url>http://repository.jboss.org/nexus/content/groups/public/</url>
 			<snapshots>
-				<enabled>false</enabled>
+			<enabled>false</enabled>
 			</snapshots>
-		</repository>
-	</repositories>
+			</repository>	</repositories>
 
 	<pluginRepositories>
 		<pluginRepository>

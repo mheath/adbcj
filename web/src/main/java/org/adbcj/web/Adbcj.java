@@ -4,6 +4,7 @@ import freemarker.template.Configuration;
 import freemarker.template.ObjectWrapper;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import org.adbcj.ConnectionPool;
 import org.adbcj.DbSession;
 import org.adbcj.DbSessionFuture;
 import org.adbcj.ResultSet;
