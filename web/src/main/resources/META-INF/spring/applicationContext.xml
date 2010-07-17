@@ -49,7 +49,7 @@
 	</bean>
 
 	<bean id="jdbcTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-		<property name="maxPoolSize" value="1" />
+		<property name="maxPoolSize" value="1200" />
 	</bean>
 	<bean id="jdbcExecutorService" class="org.springframework.core.task.support.ExecutorServiceAdapter">
 		<constructor-arg ref="jdbcTaskExecutor" />
@@ -164,64 +164,71 @@
 		<property name="pools" ref="pools" />
 	</bean>
 
+
+	<util:map id="templates">
+		<entry key="mysql_contacts">
+			<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+				<constructor-arg>
+					<bean class="org.apache.commons.dbcp.BasicDataSource">
+						<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+						<property name="url" value="jdbc:mysql://localhost/adbcjtck" />
+						<property name="username" value="adbcjtck" />
+						<property name="password" value="adbcjtck" />
+						<property name="maxActive" ref="count" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		<entry key="mysql_logs">
+			<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+				<constructor-arg>
+					<bean class="org.apache.commons.dbcp.BasicDataSource">
+						<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+						<property name="url" value="jdbc:mysql://localhost/adbcjtck" />
+						<property name="username" value="adbcjtck" />
+						<property name="password" value="adbcjtck" />
+						<property name="maxActive" ref="count" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		<entry key="pg_contacts">
+			<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+				<constructor-arg>
+					<bean class="org.apache.commons.dbcp.BasicDataSource">
+						<property name="driverClassName" value="org.postgresql.Driver" />
+						<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />
+						<property name="username" value="adbcjtck" />
+						<property name="password" value="adbcjtck" />
+						<property name="maxActive" ref="count" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+		<entry key="pg_logs">
+			<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+				<constructor-arg>
+					<bean class="org.apache.commons.dbcp.BasicDataSource">
+						<property name="driverClassName" value="org.postgresql.Driver" />
+						<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />
+						<property name="username" value="adbcjtck" />
+						<property name="password" value="adbcjtck" />
+						<property name="maxActive" ref="count" />
+					</bean>
+				</constructor-arg>
+			</bean>
+		</entry>
+	</util:map>
+
 	<bean id="jdbc" class="org.adbcj.web.Jdbc">
 		<property name="freeMarkerConfig" ref="freemarkerConfig" />
-		<property name="templates">
-			<util:map>
-				<entry key="mysql_contacts">
-					<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-						<constructor-arg>
-							<bean class="org.apache.commons.dbcp.BasicDataSource">
-								<property name="driverClassName" value="com.mysql.jdbc.Driver" />
-								<property name="url" value="jdbc:mysql://localhost/adbcjtck" />
-								<property name="username" value="adbcjtck" />
-								<property name="password" value="adbcjtck" />
-								<property name="maxActive" ref="count" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="mysql_logs">
-					<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-						<constructor-arg>
-							<bean class="org.apache.commons.dbcp.BasicDataSource">
-								<property name="driverClassName" value="com.mysql.jdbc.Driver" />
-								<property name="url" value="jdbc:mysql://localhost/adbcjtck" />
-								<property name="username" value="adbcjtck" />
-								<property name="password" value="adbcjtck" />
-								<property name="maxActive" ref="count" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="pg_contacts">
-					<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-						<constructor-arg>
-							<bean class="org.apache.commons.dbcp.BasicDataSource">
-								<property name="driverClassName" value="org.postgresql.Driver" />
-								<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />
-								<property name="username" value="adbcjtck" />
-								<property name="password" value="adbcjtck" />
-								<property name="maxActive" ref="count" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-				<entry key="pg_logs">
-					<bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-						<constructor-arg>
-							<bean class="org.apache.commons.dbcp.BasicDataSource">
-								<property name="driverClassName" value="org.postgresql.Driver" />
-								<property name="url" value="jdbc:postgresql://localhost/adbcjtck" />
-								<property name="username" value="adbcjtck" />
-								<property name="password" value="adbcjtck" />
-								<property name="maxActive" ref="count" />
-							</bean>
-						</constructor-arg>
-					</bean>
-				</entry>
-			</util:map>
-		</property>
+		<property name="templates" ref="templates" />
+	</bean>
+
+	<bean id="hybrid" class="org.adbcj.web.Hybrid">
+		<property name="executorService" ref="jdbcExecutorService" />
+		<property name="freeMarkerConfig" ref="freemarkerConfig" />
+		<property name="templates" ref="templates" />
 	</bean>
 
 </beans>

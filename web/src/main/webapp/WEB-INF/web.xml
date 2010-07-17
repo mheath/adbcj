@@ -68,6 +68,16 @@
 
 	<servlet>
 		<servlet-class>org.springframework.web.context.support.HttpRequestHandlerServlet</servlet-class>
+		<servlet-name>hybrid</servlet-name>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>hybrid</servlet-name>
+		<url-pattern>/hybrid</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<servlet-class>org.springframework.web.context.support.HttpRequestHandlerServlet</servlet-class>
 		<servlet-name>remotePoolSizeManager</servlet-name>
 	</servlet>
 	<servlet-mapping>
