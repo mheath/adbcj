@@ -21,6 +21,7 @@ public class RemotePoolSizeManager implements HttpRequestHandler {
 
 	private Map<String, ConnectionPool> pools;
 	private Monitor monitor;
+	private Hybrid hybrid;
 
 	@Override
 	public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -33,6 +34,10 @@ public class RemotePoolSizeManager implements HttpRequestHandler {
 
 		monitor.setCount(poolSize);
 
+		if (hybrid != null) {
+			hybrid.dump();
+		}
+
 		response.setContentType("text/plain");
 		response.getWriter().write("Pool size set to " + poolSize + " for " + count + " pools.\n");
 	}
@@ -43,5 +48,9 @@ public class RemotePoolSizeManager implements HttpRequestHandler {
 
 	public void setMonitor(Monitor monitor) {
 		this.monitor = monitor;
+	}
+
+	public void setHybrid(Hybrid hybrid) {
+		this.hybrid = hybrid;
 	}
 }
