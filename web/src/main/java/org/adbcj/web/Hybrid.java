@@ -27,6 +27,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Mike Heath <heathma@ldschurch.org>
@@ -38,6 +40,13 @@ public class Hybrid implements HttpRequestHandler {
 	private Map<String, SimpleJdbcTemplate> templates;
 
 	private ExecutorService executorService;
+
+	private final AtomicLong queueTime = new AtomicLong();
+	private final AtomicInteger queueCount = new AtomicInteger();
+	private final AtomicLong queryTime = new AtomicLong();
+	private final AtomicInteger queryCount = new AtomicInteger();
+	private final AtomicLong totalTime = new AtomicLong();
+	private final AtomicInteger timeCount = new AtomicInteger();
 
 	@Override
 	public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -54,10 +63,17 @@ public class Hybrid implements HttpRequestHandler {
 		final int maxTime = 1247052675;
 		int time = random.nextInt(maxTime);
 		final String query = "select count(*) from access_log where time > " + time + " and time < " + (time + 10000) + ";";
+		final long start = System.currentTimeMillis();
 		Future<Integer> count1Future = executorService.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-				return templates.get("mysql_logs").queryForInt(query);
+				long queryStart = System.currentTimeMillis();
+				queueTime.getAndAdd(queryStart - start);
+				queueCount.incrementAndGet();
+				int count = templates.get("mysql_logs").queryForInt(query);
+				queryTime.getAndAdd(System.currentTimeMillis() - queryStart);
+				queryCount.incrementAndGet();
+				return count;
 			}
 		});
 		Future<Integer> count2Future = executorService.submit(new Callable<Integer>() {
@@ -75,6 +91,8 @@ public class Hybrid implements HttpRequestHandler {
 			root.put("count2", count2Future.get());
 			root.put("contacts1", contacts1Future.get());
 			root.put("contacts2", contacts2Future.get());
+			totalTime.getAndAdd(System.currentTimeMillis() - start);
+			timeCount.incrementAndGet();
 
 			response.setContentType("text/html");
 			template.process(root, writer);
@@ -116,5 +134,11 @@ public class Hybrid implements HttpRequestHandler {
 			}
 			return contacts;
 		}
+	}
+
+	public void dump() {
+		System.out.println("Average queue time: " + ((double)queueTime.get() / queueCount.get()));
+		System.out.println("Average query time: " + ((double)queryTime.get() / queryCount.get()));
+		System.out.println("Average total time: " + ((double)totalTime.get() / timeCount.get()));
 	}
 }
