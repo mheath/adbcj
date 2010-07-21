@@ -56,13 +56,11 @@
 	<bean id="jdbcTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
 		<property name="maxPoolSize" value="1" />
 	</bean>
-	<!--TODO: We need the edquivalent of the RemotePoolSizeManager -->
-	<!--
-
 	<bean id="jdbcExecutorService" class="org.springframework.core.task.support.ExecutorServiceAdapter">
 		<constructor-arg ref="jdbcTaskExecutor" />
 	</bean>
 
+	<!--
 	<bean id="sessionProvider" class="org.adbcj.ConnectionPool">
 		<constructor-arg>
 			<bean class="org.adbcj.jdbc.JdbcConnectionManager">
@@ -106,6 +104,13 @@
 					<bean class="org.adbcj.webasync.Adbcj">
 						<property name="freeMarkerConfig" ref="freemarkerConfig" />
 						<property name="connectionPool" ref="sessionProvider" />
+					</bean>
+				</property>
+				<property name="hybrid">
+					<bean class="org.adbcj.webasync.Hybrid">
+						<property name="executorService" ref="jdbcExecutorService" />
+						<property name="freeMarkerConfig" ref="freemarkerConfig" />
+						<property name="jdbcTemplate" ref="dataSource" />
 					</bean>
 				</property>
 				<property name="remotePoolSizeManager">
