@@ -19,7 +19,7 @@
 	<bean class="com.mysql.jdbc.Driver" />
 	<bean class="org.postgresql.Driver" />
 
-	<bean id="count" class="java.lang.Integer"><constructor-arg value="1500"/></bean>
+	<bean id="count" class="java.lang.Integer"><constructor-arg value="1000"/></bean>
 
 	<bean id="monitor" class="org.adbcj.web.Monitor" lazy-init="false">
 		<constructor-arg>
@@ -46,6 +46,7 @@
 	<bean id="remotePoolSizeManager" class="org.adbcj.web.RemotePoolSizeManager">
 		<property name="monitor" ref="monitor" />
 		<property name="pools" ref="pools" />
+		<property name="hybrid" ref="hybrid" />
 	</bean>
 
 	<bean id="jdbcTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
