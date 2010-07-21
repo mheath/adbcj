@@ -31,7 +31,7 @@ public interface DbSession {
      */
     //void beginTransaction(TransactionIsolationLevel isolationLevel);
 
-    // Canceling a commit will cause the transaction to rollback - TODO Write a TCK test to test that canceling a commit converts it to a rollback
+    // Canceling a commit will cause the transaction to rollback
 	DbSessionFuture<Void> commit();
 
 	// A rollback cannot be canceled

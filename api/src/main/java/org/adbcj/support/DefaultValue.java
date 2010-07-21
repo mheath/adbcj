@@ -54,6 +54,9 @@ public class DefaultValue implements Value {
 		if (value instanceof Boolean) {
 			return ((Boolean)value).booleanValue();
 		}
+		if (value instanceof Number) {
+			return getInt() != 0;
+		}
 		return Boolean.valueOf(value.toString());
 	}
 
