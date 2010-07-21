@@ -30,6 +30,8 @@ public class WebHandler extends SimpleChannelUpstreamHandler {
 
 	private Adbcj adbcj;
 
+	private Hybrid hybrid;
+
 	private RemotePoolSizeManager remotePoolSizeManager;
 
 	@Override
@@ -55,6 +57,8 @@ public class WebHandler extends SimpleChannelUpstreamHandler {
 				sendHttpResponse(ctx, request, response);
 			} else if ("/adbcj".equals(request.getUri())) {
 				adbcj.render(ctx, request);
+			} else if ("/hybrid".equals(request.getUri())) {
+				hybrid.render(ctx, request);
 			} else if (request.getUri().startsWith("/count/")) {
 				int count = Integer.parseInt(request.getUri().substring(7));
 				ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(4096);
@@ -97,6 +101,10 @@ public class WebHandler extends SimpleChannelUpstreamHandler {
 
 	public void setAdbcj(Adbcj adbcj) {
 		this.adbcj = adbcj;
+	}
+
+	public void setHybrid(Hybrid hybrid) {
+		this.hybrid = hybrid;
 	}
 
 	public void setRemotePoolSizeManager(RemotePoolSizeManager remotePoolSizeManager) {
