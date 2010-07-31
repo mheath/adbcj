@@ -7,8 +7,6 @@ package org.adbcj.web;
 import freemarker.template.Configuration;
 import freemarker.template.ObjectWrapper;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
@@ -18,13 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -140,5 +133,13 @@ public class Hybrid implements HttpRequestHandler {
 		System.out.println("Average queue time: " + ((double)queueTime.get() / queueCount.get()));
 		System.out.println("Average query time: " + ((double)queryTime.get() / queryCount.get()));
 		System.out.println("Average total time: " + ((double)totalTime.get() / timeCount.get()));
+
+		queueTime.set(0);
+		queryCount.set(0);
+		queryTime.set(0);
+		queryCount.set(0);
+		totalTime.set(0);
+		timeCount.set(0);
 	}
+
 }
