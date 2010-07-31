@@ -72,7 +72,13 @@ public class Hybrid implements HttpRequestHandler {
 		Future<Integer> count2Future = executorService.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-				return templates.get("pg_logs").queryForInt(query);
+                long queryStart = System.currentTimeMillis();
+                queueTime.getAndAdd(queryStart - start);
+                queueCount.incrementAndGet();
+                int count = templates.get("pg_logs").queryForInt(query);
+                queryTime.getAndAdd(System.currentTimeMillis() - queryStart);
+                queryCount.incrementAndGet();
+                return count;
 			}
 		});
 		int[] numbers = {random.nextInt(40000), random.nextInt(40000), random.nextInt(40000), random.nextInt(40000), random.nextInt(40000)};
