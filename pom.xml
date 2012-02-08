@@ -30,9 +30,6 @@
 		<module>mysql</module>
 		<module>postgresql</module>
 		<!--<module>tck</module>-->
-		<module>perf</module>
-		<module>web</module>
-		<module>webasync</module>
 	</modules>
 
 	<scm>
