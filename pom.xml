@@ -21,7 +21,7 @@
 	<properties>
 		<slf4j.version>1.5.8</slf4j.version>
 		<mina.version>2.0.0-M6</mina.version>
-		<netty.version>3.2.1.Final</netty.version>
+		<netty.version>3.2.7.Final</netty.version>
 	</properties>
 
 	<modules>
@@ -33,18 +33,18 @@
 	</modules>
 
 	<scm>
-		<url>http://adbcj.googlecode.com/svn/adbcj/trunk</url>
+		<url>https://github.com/mheath/adbcj</url>
 		<connection>
-			scm:svn:http://adbcj.googlecode.com/svn/adbcj/trunk
+			scm:git://github.com/mheath/adbcj.git
 		</connection>
 		<developerConnection>
-			scm:svn:https://adbcj.googlecode.com/svn/adbcj/trunk
+			git@github.com:mheath/adbcj.git
 		</developerConnection>
 	</scm>
 
 	<issueManagement>
-		<system>google</system>
-		<url>http://code.google.com/p/adbcj/issues/list</url>
+		<system>github</system>
+		<url>https://github.com/mheath/adbcj/issues</url>
 	</issueManagement>
 
 	<licenses>
@@ -59,7 +59,7 @@
 		<developer>
 			<id>mheath</id>
 			<name>Mike Heath</name>
-			<url>http://swamp.homelinux.net/blog</url>
+			<url>http://blog.toadhead.net</url>
 		</developer>
 	</developers>
 
@@ -79,33 +79,8 @@
 			</snapshots>
 			</repository>	</repositories>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>apache.snapshots</id>
-			<url>http://people.apache.org/repo/m2-snapshot-repository/</url>
-		</pluginRepository>
-	</pluginRepositories>
-
 	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-eclipse-plugin</artifactId>
-					<version>2.5.1</version>
-					<configuration>
-						<downloadSources>true</downloadSources>
-						<downloadJavadocs>true</downloadJavadocs>
-					</configuration>
-					<inherited>true</inherited>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 		<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-eclipse-plugin</artifactId>
-					</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
@@ -117,7 +92,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.4.3</version>
+				<version>2.12</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
