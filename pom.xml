@@ -20,7 +20,7 @@
 
 	<properties>
 		<slf4j.version>1.5.8</slf4j.version>
-		<mina.version>2.0.0-M6</mina.version>
+		<mina.version>2.0.4</mina.version>
 		<netty.version>3.2.7.Final</netty.version>
 	</properties>
 
@@ -75,9 +75,10 @@
 			<id>repository.jboss.org</id>
 			<url>http://repository.jboss.org/nexus/content/groups/public/</url>
 			<snapshots>
-			<enabled>false</enabled>
+				<enabled>false</enabled>
 			</snapshots>
-			</repository>	</repositories>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
