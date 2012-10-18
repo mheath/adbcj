@@ -25,12 +25,12 @@ public interface PreparedStatement {
 	
 	String getNativeSQL();
 	
-	DbFuture<ResultSet> executeQuery(Object... params);
+	<T extends ResultSet> DbFuture<T> executeQuery(Object... params);
 	
-	DbFuture<ResultSet> executeQuery(Map<Object, Object> params);
+	<T extends ResultSet> DbFuture<T> executeQuery(Map<Object, Object> params);
 	
-	DbFuture<Result> executeUpdate(Object... params);
+	<T extends Result> DbFuture<T> executeUpdate(Object... params);
 	
-	DbFuture<Result> executeUpdate(Map<Object, Object> params);
+	<T extends ResultSet> DbFuture<T> executeUpdate(Map<Object, Object> params);
 	
 }
