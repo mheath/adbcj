@@ -7,11 +7,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.adbcj.Connection;
+import org.adbcj.DbFuture;
 import org.adbcj.mysql.codec.AbstractMySqlConnectionManager;
 import org.adbcj.mysql.codec.ClientRequest;
 import org.adbcj.mysql.codec.MySqlClientDecoder;
 import org.adbcj.mysql.codec.MySqlClientEncoder;
 import org.adbcj.mysql.codec.ProtocolHandler;
+import org.adbcj.mysql.netty.org.apache.commons.pool2.impl.GenericObjectPool;
 import org.adbcj.support.DefaultDbFuture;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -39,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
-
 	private static final Logger logger = LoggerFactory.getLogger(MysqlConnectionManager.class);
 
 	private static final String QUEUE_HANDLER = MysqlConnectionManager.class.getName() + ".queueHandler";
@@ -67,7 +68,7 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 
 	private void init(String host, int port) {
 		bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-			@Override
+			
 			public ChannelPipeline getPipeline() throws Exception {
 				ChannelPipeline pipeline = Channels.pipeline();
 
@@ -84,14 +85,14 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 		bootstrap.setOption("remoteAddress", new InetSocketAddress(host, port));
 	}
 
-	@Override
+	
 	protected void dispose() {
 		if (executorService != null) {
 			executorService.shutdownNow();
 		}
 	}
 
-	@Override
+	
 	protected DefaultDbFuture<Connection> createConnectionFuture() {
 		final ChannelFuture channelFuture = bootstrap.connect();
 		return new MysqlConnectFuture(channelFuture);
@@ -103,7 +104,7 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 		public MysqlConnectFuture(ChannelFuture channelFuture) {
 			this.channelFuture = channelFuture;
 			channelFuture.addListener(new ChannelFutureListener() {
-				@Override
+				
 				public void operationComplete(ChannelFuture future) throws Exception {
 					logger.debug("Connect completed");
 					
@@ -120,7 +121,7 @@ public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 			});
 		}
 
-		@Override
+		
 		protected boolean doCancel(boolean mayInterruptIfRunning) {
 			return channelFuture.cancel();
 		}
@@ -132,7 +133,7 @@ class Decoder extends FrameDecoder {
 
 	private final MySqlClientDecoder decoder = new MySqlClientDecoder();
 
-	@Override
+	
 	protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
 		 InputStream in = new ChannelBufferInputStream(buffer);
 		 try {
@@ -178,12 +179,12 @@ class Handler extends SimpleChannelHandler {
 		this.connection = connection;
 	}
 
-	@Override
+	
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
 		handler.messageReceived(connection, e.getMessage());
 	}
 
-	@Override
+	
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
 		Throwable t = handler.handleException(connection, e.getCause());
 		if (t != null) {
@@ -192,7 +193,7 @@ class Handler extends SimpleChannelHandler {
 		}
 	}
 
-	@Override
+	
 	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
 		handler.connectionClosed(connection);
 	}

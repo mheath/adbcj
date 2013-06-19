@@ -44,7 +44,6 @@ public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 		}
 	}
 
-	@Override
 	public boolean canHandle(String protocol) {
 		return PROTOCOL.equals(protocol);
 	}

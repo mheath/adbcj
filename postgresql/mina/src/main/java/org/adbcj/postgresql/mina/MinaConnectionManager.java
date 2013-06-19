@@ -54,7 +54,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 
 				private final BackendMessageDecoder decoder = new BackendMessageDecoder(connection.getConnectionState());
 
-				@Override
+				
 				protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 					DecoderInputStream inputStream = new DecoderInputStream(in.asInputStream());
 					while (true) {
@@ -75,12 +75,12 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 
 				private final FrontendMessageEncoder encoder = new FrontendMessageEncoder(connection.getConnectionState());
 
-				@Override
+				
 				public void dispose(IoSession ioSession) throws Exception {
 					// Do nothing.
 				}
 
-				@Override
+				
 				public void encode(IoSession ioSession, Object o, ProtocolEncoderOutput protocolEncoderOutput) throws Exception {
 					IoBuffer buffer = IoBuffer.allocate(4096);
 					OutputStream out = buffer.asOutputStream();
@@ -136,7 +136,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 		private boolean cancelled = false;
 		private boolean started = false;
 
-		@Override
+		
 		public synchronized void initializeSession(IoSession session, ConnectFuture future) {
 			if (cancelled) {
 				session.close(true);
@@ -148,7 +148,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 			IoSessionUtil.setConnection(session, connection);
 		}
 
-		@Override
+		
 		protected synchronized boolean doCancel(boolean mayInterruptIfRunning) {
 			if (started) {
 				logger.debug("Can't cancel, connection already started");
@@ -195,7 +195,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 	//
 	// ================================================================================================================
 
-	@Override
+	
 	public String toString() {
 		return String.format("Postgresql (MINA) Connection Manager (Db: '%s', User: '%s')", getDatabase(), getUsername());
 	}

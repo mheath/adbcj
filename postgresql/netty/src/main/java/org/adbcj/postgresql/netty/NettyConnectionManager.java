@@ -86,7 +86,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 	}
 
 
-	@Override
+	
 	public DbFuture<org.adbcj.Connection> connect() {
 		if (isClosed()) {
 			throw new DbException("Connection manager is closed");
@@ -95,7 +95,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 		return new PostgresqlConnectFuture(channelFuture);
 	}
 
-	@Override
+	
 	public DbFuture<Void> close(boolean immediate) throws DbException {
 		if (isClosed()) {
 			return closeFuture;
@@ -117,19 +117,19 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 		}
 	}
 
-	@Override
+	
 	public boolean isClosed() {
 		synchronized (this) {
 			return closeFuture != null;
 		}
 	}
 
-	@Override
+	
 	public boolean isPipeliningEnabled() {
 		return pipeliningEnabled;
 	}
 
-	@Override
+	
 	public void setPipeliningEnabled(boolean pipeliningEnabled) {
 		this.pipeliningEnabled = pipeliningEnabled;
 	}
@@ -141,7 +141,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 		public PostgresqlConnectFuture(ChannelFuture channelFuture) {
 			this.channelFuture = channelFuture;
 			channelFuture.addListener(new ChannelFutureListener() {
-				@Override
+				
 				public void operationComplete(ChannelFuture future) throws Exception {
 					Channel channel = future.getChannel();
 					Connection connection = new Connection(NettyConnectionManager.this, channel, PostgresqlConnectFuture.this);
@@ -158,7 +158,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 			});
 		}
 
-		@Override
+		
 		protected boolean doCancel(boolean mayInterruptIfRunning) {
 			return channelFuture.cancel();
 		}
@@ -178,22 +178,22 @@ class Connection extends AbstractConnection {
 		this.connectFuture = connectFuture;
 	}
 
-	@Override
+	
 	public DefaultDbFuture<org.adbcj.Connection> getConnectFuture() {
 		return connectFuture;
 	}
 
-	@Override
+	
 	protected boolean isConnectionClosing() {
 		return !channel.isOpen();
 	}
 
-	@Override
+	
 	protected void write(AbstractFrontendMessage message) {
 		channel.write(message);
 	}
 
-	@Override
+	
 	protected void write(AbstractFrontendMessage[] messages) {
 		channel.write(messages);
 	}
@@ -209,17 +209,17 @@ class Handler extends SimpleChannelHandler {
 		this.protocolHandler = protocolHandler;
 	}
 
-	@Override
+	
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
 		protocolHandler.handleMessage(connection, (AbstractBackendMessage) e.getMessage());
 	}
 
-	@Override
+	
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
 		protocolHandler.handleException(connection, e.getCause());
 	}
 
-	@Override
+	
 	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
 		protocolHandler.closeConnection(connection);
 	}
@@ -236,7 +236,7 @@ class Decoder extends FrameDecoder {
 		this.decoder = new BackendMessageDecoder(state);
 	}
 
-	@Override
+	
 	protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
 		 InputStream in = new ChannelBufferInputStream(buffer);
 		 DecoderInputStream dis = new DecoderInputStream(in);

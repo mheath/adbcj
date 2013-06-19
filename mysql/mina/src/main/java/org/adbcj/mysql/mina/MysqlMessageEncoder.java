@@ -35,7 +35,6 @@ public class MysqlMessageEncoder implements ProtocolEncoder {
 		// Nothing to dispose
 	}
 
-	@Override
 	public void encode(IoSession session, Object message, ProtocolEncoderOutput encoderOut) throws Exception {
 		IoBuffer buffer = IoBuffer.allocate(1024);
 		OutputStream out = buffer.asOutputStream();
