@@ -22,147 +22,151 @@ package org.adbcj.mysql.netty.org.apache.commons.pool2.impl;
  * defined by the public constants.
  * <p>
  * This class is not thread-safe.
- *
+ * 
  * @version $Revision: $
- *
  * @since 2.0
  */
 public abstract class BaseObjectPoolConfig implements Cloneable {
 
     /**
      * The default value for the {@code lifo} configuration attribute.
+     * 
      * @see GenericObjectPool#getLifo()
      * @see GenericKeyedObjectPool#getLifo()
      */
-    public static final boolean DEFAULT_LIFO = true;
+    public static final boolean DEFAULT_LIFO                                = true;
 
     /**
      * The default value for the {@code maxWait} configuration attribute.
+     * 
      * @see GenericObjectPool#getMaxWaitMillis()
      * @see GenericKeyedObjectPool#getMaxWaitMillis()
      */
-    public static final long DEFAULT_MAX_WAIT_MILLIS = -1L;
+    public static final long    DEFAULT_MAX_WAIT_MILLIS                     = -1L;
 
     /**
      * The default value for the {@code minEvictableIdleTimeMillis}
      * configuration attribute.
+     * 
      * @see GenericObjectPool#getMinEvictableIdleTimeMillis()
      * @see GenericKeyedObjectPool#getMinEvictableIdleTimeMillis()
      */
-    public static final long DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS =
-            1000L * 60L * 30L;
+    public static final long    DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS      = 1000L * 60L * 30L;
 
     /**
      * The default value for the {@code softMinEvictableIdleTimeMillis}
      * configuration attribute.
+     * 
      * @see GenericObjectPool#getSoftMinEvictableIdleTimeMillis()
      * @see GenericKeyedObjectPool#getSoftMinEvictableIdleTimeMillis()
      */
-    public static final long DEFAULT_SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS = -1;
+    public static final long    DEFAULT_SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS = -1;
 
     /**
      * The default value for the {@code numTestsPerEvictionRun} configuration
      * attribute.
+     * 
      * @see GenericObjectPool#getNumTestsPerEvictionRun()
      * @see GenericKeyedObjectPool#getNumTestsPerEvictionRun()
      */
-    public static final int DEFAULT_NUM_TESTS_PER_EVICTION_RUN = 3;
+    public static final int     DEFAULT_NUM_TESTS_PER_EVICTION_RUN          = 3;
 
     /**
      * The default value for the {@code testOnBorrow} configuration attribute.
+     * 
      * @see GenericObjectPool#getTestOnBorrow()
      * @see GenericKeyedObjectPool#getTestOnBorrow()
      */
-    public static final boolean DEFAULT_TEST_ON_BORROW = false;
+    public static final boolean DEFAULT_TEST_ON_BORROW                      = false;
 
     /**
      * The default value for the {@code testOnReturn} configuration attribute.
+     * 
      * @see GenericObjectPool#getTestOnReturn()
      * @see GenericKeyedObjectPool#getTestOnReturn()
      */
-    public static final boolean DEFAULT_TEST_ON_RETURN = false;
+    public static final boolean DEFAULT_TEST_ON_RETURN                      = false;
 
     /**
      * The default value for the {@code testWhileIdle} configuration attribute.
+     * 
      * @see GenericObjectPool#getTestWhileIdle()
      * @see GenericKeyedObjectPool#getTestWhileIdle()
      */
-    public static final boolean DEFAULT_TEST_WHILE_IDLE = false;
+    public static final boolean DEFAULT_TEST_WHILE_IDLE                     = false;
 
     /**
      * The default value for the {@code timeBetweenEvictionRunsMillis}
      * configuration attribute.
+     * 
      * @see GenericObjectPool#getTimeBetweenEvictionRunsMillis()
      * @see GenericKeyedObjectPool#getTimeBetweenEvictionRunsMillis()
      */
-    public static final long DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS = -1L;
+    public static final long    DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS   = -1L;
 
     /**
      * The default value for the {@code blockWhenExhausted} configuration
      * attribute.
+     * 
      * @see GenericObjectPool#getBlockWhenExhausted()
      * @see GenericKeyedObjectPool#getBlockWhenExhausted()
      */
-    public static final boolean DEFAULT_BLOCK_WHEN_EXHAUSTED = true;
+    public static final boolean DEFAULT_BLOCK_WHEN_EXHAUSTED                = true;
 
     /**
      * The default value for enabling JMX for pools created with a configuration
      * instance.
      */
-    public static final boolean DEFAULT_JMX_ENABLE = true;
+    public static final boolean DEFAULT_JMX_ENABLE                          = true;
 
     /**
      * The default value for the prefix used to name JMX enabled pools created
      * with a configuration instance.
+     * 
      * @see GenericObjectPool#getJmxName()
      * @see GenericKeyedObjectPool#getJmxName()
      */
-    public static final String DEFAULT_JMX_NAME_PREFIX = "pool";
+    public static final String  DEFAULT_JMX_NAME_PREFIX                     = "pool";
 
     /**
      * The default value for the {@code evictionPolicyClassName} configuration
      * attribute.
+     * 
      * @see GenericObjectPool#getEvictionPolicyClassName()
      * @see GenericKeyedObjectPool#getEvictionPolicyClassName()
      */
-    public static final String DEFAULT_EVICTION_POLICY_CLASS_NAME =
-            "org.apache.commons.pool2.impl.DefaultEvictionPolicy";
+    public static final String  DEFAULT_EVICTION_POLICY_CLASS_NAME          = "org.adbcj.mysql.netty.org.apache.commons.pool2.impl.DefaultEvictionPolicy";
 
+    private boolean             lifo                                        = DEFAULT_LIFO;
 
-    private boolean lifo = DEFAULT_LIFO;
+    private long                maxWaitMillis                               = DEFAULT_MAX_WAIT_MILLIS;
 
-    private long maxWaitMillis = DEFAULT_MAX_WAIT_MILLIS;
+    private long                minEvictableIdleTimeMillis                  = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
 
-    private long minEvictableIdleTimeMillis =
-        DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
+    private long                softMinEvictableIdleTimeMillis              = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
 
-    private long softMinEvictableIdleTimeMillis =
-            DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
+    private int                 numTestsPerEvictionRun                      = DEFAULT_NUM_TESTS_PER_EVICTION_RUN;
 
-    private int numTestsPerEvictionRun =
-        DEFAULT_NUM_TESTS_PER_EVICTION_RUN;
+    private String              evictionPolicyClassName                     = DEFAULT_EVICTION_POLICY_CLASS_NAME;
 
-    private String evictionPolicyClassName = DEFAULT_EVICTION_POLICY_CLASS_NAME;
+    private boolean             testOnBorrow                                = DEFAULT_TEST_ON_BORROW;
 
-    private boolean testOnBorrow = DEFAULT_TEST_ON_BORROW;
+    private boolean             testOnReturn                                = DEFAULT_TEST_ON_RETURN;
 
-    private boolean testOnReturn = DEFAULT_TEST_ON_RETURN;
+    private boolean             testWhileIdle                               = DEFAULT_TEST_WHILE_IDLE;
 
-    private boolean testWhileIdle = DEFAULT_TEST_WHILE_IDLE;
+    private long                timeBetweenEvictionRunsMillis               = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS;
 
-    private long timeBetweenEvictionRunsMillis =
-        DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS;
+    private boolean             blockWhenExhausted                          = DEFAULT_BLOCK_WHEN_EXHAUSTED;
 
-    private boolean blockWhenExhausted = DEFAULT_BLOCK_WHEN_EXHAUSTED;
+    private boolean             jmxEnabled                                  = DEFAULT_JMX_ENABLE;
 
-    private boolean jmxEnabled = DEFAULT_JMX_ENABLE;
-
-    private String jmxNamePrefix = DEFAULT_JMX_NAME_PREFIX;
-
+    private String              jmxNamePrefix                               = DEFAULT_JMX_NAME_PREFIX;
 
     /**
      * Get the value for the {@code lifo} configuration attribute for pools
      * created with this configuration instance.
+     * 
      * @see GenericObjectPool#getLifo()
      * @see GenericKeyedObjectPool#getLifo()
      */
@@ -173,6 +177,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code lifo} configuration attribute for pools
      * created with this configuration instance.
+     * 
      * @see GenericObjectPool#getLifo()
      * @see GenericKeyedObjectPool#getLifo()
      */
@@ -183,6 +188,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Get the value for the {@code maxWait} configuration attribute for pools
      * created with this configuration instance.
+     * 
      * @see GenericObjectPool#getMaxWaitMillis()
      * @see GenericKeyedObjectPool#getMaxWaitMillis()
      */
@@ -193,6 +199,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code maxWait} configuration attribute for pools
      * created with this configuration instance.
+     * 
      * @see GenericObjectPool#getMaxWaitMillis()
      * @see GenericKeyedObjectPool#getMaxWaitMillis()
      */
@@ -203,6 +210,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Get the value for the {@code minEvictableIdleTimeMillis} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getMinEvictableIdleTimeMillis()
      * @see GenericKeyedObjectPool#getMinEvictableIdleTimeMillis()
      */
@@ -213,6 +221,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code minEvictableIdleTimeMillis} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getMinEvictableIdleTimeMillis()
      * @see GenericKeyedObjectPool#getMinEvictableIdleTimeMillis()
      */
@@ -224,6 +233,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
      * Get the value for the {@code softMinEvictableIdleTimeMillis}
      * configuration attribute for pools created with this configuration
      * instance.
+     * 
      * @see GenericObjectPool#getSoftMinEvictableIdleTimeMillis()
      * @see GenericKeyedObjectPool#getSoftMinEvictableIdleTimeMillis()
      */
@@ -235,17 +245,18 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
      * Set the value for the {@code softMinEvictableIdleTimeMillis}
      * configuration attribute for pools created with this configuration
      * instance.
+     * 
      * @see GenericObjectPool#getSoftMinEvictableIdleTimeMillis()
      * @see GenericKeyedObjectPool#getSoftMinEvictableIdleTimeMillis()
      */
-    public void setSoftMinEvictableIdleTimeMillis(
-            long softMinEvictableIdleTimeMillis) {
+    public void setSoftMinEvictableIdleTimeMillis(long softMinEvictableIdleTimeMillis) {
         this.softMinEvictableIdleTimeMillis = softMinEvictableIdleTimeMillis;
     }
 
     /**
      * Get the value for the {@code numTestsPerEvictionRun} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getNumTestsPerEvictionRun()
      * @see GenericKeyedObjectPool#getNumTestsPerEvictionRun()
      */
@@ -256,6 +267,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code numTestsPerEvictionRun} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getNumTestsPerEvictionRun()
      * @see GenericKeyedObjectPool#getNumTestsPerEvictionRun()
      */
@@ -266,6 +278,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Get the value for the {@code testOnBorrow} configuration attribute for
      * pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTestOnBorrow()
      * @see GenericKeyedObjectPool#getTestOnBorrow()
      */
@@ -276,6 +289,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code testOnBorrow} configuration attribute for
      * pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTestOnBorrow()
      * @see GenericKeyedObjectPool#getTestOnBorrow()
      */
@@ -286,6 +300,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Get the value for the {@code testOnReturn} configuration attribute for
      * pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTestOnReturn()
      * @see GenericKeyedObjectPool#getTestOnReturn()
      */
@@ -296,6 +311,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code testOnReturn} configuration attribute for
      * pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTestOnReturn()
      * @see GenericKeyedObjectPool#getTestOnReturn()
      */
@@ -306,6 +322,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Get the value for the {@code testWhileIdle} configuration attribute for
      * pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTestWhileIdle()
      * @see GenericKeyedObjectPool#getTestWhileIdle()
      */
@@ -316,6 +333,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code testWhileIdle} configuration attribute for
      * pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTestWhileIdle()
      * @see GenericKeyedObjectPool#getTestWhileIdle()
      */
@@ -326,6 +344,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Get the value for the {@code timeBetweenEvictionRunsMillis} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTimeBetweenEvictionRunsMillis()
      * @see GenericKeyedObjectPool#getTimeBetweenEvictionRunsMillis()
      */
@@ -336,17 +355,18 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code timeBetweenEvictionRunsMillis} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getTimeBetweenEvictionRunsMillis()
      * @see GenericKeyedObjectPool#getTimeBetweenEvictionRunsMillis()
      */
-    public void setTimeBetweenEvictionRunsMillis(
-            long timeBetweenEvictionRunsMillis) {
+    public void setTimeBetweenEvictionRunsMillis(long timeBetweenEvictionRunsMillis) {
         this.timeBetweenEvictionRunsMillis = timeBetweenEvictionRunsMillis;
     }
 
     /**
      * Get the value for the {@code evictionPolicyClassName} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getEvictionPolicyClassName()
      * @see GenericKeyedObjectPool#getEvictionPolicyClassName()
      */
@@ -357,6 +377,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code evictionPolicyClassName} configuration
      * attribute for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getEvictionPolicyClassName()
      * @see GenericKeyedObjectPool#getEvictionPolicyClassName()
      */
@@ -367,6 +388,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Get the value for the {@code blockWhenExhausted} configuration attribute
      * for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getBlockWhenExhausted()
      * @see GenericKeyedObjectPool#getBlockWhenExhausted()
      */
@@ -377,6 +399,7 @@ public abstract class BaseObjectPoolConfig implements Cloneable {
     /**
      * Set the value for the {@code blockWhenExhausted} configuration attribute
      * for pools created with this configuration instance.
+     * 
      * @see GenericObjectPool#getBlockWhenExhausted()
      * @see GenericKeyedObjectPool#getBlockWhenExhausted()
      */
