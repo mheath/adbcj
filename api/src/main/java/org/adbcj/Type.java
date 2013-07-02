@@ -26,6 +26,7 @@ import java.sql.Types;
 public enum Type {
 	ARRAY(Types.ARRAY),
 	BIGINT(Types.BIGINT),
+	LONG(Types.BIGINT),
 	BINARY(Types.BINARY),
 	BIT(Types.BIT),
 	BLOB(Types.BLOB),

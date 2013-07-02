@@ -20,6 +20,8 @@ package org.adbcj.mysql.codec;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -218,12 +220,16 @@ public class MySqlClientDecoder {
                             // TODO add decoding for all column types
                             switch (field.getColumnType()) {
                                 case TINYINT:
-                                    value = Byte.valueOf(strVal);
+                                    //in java Boolean is the same with Integer
+                                    value = Integer.valueOf(strVal);
                                     break;
                                 case INTEGER:
                                     value = Integer.valueOf(strVal);
                                     break;
                                 case BIGINT:
+                                    value = BigInteger.valueOf(Long.valueOf(strVal));
+                                    break;
+                                case LONG:
                                     value = Long.valueOf(strVal);
                                     break;
                                 case VARCHAR:
@@ -260,7 +266,28 @@ public class MySqlClientDecoder {
                                     // UTF-8?GBK?
                                     value = strVal.getBytes();
                                     break;
-
+                                case BLOB:
+                                    value = new SimpleBlob(strVal.getBytes());
+                                    break;
+                                case BIT:
+                                    value = strVal.getBytes();
+                                    break;
+                                case DECIMAL:
+                                    if(strVal == null)
+                                    {
+                                        break;
+                                    }
+                                    if(strVal.contains("."))
+                                    {
+                                        //double
+                                       value = BigDecimal.valueOf(Double.valueOf(strVal));
+                                    }
+                                    else
+                                    {
+                                        value = BigDecimal.valueOf(Long.valueOf(strVal));
+                                    }
+                                   
+                                    break;
                                 default:
                                     throw new IllegalStateException("Don't know how to handle column type of "
                                                                     + field.getColumnType());
@@ -305,7 +332,12 @@ public class MySqlClientDecoder {
 
         in.read(salt, SALT_SIZE, SALT2_SIZE);
         in.read(); // Throw away 0 byte
-
+        String str = IoUtils.readString(in, "ASCII");
+        if (!"mysql_native_password".equals(str)) {
+            // in 5.5, the authentication plugin name is specifical tolded by
+            // default
+            throw new IllegalStateException("not supported yet : " + str);
+        }
         return new ServerGreeting(length,
             packetNumber,
             protocol,
@@ -356,8 +388,14 @@ public class MySqlClientDecoder {
         MysqlCharacterSet charSet = MysqlCharacterSet.findById(characterSetNumber);
         long length = IoUtils.readUnsignedInt(in);
         int fieldTypeId = in.read();
-        MysqlType fieldType = MysqlType.findById(fieldTypeId);
         Set<FieldFlag> flags = IoUtils.readEnumSet(in, FieldFlag.class);
+        boolean unsigned = false;
+        if(flags.contains(FieldFlag.UNSIGNED))
+        {
+            unsigned = true;
+        }
+        MysqlType fieldType = MysqlType.findById(fieldTypeId,unsigned);
+        
         int decimals = in.read();
         in.skip(2); // Skip filler
         long fieldDefault = IoUtils.readBinaryLengthEncoding(in);
