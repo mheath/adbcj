@@ -8,7 +8,7 @@
 	<parent>
         <groupId>org.adbcj</groupId>
 		<artifactId>postgresql-build</artifactId>
-		<version>1.0-tb-SNAPSHOT</version>
+		<version>0.2-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>postgresql-mina</artifactId>
