@@ -3,6 +3,9 @@ package org.adbcj.mysql.netty;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Blob;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import junit.framework.Assert;
 
@@ -89,9 +92,14 @@ public class TestType {
         // + "decimalr,
         Assert.assertEquals(BigDecimal.valueOf(1000l), values[12].getValue());
         // dater
-        Assert.assertEquals("1986-03-22", values[13].getValue());
-        // ,timer,datetimer,timestampr,yearr
-        // "0,'varch','char','lob',100,4,"
-        // + "1,100,0,1000000,1.1,2.2,1000.1,now(),now(),now(),now(),now()
+        Assert.assertEquals(Date.valueOf("1986-03-22"), values[13].getValue());
+        //timer 
+        Assert.assertEquals(Time.valueOf("05:33:12"), values[14].getValue());
+        //datetimer
+        Assert.assertEquals(Timestamp.valueOf("1986-03-22 05:33:12"), values[15].getValue());
+        //,timestampr
+        Assert.assertEquals(Timestamp.valueOf("1986-03-22 05:33:12"), values[16].getValue());
+        //yearr
+        Assert.assertEquals(1986, values[17].getValue());
     }
 }
