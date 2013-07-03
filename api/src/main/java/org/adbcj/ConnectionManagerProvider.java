@@ -25,16 +25,13 @@ public class ConnectionManagerProvider {
 
     public static final String ADBCJ_PROTOCOL = "adbcj";
 
-    private ConnectionManagerProvider(){
-    }
+    private ConnectionManagerProvider () {}
 
-    public static ConnectionManager createConnectionManager(String url, String username, String password)
-                                                                                                         throws DbException {
+    public static ConnectionManager createConnectionManager(String url, String username, String password) throws DbException {
         return createConnectionManager(url, username, password, null);
     }
 
-    public static ConnectionManager createConnectionManager(String url, String username, String password,
-                                                            Properties properties) throws DbException {
+    public static ConnectionManager createConnectionManager(String url, String username, String password, Properties properties) throws DbException {
         if (url == null) {
             throw new IllegalArgumentException("Connection url can not be null");
         }

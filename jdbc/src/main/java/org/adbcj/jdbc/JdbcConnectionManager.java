@@ -105,6 +105,7 @@ public class JdbcConnectionManager implements ConnectionManager {
 			if (closeFuture == null) {
 				closeFuture = new DefaultDbFuture<Void>();
 				closeFuture.addListener(new DbListener<Void>() {
+				    @Override
 					public void onCompletion(DbFuture<Void> future) throws Exception {
 						executorService.shutdown();
 					}
@@ -117,6 +118,7 @@ public class JdbcConnectionManager implements ConnectionManager {
 		final AtomicBoolean allClosed = new AtomicBoolean(false);
 		
 		DbListener<Void> listener = new DbListener<Void>() {
+		    @Override
 			public void onCompletion(DbFuture<Void> future) {
 				try {
 					int count = countDown.decrementAndGet();

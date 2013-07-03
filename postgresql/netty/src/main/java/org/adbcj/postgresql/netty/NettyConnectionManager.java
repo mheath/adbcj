@@ -1,46 +1,46 @@
 package org.adbcj.postgresql.netty;
 
-import org.adbcj.DbFuture;
-import org.adbcj.DbException;
-import org.adbcj.support.DecoderInputStream;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.postgresql.codec.AbstractConnectionManager;
-import org.adbcj.postgresql.codec.ConnectionState;
-import org.adbcj.postgresql.codec.AbstractConnection;
-import org.adbcj.postgresql.codec.ProtocolHandler;
-import org.adbcj.postgresql.codec.backend.BackendMessageDecoder;
-import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
-import org.adbcj.postgresql.codec.frontend.FrontendMessageEncoder;
-import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelDownstreamHandler;
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.net.InetSocketAddress;
-import java.io.InputStream;
+
+import org.adbcj.DbException;
+import org.adbcj.DbFuture;
+import org.adbcj.postgresql.codec.AbstractConnection;
+import org.adbcj.postgresql.codec.AbstractConnectionManager;
+import org.adbcj.postgresql.codec.ConnectionState;
+import org.adbcj.postgresql.codec.ProtocolHandler;
+import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
+import org.adbcj.postgresql.codec.backend.BackendMessageDecoder;
+import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
+import org.adbcj.postgresql.codec.frontend.FrontendMessageEncoder;
+import org.adbcj.support.DecoderInputStream;
+import org.adbcj.support.DefaultDbFuture;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelDownstreamHandler;
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.codec.frame.FrameDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Mike Heath
@@ -86,7 +86,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 	}
 
 
-	
+	@Override
 	public DbFuture<org.adbcj.Connection> connect() {
 		if (isClosed()) {
 			throw new DbException("Connection manager is closed");
@@ -95,7 +95,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 		return new PostgresqlConnectFuture(channelFuture);
 	}
 
-	
+	@Override
 	public DbFuture<Void> close(boolean immediate) throws DbException {
 		if (isClosed()) {
 			return closeFuture;
@@ -117,19 +117,19 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 		}
 	}
 
-	
+	@Override
 	public boolean isClosed() {
 		synchronized (this) {
 			return closeFuture != null;
 		}
 	}
 
-	
+	@Override
 	public boolean isPipeliningEnabled() {
 		return pipeliningEnabled;
 	}
 
-	
+	@Override
 	public void setPipeliningEnabled(boolean pipeliningEnabled) {
 		this.pipeliningEnabled = pipeliningEnabled;
 	}
@@ -141,7 +141,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 		public PostgresqlConnectFuture(ChannelFuture channelFuture) {
 			this.channelFuture = channelFuture;
 			channelFuture.addListener(new ChannelFutureListener() {
-				
+				@Override
 				public void operationComplete(ChannelFuture future) throws Exception {
 					Channel channel = future.getChannel();
 					Connection connection = new Connection(NettyConnectionManager.this, channel, PostgresqlConnectFuture.this);
@@ -158,7 +158,7 @@ public class NettyConnectionManager extends AbstractConnectionManager {
 			});
 		}
 
-		
+		@Override
 		protected boolean doCancel(boolean mayInterruptIfRunning) {
 			return channelFuture.cancel();
 		}
@@ -178,22 +178,22 @@ class Connection extends AbstractConnection {
 		this.connectFuture = connectFuture;
 	}
 
-	
+	@Override
 	public DefaultDbFuture<org.adbcj.Connection> getConnectFuture() {
 		return connectFuture;
 	}
 
-	
+	@Override
 	protected boolean isConnectionClosing() {
 		return !channel.isOpen();
 	}
 
-	
+	@Override
 	protected void write(AbstractFrontendMessage message) {
 		channel.write(message);
 	}
 
-	
+	@Override
 	protected void write(AbstractFrontendMessage[] messages) {
 		channel.write(messages);
 	}
@@ -209,17 +209,17 @@ class Handler extends SimpleChannelHandler {
 		this.protocolHandler = protocolHandler;
 	}
 
-	
+	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
 		protocolHandler.handleMessage(connection, (AbstractBackendMessage) e.getMessage());
 	}
 
-	
+	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
 		protocolHandler.handleException(connection, e.getCause());
 	}
 
-	
+	@Override
 	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
 		protocolHandler.closeConnection(connection);
 	}
@@ -236,7 +236,7 @@ class Decoder extends FrameDecoder {
 		this.decoder = new BackendMessageDecoder(state);
 	}
 
-	
+	@Override
 	protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
 		 InputStream in = new ChannelBufferInputStream(buffer);
 		 DecoderInputStream dis = new DecoderInputStream(in);
@@ -283,4 +283,3 @@ class Encoder implements ChannelDownstreamHandler {
     	Channels.write(context, e.getFuture(), buffer);
 	}
 }
-

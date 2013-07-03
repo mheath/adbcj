@@ -1,36 +1,34 @@
 package org.adbcj.postgresql.mina;
 
-import org.adbcj.postgresql.codec.AbstractConnectionManager;
-import org.adbcj.postgresql.codec.backend.BackendMessageDecoder;
-import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
-import org.adbcj.postgresql.codec.frontend.FrontendMessageEncoder;
-import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
-import org.adbcj.postgresql.mina.IoHandler;
-import org.adbcj.postgresql.mina.IoSessionUtil;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.support.DecoderInputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.util.Properties;
+
 import org.adbcj.Connection;
-import org.adbcj.DbFuture;
 import org.adbcj.DbException;
-import org.apache.mina.core.session.IoSession;
-import org.apache.mina.core.session.IoSessionInitializer;
+import org.adbcj.DbFuture;
+import org.adbcj.postgresql.codec.AbstractConnectionManager;
+import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
+import org.adbcj.postgresql.codec.backend.BackendMessageDecoder;
+import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
+import org.adbcj.postgresql.codec.frontend.FrontendMessageEncoder;
+import org.adbcj.support.DecoderInputStream;
+import org.adbcj.support.DefaultDbFuture;
+import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.future.ConnectFuture;
-import org.apache.mina.core.buffer.IoBuffer;
-import org.apache.mina.filter.codec.ProtocolDecoder;
-import org.apache.mina.filter.codec.ProtocolCodecFactory;
-import org.apache.mina.filter.codec.ProtocolEncoder;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.codec.ProtocolEncoderOutput;
-import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.core.session.IoSessionInitializer;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
+import org.apache.mina.filter.codec.ProtocolCodecFactory;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.codec.ProtocolDecoder;
+import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+import org.apache.mina.filter.codec.ProtocolEncoder;
+import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Properties;
-import java.net.InetSocketAddress;
-import java.io.OutputStream;
 
 /**
  * @author Mike Heath
@@ -54,7 +52,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 
 				private final BackendMessageDecoder decoder = new BackendMessageDecoder(connection.getConnectionState());
 
-				
+				@Override
 				protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 					DecoderInputStream inputStream = new DecoderInputStream(in.asInputStream());
 					while (true) {
@@ -75,12 +73,12 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 
 				private final FrontendMessageEncoder encoder = new FrontendMessageEncoder(connection.getConnectionState());
 
-				
+				@Override
 				public void dispose(IoSession ioSession) throws Exception {
 					// Do nothing.
 				}
 
-				
+				@Override
 				public void encode(IoSession ioSession, Object o, ProtocolEncoderOutput protocolEncoderOutput) throws Exception {
 					IoBuffer buffer = IoBuffer.allocate(4096);
 					OutputStream out = buffer.asOutputStream();
@@ -136,7 +134,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 		private boolean cancelled = false;
 		private boolean started = false;
 
-		
+		@Override
 		public synchronized void initializeSession(IoSession session, ConnectFuture future) {
 			if (cancelled) {
 				session.close(true);
@@ -148,7 +146,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 			IoSessionUtil.setConnection(session, connection);
 		}
 
-		
+		@Override
 		protected synchronized boolean doCancel(boolean mayInterruptIfRunning) {
 			if (started) {
 				logger.debug("Can't cancel, connection already started");
@@ -195,7 +193,7 @@ public class MinaConnectionManager extends AbstractConnectionManager {
 	//
 	// ================================================================================================================
 
-	
+	@Override
 	public String toString() {
 		return String.format("Postgresql (MINA) Connection Manager (Db: '%s', User: '%s')", getDatabase(), getUsername());
 	}
