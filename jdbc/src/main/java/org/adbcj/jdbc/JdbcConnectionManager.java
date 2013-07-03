@@ -40,14 +40,14 @@ public class JdbcConnectionManager implements ConnectionManager {
 
 	private static final Object USER = "user";
 	private static final Object PASSWORD = "password";
-	
+
 	private final String jdbcUrl;
 	private final Properties properties;
 	private final ExecutorService executorService;
 
 	private final Object lock = this;
 	private final Set<JdbcConnection> connections = new HashSet<JdbcConnection>(); // Access must be synchronized on lock 
-	
+
 	private volatile DefaultDbFuture<Void> closeFuture;
 
 	private volatile boolean pipeliningEnabled = false;
@@ -105,7 +105,7 @@ public class JdbcConnectionManager implements ConnectionManager {
 			if (closeFuture == null) {
 				closeFuture = new DefaultDbFuture<Void>();
 				closeFuture.addListener(new DbListener<Void>() {
-				    @Override
+					@Override
 					public void onCompletion(DbFuture<Void> future) throws Exception {
 						executorService.shutdown();
 					}
@@ -116,9 +116,9 @@ public class JdbcConnectionManager implements ConnectionManager {
 		}
 		final AtomicInteger countDown = new AtomicInteger();
 		final AtomicBoolean allClosed = new AtomicBoolean(false);
-		
+
 		DbListener<Void> listener = new DbListener<Void>() {
-		    @Override
+			@Override
 			public void onCompletion(DbFuture<Void> future) {
 				try {
 					int count = countDown.decrementAndGet();
@@ -154,7 +154,7 @@ public class JdbcConnectionManager implements ConnectionManager {
 	 * Non API Method
 	 * 
 	 */
-	
+
 	public ExecutorService getExecutorService() {
 		return executorService;
 	}
@@ -177,5 +177,5 @@ public class JdbcConnectionManager implements ConnectionManager {
 	public String toString() {
 		return String.format("%s: %s (user: %s)", getClass().getName(), jdbcUrl, properties.get(USER));
 	}
-	
+
 }
