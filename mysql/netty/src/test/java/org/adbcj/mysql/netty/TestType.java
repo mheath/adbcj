@@ -18,7 +18,7 @@ import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Row;
 import org.adbcj.Value;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 public class TestType {
@@ -33,8 +33,7 @@ public class TestType {
                                              "");
     public static final String      DATE = "'1986-03-22 05:33:12'";
 
-    @BeforeMethod
-    public void prepare() throws Exception {
+    public void prepare_notNull() throws Exception {
         Connection connection = cm.connect().get();
         DbSessionFuture<Result> result = connection.executeUpdate("delete from type_test");
         Assert.assertTrue(result.get().getAffectedRows() > -1);
@@ -47,13 +46,93 @@ public class TestType {
         Assert.assertTrue(result.get().getAffectedRows() > -1);
         connection.close(true);
     }
-
-    public void tear() throws Exception {
-
+    
+    public void prepare_Null() throws Exception {
+        Connection connection = cm.connect().get();
+        DbSessionFuture<Result> result = connection.executeUpdate("delete from type_test");
+        Assert.assertTrue(result.get().getAffectedRows() > -1);
+        String sql = "insert into type_test (" + "pk,varcharr,charr,blobr,integerr,integerr_unsigned,tinyintr,tinyintr_unsigned,"
+                     + "smallintr,smallintr_unsigned,mediumintr,mediumintr_unsigned,bitr,bigintr,bigintr_unsigned,floatr,doubler,"
+                     + "decimalr,dater,timer,datetimer,timestampr,yearr) values (" + "0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"
+                     + "NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL"
+                     + ")";
+        result = connection.executeUpdate(sql);
+        Assert.assertTrue(result.get().getAffectedRows() > -1);
+        connection.close(true);
     }
+    
+    @AfterMethod
+    public void tear() throws Exception {
+        Connection connection = cm.connect().get();
+        DbSessionFuture<Result> result = connection.executeUpdate("delete from type_test");
+        Assert.assertTrue(result.get().getAffectedRows() > -1);
+        connection.close(true);
+    }
+    
 
     @Test
+    public void testNull() throws Exception {
+        prepare_Null();
+        Connection connection = cm.connect().get();
+        DbSessionFuture<ResultSet> result = connection.executeQuery("select pk,varcharr,charr,blobr,integerr,integerr_unsigned,tinyintr,tinyintr_unsigned,"
+                                                                    + "smallintr,smallintr_unsigned,mediumintr,mediumintr_unsigned,bitr,bigintr,bigintr_unsigned,floatr,doubler,"
+                                                                    + "decimalr,dater,timer,datetimer,timestampr,yearr from type_test");
+        ResultSet r = result.get();
+        Row row = r.iterator().next();
+        Value[] values = row.getValues();
+        // pk
+        Assert.assertEquals(0, values[0].getValue());
+        // varcharr varch
+        Assert.assertEquals(null, values[1].getValue());
+        Assert.assertTrue(values[1].isNull());
+        // charr 'char'
+        Assert.assertEquals(null, values[2].getValue());
+        // blobr 'lob'
+        Assert.assertEquals(null, values[3].getValue());
+        // ,integerr 100
+        Assert.assertEquals(null, values[4].getValue());
+        // ,integerr_unsign 100
+        Assert.assertEquals(null, values[5].getValue());
+
+        // ,tinyintr, 4
+        Assert.assertEquals(null, values[6].getValue());
+        // ,tinyintr_unsign, 4
+        Assert.assertEquals(null, values[7].getValue());
+       
+        // "smallintr
+        Assert.assertEquals(null, values[8].getValue());
+        // "smallintr_unsign
+        Assert.assertEquals(null, values[9].getValue());
+        // ,mediumintr 100
+        Assert.assertEquals(null, values[10].getValue());
+        // ,mediumintr_unsign 100
+        Assert.assertEquals(null, values[11].getValue());
+        // ,bitr, 0
+        Assert.assertEquals(null, ((byte[])values[12].getValue()));
+        // bigintr 1000000
+        Assert.assertEquals(null, values[13].getValue());
+        // bigintr 1000000
+        Assert.assertEquals(null, values[14].getValue());
+        // ,floatr
+        Assert.assertEquals(null, values[15].getValue());
+        // ,doubler," 2.2
+        Assert.assertEquals(null, values[16].getValue());
+        // + "decimalr,
+        Assert.assertEquals(null, values[17].getValue());
+        // dater
+        Assert.assertEquals(null, values[18].getValue());
+        //timer 
+        Assert.assertEquals(null, values[19].getValue());
+        //datetimer
+        Assert.assertEquals(null, values[20].getValue());
+        //,timestampr
+        Assert.assertEquals(null, values[21].getValue());
+        //yearr
+        Assert.assertEquals(null, values[22].getValue());
+    }
+    @Test
     public void testType() throws Exception {
+        prepare_notNull();
         Connection connection = cm.connect().get();
         DbSessionFuture<ResultSet> result = connection.executeQuery("select pk,varcharr,charr,blobr,integerr,integerr_unsigned,tinyintr,tinyintr_unsigned,"
                                                                     + "smallintr,smallintr_unsigned,mediumintr,mediumintr_unsigned,bitr,bigintr,bigintr_unsigned,floatr,doubler,"
