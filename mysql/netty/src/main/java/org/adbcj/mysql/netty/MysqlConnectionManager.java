@@ -195,8 +195,9 @@ class Handler extends SimpleChannelHandler {
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
         Throwable t = handler.handleException(connection, e.getCause());
         if (t != null) {
-            // TODO: Pass exception on to connectionManager
-            t.printStackTrace();
+//            t.printStackTrace();
+            e.getChannel().close();
+            super.exceptionCaught(ctx, e);
         }
     }
 
