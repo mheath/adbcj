@@ -13,7 +13,9 @@ import junit.framework.Assert;
 import org.adbcj.Connection;
 import org.adbcj.ConnectionManager;
 import org.adbcj.ConnectionManagerProvider;
+import org.adbcj.DbFuture;
 import org.adbcj.DbSessionFuture;
+import org.adbcj.PreparedStatement;
 import org.adbcj.Result;
 import org.adbcj.ResultSet;
 import org.adbcj.Row;
@@ -68,6 +70,7 @@ public class TestType {
         Assert.assertTrue(result.get().getAffectedRows() > -1);
         connection.close(true);
     }
+    
     
 
     @Test
@@ -134,9 +137,10 @@ public class TestType {
     public void testType() throws Exception {
         prepare_notNull();
         Connection connection = cm.connect().get();
-        DbSessionFuture<ResultSet> result = connection.executeQuery("select pk,varcharr,charr,blobr,integerr,integerr_unsigned,tinyintr,tinyintr_unsigned,"
-                                                                    + "smallintr,smallintr_unsigned,mediumintr,mediumintr_unsigned,bitr,bigintr,bigintr_unsigned,floatr,doubler,"
-                                                                    + "decimalr,dater,timer,datetimer,timestampr,yearr from type_test");
+        DbSessionFuture<PreparedStatement> ps = connection.prepareStatement("select pk,varcharr,charr,blobr,integerr,integerr_unsigned,tinyintr,tinyintr_unsigned,"
+                + "smallintr,smallintr_unsigned,mediumintr,mediumintr_unsigned,bitr,bigintr,bigintr_unsigned,floatr,doubler,"
+                + "decimalr,dater,timer,datetimer,timestampr,yearr from type_test where pk = ?");
+        DbFuture<ResultSet> result = ps.get().executeQuery(0);
         ResultSet r = result.get();
         Row row = r.iterator().next();
         Value[] values = row.getValues();
