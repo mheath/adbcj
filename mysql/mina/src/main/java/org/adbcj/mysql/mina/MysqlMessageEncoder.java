@@ -31,6 +31,7 @@ public class MysqlMessageEncoder implements ProtocolEncoder {
 
 	private final MySqlClientEncoder encoder = new MySqlClientEncoder();
 
+	@Override
 	public void dispose(IoSession session) throws Exception {
 		// Nothing to dispose
 	}

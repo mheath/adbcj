@@ -1,46 +1,46 @@
 package org.adbcj.postgresql.netty;
 
-import org.adbcj.DbFuture;
-import org.adbcj.DbException;
-import org.adbcj.support.DecoderInputStream;
-import org.adbcj.support.DefaultDbFuture;
-import org.adbcj.postgresql.codec.AbstractConnectionManager;
-import org.adbcj.postgresql.codec.ConnectionState;
-import org.adbcj.postgresql.codec.AbstractConnection;
-import org.adbcj.postgresql.codec.ProtocolHandler;
-import org.adbcj.postgresql.codec.backend.BackendMessageDecoder;
-import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
-import org.adbcj.postgresql.codec.frontend.FrontendMessageEncoder;
-import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelDownstreamHandler;
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.net.InetSocketAddress;
-import java.io.InputStream;
+
+import org.adbcj.DbException;
+import org.adbcj.DbFuture;
+import org.adbcj.postgresql.codec.AbstractConnection;
+import org.adbcj.postgresql.codec.AbstractConnectionManager;
+import org.adbcj.postgresql.codec.ConnectionState;
+import org.adbcj.postgresql.codec.ProtocolHandler;
+import org.adbcj.postgresql.codec.backend.AbstractBackendMessage;
+import org.adbcj.postgresql.codec.backend.BackendMessageDecoder;
+import org.adbcj.postgresql.codec.frontend.AbstractFrontendMessage;
+import org.adbcj.postgresql.codec.frontend.FrontendMessageEncoder;
+import org.adbcj.support.DecoderInputStream;
+import org.adbcj.support.DefaultDbFuture;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelDownstreamHandler;
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.codec.frame.FrameDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Mike Heath
@@ -283,4 +283,3 @@ class Encoder implements ChannelDownstreamHandler {
     	Channels.write(context, e.getFuture(), buffer);
 	}
 }
-

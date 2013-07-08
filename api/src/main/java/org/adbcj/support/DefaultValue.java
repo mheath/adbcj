@@ -25,108 +25,118 @@ import org.adbcj.Value;
 
 public class DefaultValue implements Value {
 
-	private final Field field;
-	private final Object value;
+    private final Field  field;
+    private final Object value;
 
-	public DefaultValue(Field field, Object value) {
-		this.field = field;
-		this.value = value;
-	}
+    public DefaultValue(Field field, Object value){
+        this.field = field;
+        this.value = value;
+    }
 
-	public Field getField() {
-		return field;
-	}
+    public Field getField() {
+        return field;
+    }
 
-	public BigDecimal getBigDecimal() {
-		if (value == null) {
-			return null;
-		}
-		if (value instanceof BigDecimal) {
-			return (BigDecimal)value;
-		}
-		return new BigDecimal(value.toString());
-	}
+    public BigDecimal getBigDecimal() {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof BigDecimal) {
+            return (BigDecimal) value;
+        }
+        return new BigDecimal(value.toString());
+    }
 
-	public boolean getBoolean() {
-		if (value == null) {
-			return false;
-		}
-		if (value instanceof Boolean) {
-			return ((Boolean)value).booleanValue();
-		}
-		if (value instanceof Number) {
-			return getInt() != 0;
-		}
-		return Boolean.valueOf(value.toString());
-	}
+    public boolean getBoolean() {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean) {
+            return ((Boolean) value).booleanValue();
+        }
+        if (value instanceof Number) {
+            return getInt() != 0;
+        }
+        return Boolean.valueOf(value.toString());
+    }
 
-	public Date getDate() {
-		if (value == null) {
-			return null;
-		}
-		if (value instanceof Date) {
-			return (Date)value;
-		}
-		throw new DbException(String.format("%s is not a date", value.toString()));
-	}
+    public Date getDate() {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Date) {
+            return (Date) value;
+        }
+        throw new DbException(String.format("%s is not a date", value.toString()));
+    }
 
-	public double getDouble() {
-		if (value == null) {
-			return 0d;
-		}
-		if (value instanceof Number) {
-			return ((Number)value).doubleValue();
-		}
-		return Double.valueOf(value.toString());
-	}
+    public double getDouble() {
+        if (value == null) {
+            return 0d;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        return Double.valueOf(value.toString());
+    }
 
-	public float getFloat() {
-		if (value == null) {
-			return 0f;
-		}
-		if (value instanceof Number) {
-			return ((Number)value).floatValue();
-		}
-		return Float.valueOf(value.toString());
-	}
+    public float getFloat() {
+        if (value == null) {
+            return 0f;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+        return Float.valueOf(value.toString());
+    }
 
-	public int getInt() {
-		if (value == null) {
-			return 0;
-		}
-		if (value instanceof Number) {
-			return ((Number)value).intValue();
-		}
-		return Integer.valueOf(value.toString());
-	}
+    public int getInt() {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return Integer.valueOf(value.toString());
+    }
 
-	public long getLong() {
-		if (value == null) {
-			return 0L;
-		}
-		if (value instanceof Number) {
-			return ((Number)value).longValue();
-		}
-		return Long.valueOf(value.toString());
-	}
+    public short getShort() {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).shortValue();
+        }
+        return Short.valueOf(value.toString());
+    }
 
-	public String getString() {
-		return value == null ? null : value.toString();
-	}
+    public long getLong() {
+        if (value == null) {
+            return 0L;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        return Long.valueOf(value.toString());
+    }
 
-	public Object getValue() {
-		return value;
-	}
+    public String getString() {
+        return value == null ? null : value.toString();
+    }
 
-	public boolean isNull() {
-		return value == null;
-	}
-	
-	@Override
-	public String toString() {
-		// TODO Add padding if a display width is specified in the Field
-		String s = getString();
-		return s == null ? "null" : s;
-	}
+    public Object getValue() {
+        return value;
+    }
+
+    public boolean isNull() {
+        return value == null;
+    }
+
+    @Override
+    public String toString() {
+        // TODO Add padding if a display width is specified in the Field
+        String s = getString();
+        return s == null ? "null" : s;
+    }
 
 }

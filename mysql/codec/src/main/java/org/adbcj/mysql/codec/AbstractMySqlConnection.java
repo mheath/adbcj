@@ -14,6 +14,7 @@ import org.adbcj.Result;
 import org.adbcj.ResultEventHandler;
 import org.adbcj.support.AbstractDbSession;
 import org.adbcj.support.DefaultDbFuture;
+import org.adbcj.support.DefaultDbSessionFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,8 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 	private Request<Void> closeRequest; // Access must by synchronized on 'this'
 
 	private MysqlCharacterSet charset = MysqlCharacterSet.LATIN1_SWEDISH_CI;
+	
+	private final FastDateFormat fastDateFormat;
 
 	protected AbstractMySqlConnection(AbstractMySqlConnectionManager connectionManager, LoginCredentials credentials) {
 		super(connectionManager.isPipeliningEnabled());
@@ -37,6 +40,8 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 		this.credentials = credentials;
 		this.id = connectionManager.nextId();
 		connectionManager.addConnection(this);
+		String format = "yyyy-MM-dd HH:mm:ss";
+		fastDateFormat = FastDateFormat.getInstance(format);
 	}
 
 	public abstract void write(ClientRequest request);
@@ -156,13 +161,13 @@ public abstract class AbstractMySqlConnection extends AbstractDbSession implemen
 
 	public DbSessionFuture<PreparedStatement> prepareStatement(String sql) {
 		checkClosed();
-		// TODO Implement MySQL prepareStatement(String sql)
-		throw new IllegalStateException("Not yet implemented");
+		PreparedStatement myPs = new MysqlPreparedStatement(sql, this, fastDateFormat);
+		DbSessionFuture<PreparedStatement> dbFuture = DefaultDbSessionFuture.createCompletedFuture(this, myPs);
+		return  dbFuture;
 	}
 
 	public DbSessionFuture<PreparedStatement> prepareStatement(Object key, String sql) {
 		checkClosed();
-		// TODO Implement MySQL prepareStatement(Object key, String sql)
 		throw new IllegalStateException("Not yet implemented");
 	}
 

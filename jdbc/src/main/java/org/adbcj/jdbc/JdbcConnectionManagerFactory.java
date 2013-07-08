@@ -43,7 +43,7 @@ public class JdbcConnectionManagerFactory implements ConnectionManagerFactory {
 			throw new DbException(e);
 		}
 	}
-
+	
 	@Override
 	public boolean canHandle(String protocol) {
 		return PROTOCOL.equals(protocol);

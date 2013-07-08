@@ -50,7 +50,6 @@ public class MysqlConnectionManagerFactory implements ConnectionManagerFactory {
 		}
 	}
 
-	@Override
 	public boolean canHandle(String protocol) {
 		return PROTOCOL.equals(protocol) | PROTOCOL_MINA.equals(protocol);
 	}
