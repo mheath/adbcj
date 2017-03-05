@@ -7,7 +7,7 @@ import org.adbcj.DbException;
 public class Test {
 
 	public static void main(String[] args) throws DbException, Exception {
-		ConnectionManager cm = ConnectionManagerProvider.createConnectionManager("adbcj:mysqlnetty://localhost/test", "foo", "dawg");
+		ConnectionManager cm = ConnectionManagerProvider.createConnectionManager("adbcj:pooledMysqlnetty://localhost/test", "foo", "dawg");
 		Connection connection = cm.connect().get();
 		connection.close(true);
 	}

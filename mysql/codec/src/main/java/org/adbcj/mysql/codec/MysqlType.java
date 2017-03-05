@@ -22,33 +22,37 @@ import org.adbcj.Type;
 
 // TODO Make sure all the types are mapped up properly - Most of these are guesses
 public enum MysqlType {
-	DECIMAL(0x00, Type.DECIMAL),
-	TINY(0x01, Type.TINYINT),
-	SHORT(0x02, Type.SMALLINT),
-	LONG(0x03, Type.BIGINT),
-	FLOAT(0x04, Type.FLOAT),
-	DOUBLE(0x05, Type.DOUBLE),
-	NULL(0x06, Type.NULL),
-	TIMESTAMP(0x07, Type.TIMESTAMP),
-	LONGLONG(0x08, Type.BIGINT),
-	INT24(0x09, Type.INTEGER),
-	DATE(0x0a, Type.DATE),
-	TIME(0x0b, Type.TIME),
-	DATETIME(0x0c, Type.TIMESTAMP),
-	YEAR(0x0d, Type.INTEGER),
-	NEWDATE(0x0e, Type.DATE),
-	VARCHAR(0x0f, Type.VARCHAR),
-	BIT(0x10, Type.BIT),
-	NEWDECIMAL(0xf6, Type.DECIMAL),
-	ENUM(0xf7, Type.INTEGER),
-	SET(0xf8, Type.ARRAY),
-	TINY_BLOB(0xf9, Type.BLOB),
-	MEDIUM_BLOB(0xfa, Type.BLOB),
-	LONG_BLOB(0xfb, Type.BLOB),
-	BLOB(0xfc, Type.BLOB),
-	VAR_STRING(0xfd, Type.VARCHAR),
-	STRING(0xfe, Type.VARCHAR),
-	GEOMETRY(0xff, Type.STRUCT);
+    
+	SIGNED_DECIMAL(MysqlDefs.FIELD_TYPE_DECIMAL, Type.DECIMAL),   
+	SIGNED_NEW_DECIMAL(MysqlDefs.FIELD_TYPE_NEW_DECIMAL,Type.DECIMAL),
+	SIGNED_TINY(MysqlDefs.FIELD_TYPE_TINY, Type.TINYINT),
+	SIGNED_SHORT(MysqlDefs.FIELD_TYPE_SHORT, Type.SMALLINT),
+	SIGNED_LONG(MysqlDefs.FIELD_TYPE_LONG, Type.INTEGER),
+	SIGNED_FLOAT(MysqlDefs.FIELD_TYPE_FLOAT, Type.FLOAT),
+	SIGNED_DOUBLE(MysqlDefs.FIELD_TYPE_DOUBLE, Type.DOUBLE),
+	SIGNED_NULL(MysqlDefs.FIELD_TYPE_NULL, Type.NULL),
+	SIGNED_TIMESTAMP(MysqlDefs.FIELD_TYPE_TIMESTAMP, Type.TIMESTAMP),
+	SIGNED_LONGLONG(MysqlDefs.FIELD_TYPE_LONGLONG, Type.LONG),
+	SIGNED_INT24(MysqlDefs.FIELD_TYPE_INT24, Type.INTEGER),
+	SIGNED_DATE(MysqlDefs.FIELD_TYPE_DATE, Type.DATE),
+	SIGNED_TIME(MysqlDefs.FIELD_TYPE_TIME, Type.TIME),
+	SIGNED_DATETIME(MysqlDefs.FIELD_TYPE_DATETIME, Type.TIMESTAMP),
+	SIGNED_YEAR(MysqlDefs.FIELD_TYPE_YEAR, Type.INTEGER),
+	SIGNED_NEWDATE(MysqlDefs.FIELD_TYPE_NEWDATE, Type.DATE),
+	SIGNED_VARCHAR(MysqlDefs.FIELD_TYPE_VARCHAR, Type.VARCHAR),
+	SIGNED_BIT(MysqlDefs.FIELD_TYPE_BIT, Type.BIT),
+	SIGNED_NEWDECIMAL(MysqlDefs.FIELD_TYPE_NEW_DECIMAL, Type.DECIMAL),
+	SIGNED_ENUM(MysqlDefs.FIELD_TYPE_ENUM, Type.INTEGER),
+	SIGNED_SET(MysqlDefs.FIELD_TYPE_SET, Type.ARRAY),
+	SIGNED_TINY_BLOB(MysqlDefs.FIELD_TYPE_TINY_BLOB, Type.BLOB),
+	SIGNED_MEDIUM_BLOB(MysqlDefs.FIELD_TYPE_MEDIUM_BLOB, Type.BLOB),
+	SIGNED_LONG_BLOB(MysqlDefs.FIELD_TYPE_LONG_BLOB, Type.BLOB),
+	SIGNED_BLOB(MysqlDefs.FIELD_TYPE_BLOB, Type.BLOB),
+	SIGNED_VAR_STRING(MysqlDefs.FIELD_TYPE_VAR_STRING, Type.VARCHAR),
+	SIGNED_STRING(MysqlDefs.FIELD_TYPE_STRING, Type.VARCHAR),
+	SIGNED_GEOMETRY(MysqlDefs.FIELD_TYPE_GEOMETRY, Type.STRUCT),
+	UNSIGNED_LONGLONG(MysqlDefs.FIELD_TYPE_LONGLONG,Type.BIGINT),
+	UNSIGNED_LONG(MysqlDefs.FIELD_TYPE_LONG,Type.LONG);
 
 	private final int id;
 	private final Type type;
@@ -66,10 +70,21 @@ public enum MysqlType {
 		return type;
 	}
 
-	public static MysqlType findById(int id) {
+	public static MysqlType findById(int id,boolean unsign) {
 		for (MysqlType type : values()) {
 			if (id == type.id) {
-				return type;
+			    if(unsign)
+			    {
+			       if(type == SIGNED_LONG)
+			       {
+			           return UNSIGNED_LONG;
+			       }
+			       else if(type == SIGNED_LONGLONG)
+			       {
+			           return UNSIGNED_LONGLONG;
+			       }
+			    }
+			    return type;
 			}
 		}
 		return null;

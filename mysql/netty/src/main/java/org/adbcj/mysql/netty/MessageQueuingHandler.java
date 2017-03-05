@@ -19,7 +19,7 @@ class MessageQueuingHandler implements ChannelUpstreamHandler {
 	// Access must be synchronized on this
 	private boolean flushed = false;
 
-	@Override
+	
 	public synchronized void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
 			throws Exception {
 		if (!flushed) {

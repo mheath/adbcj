@@ -51,7 +51,6 @@ public class MinaConnectionManagerFactory implements ConnectionManagerFactory {
 		}
 	}
 
-	@Override
 	public boolean canHandle(String protocol) {
 		return PROTOCOL.equals(protocol);
 	}

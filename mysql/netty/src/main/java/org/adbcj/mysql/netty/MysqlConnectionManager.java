@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import org.adbcj.Connection;
 import org.adbcj.mysql.codec.AbstractMySqlConnectionManager;
@@ -40,116 +41,125 @@ import org.slf4j.LoggerFactory;
 
 public class MysqlConnectionManager extends AbstractMySqlConnectionManager {
 
-	private static final Logger logger = LoggerFactory.getLogger(MysqlConnectionManager.class);
+    private static final Logger   logger        = LoggerFactory.getLogger(MysqlConnectionManager.class);
 
-	private static final String QUEUE_HANDLER = MysqlConnectionManager.class.getName() + ".queueHandler";
-	private static final String ENCODER = MysqlConnectionManager.class.getName() + ".encoder";
-	private static final String DECODER = MysqlConnectionManager.class.getName() + ".decoder";
+    private static final String   QUEUE_HANDLER = MysqlConnectionManager.class.getName() + ".queueHandler";
+    private static final String   ENCODER       = MysqlConnectionManager.class.getName() + ".encoder";
+    private static final String   DECODER       = MysqlConnectionManager.class.getName() + ".decoder";
 
-	private final ExecutorService executorService;
-	private final ClientBootstrap bootstrap;
+    private final ExecutorService executorService;
+    private final ClientBootstrap bootstrap;
 
-	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties) {
-		super(username, password, schema, properties);
-		executorService = Executors.newCachedThreadPool();
+    public MysqlConnectionManager(String host, int port, String username, String password, String schema,
+                                  Properties properties){
+        super(username, password, schema, properties);
+        ThreadFactory threadFactory = new ThreadFactory() {
 
-		ChannelFactory factory = new NioClientSocketChannelFactory(executorService, executorService);
-		bootstrap = new ClientBootstrap(factory);
-		init(host, port);
-	}
+            public Thread newThread(Runnable r) {
+                Thread thd = new Thread(r);
+                thd.setDaemon(true);
+                return thd;
+            }
+        };
+        executorService = Executors.newCachedThreadPool(threadFactory);
 
-	public MysqlConnectionManager(String host, int port, String username, String password, String schema, Properties properties, ChannelFactory factory) {
-		super(username, password, schema, properties);
-		executorService = null;
-		bootstrap = new ClientBootstrap(factory);
-		init(host, port);
-	}
+        ChannelFactory factory = new NioClientSocketChannelFactory(executorService, executorService);
+        bootstrap = new ClientBootstrap(factory);
+        init(host, port);
+    }
 
-	private void init(String host, int port) {
-		bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-			@Override
-			public ChannelPipeline getPipeline() throws Exception {
-				ChannelPipeline pipeline = Channels.pipeline();
+    public MysqlConnectionManager(String host, int port, String username, String password, String schema,
+                                  Properties properties, ChannelFactory factory){
+        super(username, password, schema, properties);
+        executorService = null;
+        bootstrap = new ClientBootstrap(factory);
+        init(host, port);
+    }
 
-				pipeline.addFirst(QUEUE_HANDLER, new MessageQueuingHandler());
+    private void init(String host, int port) {
+        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 
-				pipeline.addLast(DECODER, new Decoder());
-				pipeline.addLast(ENCODER, new Encoder());
+            public ChannelPipeline getPipeline() throws Exception {
+                ChannelPipeline pipeline = Channels.pipeline();
 
-				return pipeline;
-			}
-		});
-		bootstrap.setOption("tcpNoDelay", true);
-		bootstrap.setOption("keepAlive", true);
-		bootstrap.setOption("remoteAddress", new InetSocketAddress(host, port));
-	}
+                pipeline.addFirst(QUEUE_HANDLER, new MessageQueuingHandler());
 
-	@Override
-	protected void dispose() {
-		if (executorService != null) {
-			executorService.shutdownNow();
-		}
-	}
+                pipeline.addLast(DECODER, new Decoder());
+                pipeline.addLast(ENCODER, new Encoder());
 
-	@Override
-	protected DefaultDbFuture<Connection> createConnectionFuture() {
-		final ChannelFuture channelFuture = bootstrap.connect();
-		return new MysqlConnectFuture(channelFuture);
-	}
+                return pipeline;
+            }
+        });
+        bootstrap.setOption("tcpNoDelay", true);
+        bootstrap.setOption("keepAlive", true);
+        bootstrap.setOption("remoteAddress", new InetSocketAddress(host, port));
+    }
 
-	class MysqlConnectFuture extends DefaultDbFuture<Connection> {
-		private final ChannelFuture channelFuture;
+    protected void dispose() {
+        if (executorService != null) {
+            executorService.shutdownNow();
+        }
+    }
 
-		public MysqlConnectFuture(ChannelFuture channelFuture) {
-			this.channelFuture = channelFuture;
-			channelFuture.addListener(new ChannelFutureListener() {
-				@Override
-				public void operationComplete(ChannelFuture future) throws Exception {
-					logger.debug("Connect completed");
-					
-					Channel channel = future.getChannel();
-					MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this, getCredentials(), channel, MysqlConnectFuture.this);
-					channel.getPipeline().addLast("handler", new Handler(connection));
-					MessageQueuingHandler queuingHandler = channel.getPipeline().get(MessageQueuingHandler.class);
-					synchronized (queuingHandler) {
-						queuingHandler.flush();
-						channel.getPipeline().remove(queuingHandler);
-					}
+    protected DefaultDbFuture<Connection> createConnectionFuture() {
+        final ChannelFuture channelFuture = bootstrap.connect();
+        return new MysqlConnectFuture(channelFuture);
+    }
 
-				}
-			});
-		}
+    class MysqlConnectFuture extends DefaultDbFuture<Connection> {
 
-		@Override
-		protected boolean doCancel(boolean mayInterruptIfRunning) {
-			return channelFuture.cancel();
-		}
-	}
+        private final ChannelFuture channelFuture;
+
+        public MysqlConnectFuture(ChannelFuture channelFuture){
+            this.channelFuture = channelFuture;
+            channelFuture.addListener(new ChannelFutureListener() {
+
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    logger.debug("Connect completed");
+
+                    Channel channel = future.getChannel();
+                    MysqlConnection connection = new MysqlConnection(MysqlConnectionManager.this,
+                        getCredentials(),
+                        channel,
+                        MysqlConnectFuture.this);
+                    channel.getPipeline().addLast("handler", new Handler(connection));
+                    MessageQueuingHandler queuingHandler = channel.getPipeline().get(MessageQueuingHandler.class);
+                    synchronized (queuingHandler) {
+                        queuingHandler.flush();
+                        channel.getPipeline().remove(queuingHandler);
+                    }
+
+                }
+            });
+        }
+
+        protected boolean doCancel(boolean mayInterruptIfRunning) {
+            return channelFuture.cancel();
+        }
+    }
 }
 
 @ChannelPipelineCoverage("one")
 class Decoder extends FrameDecoder {
 
-	private final MySqlClientDecoder decoder = new MySqlClientDecoder();
+    private final MySqlClientDecoder decoder = new MySqlClientDecoder();
 
-	@Override
-	protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
-		 InputStream in = new ChannelBufferInputStream(buffer);
-		 try {
-			 return decoder.decode(in, false);
-		 } finally {
-			 in.close();
-		 }
-	}
+    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+        InputStream in = new ChannelBufferInputStream(buffer);
+        try {
+            return decoder.decode(in, false);
+        } finally {
+            in.close();
+        }
+    }
 
 }
 
-@ChannelPipelineCoverage("all")
 class Encoder implements ChannelDownstreamHandler {
 
-	private final MySqlClientEncoder encoder = new MySqlClientEncoder();
+    private final MySqlClientEncoder encoder = new MySqlClientEncoder();
 
-	public void handleDownstream(ChannelHandlerContext context, ChannelEvent event) throws Exception {
+    public void handleDownstream(ChannelHandlerContext context, ChannelEvent event) throws Exception {
         if (!(event instanceof MessageEvent)) {
             context.sendDownstream(event);
             return;
@@ -163,38 +173,35 @@ class Encoder implements ChannelDownstreamHandler {
 
         ChannelBuffer buffer = ChannelBuffers.buffer(1024);
         ChannelBufferOutputStream out = new ChannelBufferOutputStream(buffer);
-    	encoder.encode((ClientRequest) e.getMessage(), out);
-    	Channels.write(context, e.getFuture(), buffer);
-	}
+        encoder.encode((ClientRequest) e.getMessage(), out);
+        Channels.write(context, e.getFuture(), buffer);
+    }
 }
 
 @ChannelPipelineCoverage("one")
 class Handler extends SimpleChannelHandler {
 
-	private final MysqlConnection connection;
-	private final ProtocolHandler handler = new ProtocolHandler();
+    private final MysqlConnection connection;
+    private final ProtocolHandler handler = new ProtocolHandler();
 
-	public Handler(MysqlConnection connection) {
-		this.connection = connection;
-	}
+    public Handler(MysqlConnection connection){
+        this.connection = connection;
+    }
 
-	@Override
-	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-		handler.messageReceived(connection, e.getMessage());
-	}
+    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+        handler.messageReceived(connection, e.getMessage());
+    }
 
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-		Throwable t = handler.handleException(connection, e.getCause());
-		if (t != null) {
-			// TODO: Pass exception on to connectionManager
-			t.printStackTrace();
-		}
-	}
+    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+        Throwable t = handler.handleException(connection, e.getCause());
+        if (t != null) {
+            // TODO: Pass exception on to connectionManager
+            t.printStackTrace();
+        }
+    }
 
-	@Override
-	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-		handler.connectionClosed(connection);
-	}
+    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        handler.connectionClosed(connection);
+    }
 
 }
